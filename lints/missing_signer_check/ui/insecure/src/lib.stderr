@@ -1,0 +1,13 @@
+error: this function lacks a use of `is_signer`
+  --> $DIR/lib.rs:9:5
+   |
+LL | /     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
+LL | |         msg!("GM {}", ctx.accounts.authority.key().to_string());
+LL | |         Ok(())
+LL | |     }
+   | |_____^
+   |
+   = note: `-D missing-signer-check` implied by `-D warnings`
+
+error: aborting due to previous error
+

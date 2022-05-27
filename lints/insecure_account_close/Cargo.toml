@@ -1,0 +1,45 @@
+[package]
+name = "insecure_account_close"
+version = "0.1.0"
+authors = ["authors go here"]
+description = "decription goes here"
+edition = "2018"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[[example]]
+name = "insecure"
+path = "ui/insecure/src/lib.rs"
+
+[[example]]
+name = "insecure-still"
+path = "ui/insecure-still/src/lib.rs"
+
+[[example]]
+name = "insecure-still-still"
+path = "ui/insecure-still-still/src/lib.rs"
+
+[[example]]
+name = "recommended"
+path = "ui/recommended/src/lib.rs"
+
+[[example]]
+name = "secure"
+path = "ui/secure/src/lib.rs"
+
+[dependencies]
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "c995a8b5017766246ac5cfe66baa074eeee3a5a3"}
+dylint_linting = "2.0.0"
+if_chain = "1.0.2"
+
+[dev-dependencies]
+anchor-lang = "0.24.2"
+assert_cmd = "2.0.4"
+dylint_testing = "2.0.0"
+predicates = "2.1.1"
+tempfile = "3.3.0"
+
+[package.metadata.rust-analyzer]
+rustc_private = true

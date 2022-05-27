@@ -1,0 +1,4 @@
+[toolchain]
+# smoelius: `nightly-2021-10-11` instead of `nightly-2021-10-07` because of `proc_macro::is_available`.
+channel = "nightly-2022-02-24"
+components = ["llvm-tools-preview", "rustc-dev"]
