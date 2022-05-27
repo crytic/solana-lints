@@ -30,14 +30,15 @@ name = "secure"
 path = "ui/secure/src/lib.rs"
 
 [dependencies]
-clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "c995a8b5017766246ac5cfe66baa074eeee3a5a3"}
-dylint_linting = "2.0.0"
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "c995a8b5017766246ac5cfe66baa074eeee3a5a3" }
+dylint_linting = "2.0.2"
 if_chain = "1.0.2"
+solana-lints-utils = { path = "../../utils" }
 
 [dev-dependencies]
 anchor-lang = "0.24.2"
 assert_cmd = "2.0.4"
-dylint_testing = "2.0.0"
+dylint_testing = "2.0.2"
 predicates = "2.1.1"
 tempfile = "3.3.0"
 

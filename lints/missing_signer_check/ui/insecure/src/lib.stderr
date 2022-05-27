@@ -1,7 +1,9 @@
 error: this function lacks a use of `is_signer`
   --> $DIR/lib.rs:9:5
    |
-LL | /     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
+LL | /     pub fn log_message(
+LL | |         ctx: Context<LogMessage>,
+LL | |     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
 LL | |         msg!("GM {}", ctx.accounts.authority.key().to_string());
 LL | |         Ok(())
 LL | |     }

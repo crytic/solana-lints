@@ -877,21 +877,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb56e1aa765b4b4f3aadfab769793b7087bb03a4ea4920644a6d238e2df5b9ed"
 
 [[package]]
-name = "insecure_account_close"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "assert_cmd",
- "clippy_utils",
- "dylint_linting",
- "dylint_testing",
- "if_chain",
- "predicates",
- "solana-lints-utils",
- "tempfile",
-]
-
-[[package]]
 name = "instant"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1031,6 +1016,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "missing_signer_check"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "assert_cmd",
+ "clippy_utils",
+ "dylint_linting",
+ "dylint_testing",
+ "if_chain",
+ "predicates",
+ "solana-lints-utils",
+ "tempfile",
 ]
 
 [[package]]
