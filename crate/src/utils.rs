@@ -1,16 +1,7 @@
-#![feature(rustc_private)]
-#![warn(unused_extern_crates)]
-
-extern crate rustc_hir;
-
 use rustc_hir::{
     intravisit::{walk_expr, Visitor},
     Expr,
 };
-
-pub const ANCHOR_LANG_CONTEXT: [&str; 3] = ["anchor_lang", "context", "Context"];
-pub const SOLANA_PROGRAM_ACCOUNT_INFO: [&str; 3] =
-    ["solana_program", "account_info", "AccountInfo"];
 
 pub trait Conclusive: Default {
     fn concluded(&self) -> bool;

@@ -9,7 +9,7 @@ use if_chain::if_chain;
 use rustc_hir::{intravisit::FnKind, Body, Expr, ExprKind, FnDecl, HirId};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
-use solana_lints_utils::{visit_expr_no_bodies, ANCHOR_LANG_CONTEXT, SOLANA_PROGRAM_ACCOUNT_INFO};
+use solana_lints::{paths, utils::visit_expr_no_bodies};
 
 dylint_linting::declare_late_lint! {
     /// **What it does:**
@@ -49,7 +49,7 @@ impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
             if fn_sig
                 .inputs()
                 .iter()
-                .any(|ty| match_type(cx, *ty, &ANCHOR_LANG_CONTEXT));
+                .any(|ty| match_type(cx, *ty, &paths::ANCHOR_LANG_CONTEXT));
             if !contains_is_signer_use(cx, body);
             then {
                 span_lint(
@@ -72,7 +72,7 @@ fn is_is_signer_use<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
         if let ExprKind::Field(object, field_name) = expr.kind;
         if field_name.as_str() == "is_signer";
         let ty = cx.typeck_results().expr_ty(object);
-        if match_type(cx, ty, &SOLANA_PROGRAM_ACCOUNT_INFO);
+        if match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
         then {
             true
         } else {

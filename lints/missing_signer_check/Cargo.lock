@@ -1029,7 +1029,7 @@ dependencies = [
  "dylint_testing",
  "if_chain",
  "predicates",
- "solana-lints-utils",
+ "solana-lints",
  "tempfile",
 ]
 
@@ -1457,7 +1457,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "solana-lints-utils"
+name = "solana-lints"
 version = "0.1.0"
 
 [[package]]

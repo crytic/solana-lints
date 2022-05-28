@@ -1,5 +1,5 @@
 [package]
-name = "solana-lints-utils"
+name = "solana-lints"
 version = "0.1.0"
 edition = "2021"
 

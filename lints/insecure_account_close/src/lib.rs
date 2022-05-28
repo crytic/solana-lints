@@ -16,7 +16,7 @@ use rustc_middle::{
     mir::interpret::ConstValue,
     ty::{ConstKind, TyKind, UintTy},
 };
-use solana_lints_utils::visit_expr_no_bodies;
+use solana_lints::utils::visit_expr_no_bodies;
 
 dylint_linting::declare_late_lint! {
     /// **What it does:** Checks for attempts to close an account by setting its lamports to 0 but

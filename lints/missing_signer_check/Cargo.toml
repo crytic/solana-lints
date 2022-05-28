@@ -25,7 +25,7 @@ path = "ui/secure/src/lib.rs"
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "c995a8b5017766246ac5cfe66baa074eeee3a5a3" }
 dylint_linting = "2.0.2"
 if_chain = "1.0.2"
-solana-lints-utils = { path = "../../utils" }
+solana-lints = { path = "../../crate" }
 
 [dev-dependencies]
 anchor-lang = "0.24.2"
