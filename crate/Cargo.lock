@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "solana-lints-utils"
+name = "solana-lints"
 version = "0.1.0"
