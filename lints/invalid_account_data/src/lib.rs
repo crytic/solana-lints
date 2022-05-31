@@ -66,8 +66,40 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
         // check which accounts are referenced (used) by the function
         // call this set of accounts s.
         // For each account in s, check if the owner field is referenced somewhere in the function
+
+        // BASIC STRATEGY
+        // 1) something with checking function sig, identifying accounts used by fnc
+        // 2) visiting each expr in the fnc body to see if owner is referenced and it is a field of an Account
         
-        let params = body.params;
+        if_chain! {
+          if matches!(fn_kind, FnKind::ItemFn(..));
+
+          if !uses_owner_field(cx, body);
+          then {
+              span_lint(
+                  cx,
+                  INVALID_ACCOUNT_DATA,
+                  span,
+                  "this function doesn't use the owner field"
+              )
+            }
+        }
+    }
+}
+
+fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
+    if_chain! {
+        if let ExprKind::Field(object, field_name) = expr.kind;
+        if field_name.as_str() == "owner";
+        // checking the type of the expression, which is an object
+        let ty = cx.typeck_results().expr_ty(object);
+        // check if ty == AccountInfo
+        if match_type(cx, ty, &SOLANA_PROGRAM_ACCOUNT_INFO);
+        then {
+            true
+        } else {
+            false
+        }
     }
 }
 
