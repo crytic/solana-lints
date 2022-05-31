@@ -52,8 +52,6 @@ dylint_linting::declare_late_lint! {
 }
 
 impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
-    // A list of things you might check can be found here:
-    // https://doc.rust-lang.org/stable/nightly-rustc/rustc_lint/trait.LateLintPass.html
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -70,18 +68,31 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
         // BASIC STRATEGY
         // 1) something with checking function sig, identifying accounts used by fnc
         // 2) visiting each expr in the fnc body to see if owner is referenced and it is a field of an Account
+
+        // 1. ctx.accounts.token (here, the tokens acc is referenced)
+        // 2. Check if token.owner is referenced elsewhere in body
+        // 3. If not, emit lint
         
         if_chain! {
-          if matches!(fn_kind, FnKind::ItemFn(..));
+            if matches!(fn_kind, FnKind::ItemFn(..));
+            let fn_sig = cx.tcx.fn_sig(local_def_id.to_def_id()).skip_binder();
+            if let Some(ty) = fn_sig
+                .inputs()
+                .iter()
+                .find(|ty| match_type(cx, **ty, &paths::ANCHOR_LANG_CONTEXT));
+            // what are the substs?
+            // Adt(struct Context<...>, ??)
+            if let ty::Adt(_, substs) = ty.kind();
+            
 
-          if !uses_owner_field(cx, body);
-          then {
-              span_lint(
-                  cx,
-                  INVALID_ACCOUNT_DATA,
-                  span,
-                  "this function doesn't use the owner field"
-              )
+            if !uses_owner_field(cx, body);
+            then {
+                span_lint(
+                    cx,
+                    INVALID_ACCOUNT_DATA,
+                    span,
+                    "this function doesn't use the owner field"
+                )
             }
         }
     }
