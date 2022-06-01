@@ -1,34 +1,20 @@
 #![feature(rustc_private)]
 #![warn(unused_extern_crates)]
 
-extern crate rustc_ast;
-extern crate rustc_ast_pretty;
-extern crate rustc_data_structures;
-extern crate rustc_errors;
 extern crate rustc_hir;
-extern crate rustc_hir_pretty;
-extern crate rustc_index;
-extern crate rustc_infer;
-extern crate rustc_lexer;
 extern crate rustc_middle;
-extern crate rustc_mir_dataflow;
-extern crate rustc_parse;
-extern crate rustc_parse_format;
 extern crate rustc_span;
-extern crate rustc_target;
-extern crate rustc_trait_selection;
-extern crate rustc_typeck;
 
-use rustc_lint::{LateLintPass, LateContext};
-use clippy_utils::{diagnostics::span_lint, higher};
+use clippy_utils::{diagnostics::span_lint, ty::match_type};
 use if_chain::if_chain;
-use rustc_ast::ast::{LitIntType, LitKind};
-use rustc_middle::{
-    mir::interpret::ConstValue,
-    ty::{ConstKind, TyKind, UintTy},
-};
 use rustc_hir::{intravisit::FnKind, Body, Expr, ExprKind, FnDecl, HirId};
+use rustc_lint::{LateContext, LateLintPass};
+use rustc_middle::ty::{
+    self,
+    subst::{GenericArg, GenericArgKind},
+};
 use rustc_span::Span;
+use solana_lints::{paths, utils::visit_expr_no_bodies};
 
 dylint_linting::declare_late_lint! {
     /// **What it does:**
@@ -72,6 +58,7 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
         // 1. ctx.accounts.token (here, the tokens acc is referenced)
         // 2. Check if token.owner is referenced elsewhere in body
         // 3. If not, emit lint
+        let local_def_id = cx.tcx.hir().local_def_id(hir_id);
         
         if_chain! {
             if matches!(fn_kind, FnKind::ItemFn(..));
@@ -85,7 +72,7 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
             if let ty::Adt(_, substs) = ty.kind();
             
 
-            if !uses_owner_field(cx, body);
+            //if !uses_owner_field(cx, body);
             then {
                 span_lint(
                     cx,
@@ -95,6 +82,12 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
                 )
             }
         }
+        span_lint(
+            cx,
+            INVALID_ACCOUNT_DATA,
+            span,
+            "this function doesn't use the owner field"
+        )
     }
 }
 
@@ -105,7 +98,7 @@ fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
         // checking the type of the expression, which is an object
         let ty = cx.typeck_results().expr_ty(object);
         // check if ty == AccountInfo
-        if match_type(cx, ty, &SOLANA_PROGRAM_ACCOUNT_INFO);
+        if match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
         then {
             true
         } else {
@@ -115,14 +108,6 @@ fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
 }
 
 #[test]
-fn ui() {
-    dylint_testing::ui_test(
-        env!("CARGO_PKG_NAME"),
-        &std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("ui"),
-    );
-}
-
-/*#[test]
 fn insecure() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
 }
@@ -135,4 +120,4 @@ fn recommended() {
 #[test]
 fn secure() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
-}*/
+}
