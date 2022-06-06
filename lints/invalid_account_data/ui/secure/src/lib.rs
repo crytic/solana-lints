@@ -12,11 +12,14 @@ pub mod account_data_matching_secure {
     use super::*;
 
     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
+        // ctx.accounts.token doesn't contain reference to owner, so this flags lint
         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
+        // Passing test is ctx.accounts.token.owner
+        // Failing test is &token.owner
         if ctx.accounts.authority.key != &token.owner {
             return Err(ProgramError::InvalidAccountData);
         }
-        msg!("Your acocunt balance is: {}", token.amount);
+        msg!("Your account balance is: {}", token.amount);
         Ok(())
     }
 }
