@@ -12,7 +12,7 @@ pub mod account_data_matching_secure {
     use super::*;
 
     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
-        // ctx.accounts.token doesn't contain reference to owner, so this flags lint
+        // ctx.accounts.token doesn't contain reference to owner, so this should flag lint
         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
         // Passing test is ctx.accounts.token.owner
         // Failing test is &token.owner
