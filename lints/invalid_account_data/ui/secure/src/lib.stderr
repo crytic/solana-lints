@@ -1,9 +1,11 @@
 error: this function doesn't use the owner field
-  --> $DIR/lib.rs:14:5
+  --> $DIR/lib.rs:15:5
    |
 LL | /     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
 LL | |         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
-LL | |         msg!("Your account balance is: {}", token.amount);
+LL | |         if ctx.accounts.authority.key != &token.owner {
+LL | |             return Err(ProgramError::InvalidAccountData);
+...  |
 LL | |         Ok(())
 LL | |     }
    | |_____^

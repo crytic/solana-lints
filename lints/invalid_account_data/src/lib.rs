@@ -4,13 +4,12 @@
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use clippy_utils::{diagnostics::span_lint, ty::match_type};
+use clippy_utils::{diagnostics::span_lint, ty::match_type, SpanlessEq};
 use if_chain::if_chain;
 use rustc_hir::{intravisit::{FnKind, Visitor, walk_expr}, Body, Expr, ExprKind, FnDecl, HirId, def_id::DefId};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 use solana_lints::{paths, utils::visit_expr_no_bodies};
-use std::collections::HashSet;
 
 dylint_linting::declare_late_lint! {
     /// **What it does:**
@@ -45,9 +44,9 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
     ) {
         // visitor collects accounts referenced in fnc body
         let accounts = get_referenced_accounts(cx, body);
-        println!("{:#?}", accounts);
-        for account_id in accounts {
-            if !contains_owner_use(cx, body, account_id) {
+        // println!("{:#?}", accounts);
+        for account_expr in accounts {
+            if !contains_owner_use(cx, body, account_expr.hir_id) {
                 span_lint(
                     cx,
                     INVALID_ACCOUNT_DATA,
@@ -62,13 +61,13 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
 
 struct AccountUses<'cx, 'tcx> {
     cx: &'cx LateContext<'tcx>,
-    uses: HashSet<DefId>,
+    uses: Vec<&'tcx Expr<'tcx>>,
 }
 
-fn get_referenced_accounts<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> HashSet<DefId> {
+fn get_referenced_accounts<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> Vec<&'tcx Expr<'tcx>> {
     let mut accounts = AccountUses {
         cx,
-        uses: HashSet::new(),
+        uses: Vec::new(),
     };
 
     // start the walk by visiting entire body block
@@ -77,14 +76,16 @@ fn get_referenced_accounts<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>)
 }
 
 impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
-    // TODO: check if collects unique ids or not. Ex. ctx.accounts.token is referenced 2x in body
-    // make Vec a HashSet
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         let ty = self.cx.typeck_results().expr_ty(expr);
         if match_type(self.cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO) {
-            if let Some(def_id) = self.cx.typeck_results().type_dependent_def_id(expr.hir_id) {
-                //println!("{:#?}", def_id);
-                self.uses.insert(def_id);
+            // TODO: may be a better place to put this struct
+            let mut spanless_eq = SpanlessEq::new(self.cx);
+
+            // TODO: check that what is being added to vector is as expected
+            // if none of exprs are matching, then add to list
+            if !self.uses.iter().any(|e| spanless_eq.eq_expr(e, expr)) {
+                self.uses.push(expr);
             }
         }
         walk_expr(self, expr)
@@ -94,19 +95,18 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
 fn contains_owner_use<'tcx>(
     cx: &LateContext<'tcx>, 
     body: &'tcx Body<'tcx>,
-    local_def_id: DefId
+    hir_id: HirId
 ) -> bool {
-    visit_expr_no_bodies(&body.value, |expr| uses_owner_field(cx, expr, local_def_id))
+    visit_expr_no_bodies(&body.value, |expr| uses_owner_field(cx, expr, hir_id))
 }
 
-/// Checks if the expression is an owner field reference on an object with local_def_id
-fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>, local_def_id: DefId) -> bool {
+/// Checks if the expression is an owner field reference on an object with hir_id
+fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>, hir_id: HirId) -> bool {
     if_chain! {
         if let ExprKind::Field(object, field_name) = expr.kind;
         // TODO: add check for key, is_signer
         if field_name.as_str() == "owner";
-        if let Some(obj_def_id) = cx.typeck_results().type_dependent_def_id(object.hir_id);
-        if obj_def_id == local_def_id;
+        if hir_id == expr.hir_id;
         then {
             true
         } else {
@@ -125,7 +125,7 @@ fn insecure() {
 //     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
 // }
 
-// #[test]
-// fn secure() {
-//     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
-// }
+#[test]
+fn secure() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
+}
