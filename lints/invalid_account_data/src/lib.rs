@@ -44,7 +44,7 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
     ) {
         // visitor collects accounts referenced in fnc body
         let accounts = get_referenced_accounts(cx, body);
-        // println!("{:#?}", accounts);
+        println!("{:#?}", accounts.len());
         for account_expr in accounts {
             if !contains_owner_use(cx, body, account_expr.hir_id) {
                 span_lint(
