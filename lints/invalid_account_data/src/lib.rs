@@ -42,18 +42,21 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
         span: Span,
         hir_id: HirId,
     ) {
-        // visitor collects accounts referenced in fnc body
-        let accounts = get_referenced_accounts(cx, body);
-        println!("{:#?}", accounts.len());
-        for account_expr in accounts {
-            if !contains_owner_use(cx, body, account_expr.hir_id) {
-                span_lint(
-                    cx,
-                    INVALID_ACCOUNT_DATA,
-                    span,
-                    "this function doesn't use the owner field"
-                )
-                // return?? (if return, then we essentially short circuit)
+        if !span.from_expansion() {
+            // visitor collects accounts referenced in fnc body
+            let accounts = get_referenced_accounts(cx, body);
+            // println!("{:?}\n {:#?}", span, accounts.len());
+
+            for account_expr in accounts {
+                if !contains_owner_use(cx, body, account_expr) {
+                    span_lint(
+                        cx,
+                        INVALID_ACCOUNT_DATA,
+                        span,
+                        "this function doesn't use the owner field"
+                    )
+                    // return?? (if return, then we essentially short circuit)
+                }
             }
         }
     }
@@ -85,8 +88,10 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
             // TODO: check that what is being added to vector is as expected
             // if none of exprs are matching, then add to list
             if !self.uses.iter().any(|e| spanless_eq.eq_expr(e, expr)) {
+                // println!("Expression pushed: {:?}", expr);
                 self.uses.push(expr);
             }
+            // println!("Expression NOT pushed: {:?}", expr);
         }
         walk_expr(self, expr)
     }
@@ -95,18 +100,20 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
 fn contains_owner_use<'tcx>(
     cx: &LateContext<'tcx>, 
     body: &'tcx Body<'tcx>,
-    hir_id: HirId
+    account_expr: &Expr<'tcx>
 ) -> bool {
-    visit_expr_no_bodies(&body.value, |expr| uses_owner_field(cx, expr, hir_id))
+    visit_expr_no_bodies(&body.value, |expr| uses_owner_field(cx, expr, account_expr))
 }
 
 /// Checks if the expression is an owner field reference on an object with hir_id
-fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>, hir_id: HirId) -> bool {
+fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>, account_expr: &Expr<'tcx>) -> bool {
     if_chain! {
         if let ExprKind::Field(object, field_name) = expr.kind;
         // TODO: add check for key, is_signer
         if field_name.as_str() == "owner";
-        if hir_id == expr.hir_id;
+        let mut spanless_eq = SpanlessEq::new(cx);
+        // let _ = println!("{:?}\n {:?}", object, account_expr);
+        if spanless_eq.eq_expr(account_expr, object);
         then {
             true
         } else {
@@ -115,17 +122,23 @@ fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>, hir_id: Hir
     }
 }
 
-#[test]
-fn insecure() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
-}
-
 // #[test]
-// fn recommended() {
-//     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
+// fn insecure() {
+//     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
 // }
 
+// // #[test]
+// // fn recommended() {
+// //     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
+// // }
+
+// #[test]
+// fn secure() {
+//     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
+// }
+// expect one expression to be in array
+
 #[test]
-fn secure() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
+fn fixed_secure() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "fixed-secure");
 }

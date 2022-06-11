@@ -13,7 +13,8 @@ pub mod account_data_matching_secure {
 
     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
-        if ctx.accounts.authority.key != &ctx.accounts.token.owner {
+        let dummy = &ctx.accounts.token;
+        if ctx.accounts.authority.key != ctx.accounts.token.owner {
             return Err(ProgramError::InvalidAccountData);
         }
         msg!("Your account balance is: {}", token.amount);

@@ -11,7 +11,6 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod account_data_matching_secure {
     use super::*;
 
-    // ctx.accounts.token doesn't contain reference to owner, so this should flag lint
     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
         if ctx.accounts.authority.key != &token.owner {
