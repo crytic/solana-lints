@@ -1,0 +1,21 @@
+[package]
+name = "type_cosplay"
+version = "0.1.0"
+authors = ["authors go here"]
+description = "decription goes here"
+edition = "2018"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "7b2896a8fc9f0b275692677ee6d2d66a7cbde16a" }
+dylint_linting = "2.0.1"
+if_chain = "1.0.2"
+
+[dev-dependencies]
+dylint_testing = "2.0.1"
+
+[package.metadata.rust-analyzer]
+rustc_private = true
