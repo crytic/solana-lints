@@ -27,12 +27,12 @@ dylint_linting::declare_late_lint! {
     /// ```rust
     /// // example code that does not raise a warning
     /// ```
-    pub INVALID_ACCOUNT_DATA,
+    pub MISSING_OWNER_CHECK,
     Warn,
     "description goes here"
 }
 
-impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
+impl<'tcx> LateLintPass<'tcx> for MissingOwnerCheck {
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -50,10 +50,10 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
                 if !contains_owner_use(cx, body, account_expr) {
                     span_lint(
                         cx,
-                        INVALID_ACCOUNT_DATA,
+                        MISSING_OWNER_CHECK,
                         // use expr span; adjust error message
-                        span,
-                        "this function doesn't use the owner field"
+                        account_expr.span,
+                        "this expression is used but there is no check on its owner field"
                     )
                 }
             }
