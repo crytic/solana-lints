@@ -19,7 +19,8 @@ extern crate rustc_target;
 extern crate rustc_trait_selection;
 extern crate rustc_typeck;
 
-use rustc_lint::LateLintPass;
+use rustc_lint::{LateContext, LateLintPass};
+use rustc_hir::{Item, VariantData};
 
 dylint_linting::declare_late_lint! {
     /// **What it does:**
@@ -43,14 +44,39 @@ dylint_linting::declare_late_lint! {
 }
 
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
-    // A list of things you might check can be found here:
-    // https://doc.rust-lang.org/stable/nightly-rustc/rustc_lint/trait.LateLintPass.html
+    // if there are 2 structs that have the same fields, then flag lint
+    // CONSIDERATIONS:
+    // If it is semantically meant for 2 types to have the same fields, then adding
+    // an arbitrary "dummy" field is weird. It makes more sense to add a "discriminant"
+    // field, as is suggested. But then there needs to also be a check on this discriminant
+    // field, as in the secure example. Should we enforce this check? Or is that another lint's job?
+
+    // or post?
+    // fn check_struct_def_post(&mut self, cx: &LateContext<'tcx>, variant_data: &'tcx VariantData<'tcx>) {
+    //     println!("{:?}", variant_data);
+    // }
+
+    fn check_item(&mut self, cx: &LateContext<'tcx>, item: &'tcx Item<'tcx>) {
+        // collect struct definitions
+        //  while collecting, if encountered an equivalent struct def, flag lint
+        if let ItemKind::Struct(_, _) = item.kind {
+            println!("{:?}", item);
+        }
+    }
 }
 
 #[test]
-fn ui() {
-    dylint_testing::ui_test(
-        env!("CARGO_PKG_NAME"),
-        &std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("ui"),
-    );
+fn insecure() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
 }
+
+#[test]
+fn recommended() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
+}
+
+#[test]
+fn secure() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
+}
+

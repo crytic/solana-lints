@@ -43,7 +43,6 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
         hir_id: HirId,
     ) {
         if !span.from_expansion() {
-            // visitor collects accounts referenced in fnc body
             let accounts = get_referenced_accounts(cx, body);
             // println!("{:?}\n {:#?}", span, accounts.len());
 
@@ -52,10 +51,10 @@ impl<'tcx> LateLintPass<'tcx> for InvalidAccountData {
                     span_lint(
                         cx,
                         INVALID_ACCOUNT_DATA,
+                        // use expr span; adjust error message
                         span,
                         "this function doesn't use the owner field"
                     )
-                    // return?? (if return, then we essentially short circuit)
                 }
             }
         }
@@ -73,7 +72,6 @@ fn get_referenced_accounts<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>)
         uses: Vec::new(),
     };
 
-    // start the walk by visiting entire body block
     accounts.visit_expr(&body.value);
     accounts.uses
 }
@@ -85,8 +83,6 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
             // TODO: may be a better place to put this struct
             let mut spanless_eq = SpanlessEq::new(self.cx);
 
-            // TODO: check that what is being added to vector is as expected
-            // if none of exprs are matching, then add to list
             if !self.uses.iter().any(|e| spanless_eq.eq_expr(e, expr)) {
                 // println!("Expression pushed: {:?}", expr);
                 self.uses.push(expr);
@@ -122,21 +118,20 @@ fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>, account_exp
     }
 }
 
-// #[test]
-// fn insecure() {
-//     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
-// }
+#[test]
+fn insecure() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
+}
 
-// // #[test]
-// // fn recommended() {
-// //     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
-// // }
+#[test]
+fn recommended() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
+}
 
-// #[test]
-// fn secure() {
-//     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
-// }
-// expect one expression to be in array
+#[test]
+fn secure() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
+}
 
 #[test]
 fn fixed_secure() {

@@ -7,7 +7,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod type_cosplay_secure {
     use super::*;
 
-    pub fn update_user(ctx: Context<UpdateUser>) -> ProgramResult {
+    pub fn update_user(ctx: Context<UpdateUser>) -> anchor_lang::solana_program::entrypoint::ProgramResult {
         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
         if ctx.accounts.user.owner != ctx.program_id {
             return Err(ProgramError::IllegalOwner);
@@ -46,3 +46,5 @@ pub enum AccountDiscriminant {
     User,
     Metadata,
 }
+
+fn main() {}
