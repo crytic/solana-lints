@@ -1,14 +1,10 @@
-error: this function doesn't use the owner field
-  --> $DIR/lib.rs:14:5
+error: this Account struct is used but there is no check on its owner field
+  --> $DIR/lib.rs:15:46
    |
-LL | /     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
-LL | |         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
-LL | |         msg!("Your account balance is: {}", token.amount);
-LL | |         Ok(())
-LL | |     }
-   | |_____^
+LL |         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
+   |                                              ^^^^^^^^^^^^^^^^^^
    |
-   = note: `-D invalid-account-data` implied by `-D warnings`
+   = note: `-D missing-owner-check` implied by `-D warnings`
 
 error: aborting due to previous error
 

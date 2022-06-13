@@ -5,11 +5,11 @@ use anchor_spl::token::TokenAccount;
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
-pub mod account_data_matching_recommended {
+pub mod owner_checks_recommended {
     use super::*;
 
     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
-        msg!("Your acocunt balance is: {}", ctx.accounts.token.amount);
+        msg!("Your account balance is: {}", ctx.accounts.token.amount);
         Ok(())
     }
 }

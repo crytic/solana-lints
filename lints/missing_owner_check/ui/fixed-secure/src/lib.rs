@@ -13,7 +13,7 @@ pub mod account_data_matching_secure {
 
     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
-        let dummy = &ctx.accounts.token;
+        let _dummy = &ctx.accounts.token;
         if ctx.accounts.authority.key != ctx.accounts.token.owner {
             return Err(ProgramError::InvalidAccountData);
         }

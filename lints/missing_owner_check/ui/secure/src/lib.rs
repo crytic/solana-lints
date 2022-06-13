@@ -4,15 +4,18 @@ use anchor_lang::solana_program::{
   entrypoint::ProgramResult,
 };
 use spl_token::state::Account as SplTokenAccount;
-
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+use spl_token::ID;
+use anchor_lang::solana_program::program_error::ProgramError;
 
 #[program]
-pub mod account_data_matching_secure {
+pub mod owner_checks_secure {
     use super::*;
 
     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
+        if ctx.accounts.token.owner != &spl_token::ID {
+            return Err(ProgramError::InvalidAccountData);
+        }
         if ctx.accounts.authority.key != &token.owner {
             return Err(ProgramError::InvalidAccountData);
         }
