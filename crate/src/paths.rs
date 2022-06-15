@@ -3,3 +3,4 @@ pub const ANCHOR_LANG_SIGNER: [&str; 4] = ["anchor_lang", "accounts", "signer", 
 
 pub const SOLANA_PROGRAM_ACCOUNT_INFO: [&str; 3] =
     ["solana_program", "account_info", "AccountInfo"];
+pub const ACCOUNT_DISCRIMINANT: [&str; 1] = ["AccountDiscriminant"];
