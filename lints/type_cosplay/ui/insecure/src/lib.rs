@@ -29,6 +29,7 @@ pub struct UpdateUser<'info> {
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct User {
     authority: Pubkey,
+    hehe: u8,
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]
