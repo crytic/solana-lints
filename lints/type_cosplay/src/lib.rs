@@ -164,62 +164,6 @@ fn has_discriminant(cx: &LateContext, adt: &AdtDef) -> bool {
         .any(|field| field.name.as_str() == "discriminant")
 }
 
-/// A vector of StructFieldTypeRepr
-// struct StructFieldTypeReprArray<'hir>(Vec<StructFieldTypeRepr<'hir>>);
-
-// // TODO: can maybe get rid of this and just have it be a raw vector
-// impl<'hir> StructFieldTypeReprArray<'hir> {
-//     pub fn new() -> Self {
-//         StructFieldTypeReprArray(vec![])
-//     }
-
-//     // returns true if all fields are the same type and same order
-//     pub fn has_match(&self, cx: &LateContext, other: &StructFieldTypeRepr) -> bool {
-//         // any -- if any two structs are equal, return true immediately; if NO structs match, then return false
-//         self.0.iter().any(|item| {
-//             if item.eq(other) {
-//                 println!("{:#?}\n, {:#?}", item, other);
-//                 return true;
-//             } else {
-//                 // println!("structs not equal: {:?} {:?}", item.0[0].hir_id.owner, other.0[0].hir_id.owner);
-//                 return false;
-//             }
-//         })
-//     }
-// }
-
-// /// A representation of a struct as a vector of its field types
-// struct StructFieldTypeRepr<'hir>(Vec<&'hir MiddleTy<'hir>>);
-
-// impl<'hir> StructFieldTypeRepr<'hir> {
-//     // later add check: && !match_type(cx, x, &paths::ACCOUNT_DISCRIMINANT)
-//     pub fn eq(&self, other: &StructFieldTypeRepr) -> bool {
-//         // all -- if all fields are equal, returns true; as soon as unequal fields
-//         // are found, returns false immediately
-//         self.0.len() == other.0.len()
-//             && self.0.iter().zip(other.0.iter()).all(|(x, y)| {
-//                 // if eq_ty(x, y) {
-//                 //     println!("{:#?} and {:#?} are equal types", x, y);
-//                 return true;
-//                 // } else {
-//                 //     return false;
-//                 // }
-//             })
-//     }
-
-//     // pub fn from_field_defs(field_defs: &'hir [FieldDef<'hir>]) -> StructFieldTypeRepr {
-//     //     StructFieldTypeRepr(field_defs.iter().map(|def| {
-
-//     //     }).collect())
-//     // }
-// }
-
-// impl<'hir> Debug for StructFieldTypeRepr<'hir> {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-//         f.debug_tuple("StructFieldTypeRepr").field(&self.0).finish()
-//     }
-// }
-
 #[test]
 fn insecure() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
