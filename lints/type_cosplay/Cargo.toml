@@ -21,6 +21,10 @@ path = "ui/recommended/src/lib.rs"
 name = "secure"
 path = "ui/secure/src/lib.rs"
 
+[[example]]
+name = "types"
+path = "ui/types/src/lib.rs"
+
 [dependencies]
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "b312ad7d0cf0f30be2bd4658b71a3520a2e76709" }
 dylint_linting = "2.0.1"

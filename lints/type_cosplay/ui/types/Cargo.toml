@@ -1,0 +1,16 @@
+[package]
+name = "types"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "types"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]

@@ -62,7 +62,6 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                 if let ItemKind::Struct(variant_data, _) = &item.kind {
                     let adt_def = cx.tcx.adt_def(item.def_id);
 
-                    // TODO: can make if/else just one line later
 					let mut other_item = None;
                     let has_eq_types = struct_items.iter().any(|other| {
                         if eq_ty_recur(cx, &adt_def, &cx.tcx.adt_def(other.def_id))
@@ -177,4 +176,9 @@ fn recommended() {
 #[test]
 fn secure() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
+}
+
+#[test]
+fn types() {
+	dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "types");
 }

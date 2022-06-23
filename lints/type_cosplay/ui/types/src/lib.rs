@@ -6,6 +6,7 @@
 // unequal structs, with struct fields
 // unequal structs, with enum fields
 
+// LINT IS FLAGGED -------------------------------------------------
 pub struct EqNoADT1 {
     authority: u8,
     field2: [u8; 32],
@@ -93,3 +94,5 @@ pub struct UnEqStructField2 {
     z: UnEqNoADT2,
     y: u8,
 }
+
+fn main() {}
