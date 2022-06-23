@@ -35,11 +35,11 @@ pub struct EqWithStructField2 {
 // NOTE: current impl doesn't support this
 pub struct Pubkey([u8; 32]);
 pub struct EqWithStructField3 {
-    y: u8,
+    y: (u16, u16),
     z: [u8; 32]
 }
 pub struct EqWithStructField4 {
-    x: u8,
+    x: (u16, u16),
     y: Pubkey
 }
 
@@ -93,6 +93,20 @@ pub struct UnEqStructField1 {
 pub struct UnEqStructField2 {
     z: UnEqNoADT2,
     y: u8,
+}
+
+// Unequal because sub-enums are different
+pub enum DiffEnum {
+    Different,
+}
+pub struct UnEqEnumField1 {
+    x: Enumy,
+    y: u8,
+}
+
+pub struct UnEqEnumField2 {
+    x: DiffEnum,
+    y:u8,
 }
 
 fn main() {}

@@ -68,7 +68,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                             && !has_discriminant(cx, &adt_def)
                         {
 							other_item = Some(other.span); // save span for lint message
-                            println!("Equal and no discrim: {:?} and {:?}", adt_def, other);
+                            // println!("Equal and no discrim: {:?} and {:?}", adt_def, other);
                             return true;
                         } else {
                             return false;
@@ -85,7 +85,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
 							"consider adding a discriminant field");
                     	// should we also push in this case?
                     } else {
-                        println!("Pushing struct: {:?}", adt_def);
+                        // println!("Pushing struct: {:?}", adt_def);
                         struct_items.push(item);
                     }
                 }
@@ -137,6 +137,7 @@ fn eq_field(cx: &LateContext, left: &FieldDef, right: &FieldDef) -> bool {
                 if adt_def.variants().len() == 1;
                 let variant = adt_def.variants().get(Idx::new(0)).unwrap();
                 // check that the 1 variant is a tuple struct, ie, has 1 field
+				// NOTE: may not be correct, ie for tuples
                 if variant.fields.len() == 1;
                 let field = &variant.fields[0];
                 if cx.tcx.type_of(field.did).kind() == other;

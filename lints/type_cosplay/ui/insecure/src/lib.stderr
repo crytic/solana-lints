@@ -1,0 +1,19 @@
+error: equivalent struct types that when deserialized will be indistinguishable
+  --> $DIR/lib.rs:37:1
+   |
+LL | / pub struct Metadata {
+LL | |     account: Pubkey,
+LL | | }
+   | |_^
+   |
+   = note: `-D type-cosplay` implied by `-D warnings`
+note: consider adding a discriminant field
+  --> $DIR/lib.rs:32:1
+   |
+LL | / pub struct User {
+LL | |     authority: Pubkey,
+LL | | }
+   | |_^
+
+error: aborting due to previous error
+
