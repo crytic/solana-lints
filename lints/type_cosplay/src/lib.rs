@@ -1,5 +1,6 @@
 #![feature(rustc_private)]
 #![warn(unused_extern_crates)]
+#![recursion_limit = "256"]
 
 extern crate rustc_hir;
 extern crate rustc_index;
@@ -11,6 +12,7 @@ use std::fmt::{Debug, Formatter, Result};
 
 use clippy_utils::{diagnostics::span_lint_and_note, match_def_path, ty::match_type, SpanlessEq};
 use rustc_hir::{def::Res, Expr, ExprKind, HirId, Item, ItemKind, Mod, Path, QPath, Ty, TyKind};
+use rustc_index::vec::Idx;
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::subst::GenericArg;
 use rustc_middle::ty::List;
@@ -45,6 +47,7 @@ dylint_linting::declare_late_lint! {
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) {
         let mut enum_type = None;
+        let mut num_struct_types = 0;
         if_chain! {
             if !expr.span.from_expansion();
             if let ExprKind::Call(fnc_expr, args_exprs) = expr.kind;
@@ -58,24 +61,27 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             let res = cx.typeck_results().qpath_res(ty_qpath, ty.hir_id);
             if let Res::Def(_, def_id) = res;
             let middle_ty = cx.tcx.type_of(def_id);
-            if middle_ty.is_enum();
             then {
-                enum_type = match enum_type {
-                    Some(t) => {
-                        if !(t == middle_ty) {
-                            // span_lint -- warning, multiple enum types detected. Should only have 1 enum
-                            // type to avoid possible equivalent types
+                if middle_ty.is_enum() {
+                    enum_type = match enum_type {
+                        Some(t) => {
+                            if t != middle_ty {
+                                // span_lint -- warning, multiple enum types detected. Should only have 1 enum
+                                // type to avoid possible equivalent types
+                            }
+                            Some(t)
+                        }
+                        None => Some(middle_ty)
+                    }
+                } else {
+                    if_chain! {
+                        if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind();
+                        // num_struct_types += 1;
+                        if !has_discriminant(cx, &adt_def, num_struct_types);
+                        then {
+                            // span_lint
                         }
                     }
-                    None => Some(middle_ty)
-                }
-            } else {
-                if_chain! {
-                	if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind();
-                	if !has_discriminant(adt_def);
-                	then {
-                		// span lint
-                	}
                 }
             }
         }
@@ -109,8 +115,26 @@ fn contains_data_field_reference(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool 
     }
 }
 
-fn has_discriminant(adt_def: &AdtDef) -> bool {
-    
+fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize) -> bool {
+    // check if it is an enum with #variants >= #equivalent struct types in code
+    let variant = adt.variants().get(Idx::new(0)).unwrap();
+
+	variant
+		.fields
+		.iter()
+		.any(|field| {
+			let ty = cx.tcx.type_of(field.did);
+			if_chain! {
+				if let MiddleTyKind::Adt(adt_def, _) = ty.kind();
+				if adt_def.is_enum();
+				if adt_def.variants().len() >= num_struct_types;
+				then {
+					true
+				} else {
+					false
+				}
+			}
+		})
 }
 
 #[test]
