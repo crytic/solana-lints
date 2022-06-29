@@ -10,13 +10,13 @@ extern crate rustc_typeck;
 
 use std::fmt::{Debug, Formatter, Result};
 
-use clippy_utils::{diagnostics::span_lint_and_note, match_def_path, ty::match_type, SpanlessEq};
+use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::match_type, SpanlessEq};
 use rustc_hir::{def::Res, Expr, ExprKind, HirId, Item, ItemKind, Mod, Path, QPath, Ty, TyKind};
 use rustc_index::vec::Idx;
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::subst::GenericArg;
 use rustc_middle::ty::List;
-use rustc_middle::ty::{AdtDef, FieldDef, Ty as MiddleTy, VariantDef, TyKind as MiddleTyKind};
+use rustc_middle::ty::{AdtDef, FieldDef, Ty as MiddleTy, TyKind as MiddleTyKind, VariantDef};
 use rustc_span::Symbol;
 use solana_lints::{paths, utils::visit_expr_no_bodies};
 
@@ -53,33 +53,52 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             if let ExprKind::Call(fnc_expr, args_exprs) = expr.kind;
             if is_deserialize_function(cx, fnc_expr);
             // walk each argument expression and see if the data field is referenced
-            if args_exprs.iter().any(|arg| visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr)));
+            if args_exprs
+                .iter()
+                .any(|arg| visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr)));
             // Checking the type that the deser function was called on is an enum
             if let ExprKind::Path(qpath) = &fnc_expr.kind;
             if let QPath::TypeRelative(ty, _) = qpath;
             if let TyKind::Path(ty_qpath) = &ty.kind;
             let res = cx.typeck_results().qpath_res(ty_qpath, ty.hir_id);
             if let Res::Def(_, def_id) = res;
-            let middle_ty = cx.tcx.type_of(def_id);
             then {
+                let middle_ty = cx.tcx.type_of(def_id);
                 if middle_ty.is_enum() {
                     enum_type = match enum_type {
                         Some(t) => {
                             if t != middle_ty {
-                                // span_lint -- warning, multiple enum types detected. Should only have 1 enum
-                                // type to avoid possible equivalent types
+                                // TODO: check spans are correct
+                                span_lint_and_help(
+                                    cx,
+                                    TYPE_COSPLAY,
+                                    expr.span,
+                                    "warning: multiple enum types detected.
+                                    Should only have 1 enum type to avoid possible equivalent types",
+                                    Some(ty.span),
+                                    "help: consider constructing a single enum that
+                                    contains all type definitions as variants"
+                                )
                             }
                             Some(t)
                         }
                         None => Some(middle_ty)
                     }
                 } else {
-                    if_chain! {
-                        if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind();
-                        // num_struct_types += 1;
-                        if !has_discriminant(cx, &adt_def, num_struct_types);
-                        then {
-                            // span_lint
+                    if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind() {
+                        num_struct_types += 1;
+                        if !has_discriminant(cx, &adt_def, num_struct_types) {
+                            // TODO: check spans are correct
+                            span_lint_and_help(
+                                cx,
+                                TYPE_COSPLAY,
+                                ty.span,
+                                "warning: type definition does not have a proper discriminant.
+                                Types may be indistinguishable when deserialized",
+                                None,
+                                "help: add an enum with at least as many variants
+                                as there are struct definitions"
+                            )
                         }
                     }
                 }
@@ -119,22 +138,19 @@ fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize) -> 
     // check if it is an enum with #variants >= #equivalent struct types in code
     let variant = adt.variants().get(Idx::new(0)).unwrap();
 
-	variant
-		.fields
-		.iter()
-		.any(|field| {
-			let ty = cx.tcx.type_of(field.did);
-			if_chain! {
-				if let MiddleTyKind::Adt(adt_def, _) = ty.kind();
-				if adt_def.is_enum();
-				if adt_def.variants().len() >= num_struct_types;
-				then {
-					true
-				} else {
-					false
-				}
-			}
-		})
+    variant.fields.iter().any(|field| {
+        let ty = cx.tcx.type_of(field.did);
+        if_chain! {
+            if let MiddleTyKind::Adt(adt_def, _) = ty.kind();
+            if adt_def.is_enum();
+            if adt_def.variants().len() >= num_struct_types;
+            then {
+                true
+            } else {
+                false
+            }
+        }
+    })
 }
 
 #[test]
