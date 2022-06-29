@@ -1,10 +1,12 @@
 [package]
-name = "types"
+name = "type-cosplay-insecure-two"
+version = "0.1.0"
+description = "Deserializing from multiple enum types"
 edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "types"
+name = "type_cosplay_insecure"
 
 [features]
 no-entrypoint = []
@@ -14,3 +16,4 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
+anchor-lang = "0.24.2"

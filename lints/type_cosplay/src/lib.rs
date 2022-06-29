@@ -38,9 +38,11 @@ dylint_linting::declare_late_lint! {
 
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) {
+        // TODO: the following vars are not global, since this is check_expr. Fix!
         let mut enum_type = None;
         let mut num_struct_types = 0;
         if_chain! {
+            let _ = println!("{:?}", enum_type);
             if !expr.span.from_expansion();
             if let ExprKind::Call(fnc_expr, args_exprs) = expr.kind;
             if is_deserialize_function(cx, fnc_expr);
@@ -157,6 +159,6 @@ fn secure() {
 }
 
 #[test]
-fn types() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "types");
+fn insecure_two() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-two");
 }

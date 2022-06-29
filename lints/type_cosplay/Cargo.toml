@@ -14,16 +14,20 @@ name = "insecure"
 path = "ui/insecure/src/lib.rs"
 
 [[example]]
+name = "insecure-two"
+path = "ui/insecure-two/src/lib.rs"
+
+[[example]]
+name = "insecure-three"
+path = "ui/insecure-three/src/lib.rs"
+
+[[example]]
 name = "recommended"
 path = "ui/recommended/src/lib.rs"
 
 [[example]]
 name = "secure"
 path = "ui/secure/src/lib.rs"
-
-[[example]]
-name = "types"
-path = "ui/types/src/lib.rs"
 
 [dependencies]
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "b312ad7d0cf0f30be2bd4658b71a3520a2e76709" }
