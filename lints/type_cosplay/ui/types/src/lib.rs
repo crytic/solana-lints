@@ -14,7 +14,7 @@ pub struct EqNoADT1 {
 
 pub struct EqNoADT2 {
     field: u8,
-    x: [u8; 32]
+    x: [u8; 32],
 }
 
 // Even though the two structs have y with a different type, the type
@@ -36,11 +36,11 @@ pub struct EqWithStructField2 {
 pub struct Pubkey([u8; 32]);
 pub struct EqWithStructField3 {
     y: (u16, u16),
-    z: [u8; 32]
+    z: [u8; 32],
 }
 pub struct EqWithStructField4 {
     x: (u16, u16),
-    y: Pubkey
+    y: Pubkey,
 }
 
 pub struct Rgb(u32, u32, u32);
@@ -66,12 +66,12 @@ pub enum Enumy {
 
 pub struct EqWithEnumField1 {
     x: Vec<u8>,
-    y: Listy
+    y: Listy,
 }
 
 pub struct EqWithEnumField2 {
     x: Vec<u8>,
-    y: Enumy
+    y: Enumy,
 }
 
 // The following types are unequal
@@ -106,7 +106,7 @@ pub struct UnEqEnumField1 {
 
 pub struct UnEqEnumField2 {
     x: DiffEnum,
-    y:u8,
+    y: u8,
 }
 
 fn main() {}
