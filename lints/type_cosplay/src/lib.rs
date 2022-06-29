@@ -5,23 +5,15 @@
 extern crate rustc_hir;
 extern crate rustc_index;
 extern crate rustc_middle;
-extern crate rustc_span;
-extern crate rustc_typeck;
 
-use std::fmt::{Debug, Formatter, Result};
-
-use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::match_type, SpanlessEq};
-use rustc_hir::{def::Res, Expr, ExprKind, HirId, Item, ItemKind, Mod, Path, QPath, Ty, TyKind};
+use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::match_type};
+use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
 use rustc_index::vec::Idx;
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::ty::subst::GenericArg;
-use rustc_middle::ty::List;
-use rustc_middle::ty::{AdtDef, FieldDef, Ty as MiddleTy, TyKind as MiddleTyKind, VariantDef};
-use rustc_span::Symbol;
+use rustc_middle::ty::{AdtDef, TyKind as MiddleTyKind};
 use solana_lints::{paths, utils::visit_expr_no_bodies};
 
 use if_chain::if_chain;
-use rustc_span::Span;
 
 dylint_linting::declare_late_lint! {
     /// **What it does:**
@@ -73,11 +65,9 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                                     cx,
                                     TYPE_COSPLAY,
                                     expr.span,
-                                    "warning: multiple enum types detected.
-                                    Should only have 1 enum type to avoid possible equivalent types",
+                                    "warning: multiple enum types detected. Should only have 1 enum type to avoid possible equivalent types",
                                     Some(ty.span),
-                                    "help: consider constructing a single enum that
-                                    contains all type definitions as variants"
+                                    "help: consider constructing a single enum that contains all type definitions as variants"
                                 )
                             }
                             Some(t)
@@ -93,11 +83,9 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                                 cx,
                                 TYPE_COSPLAY,
                                 ty.span,
-                                "warning: type definition does not have a proper discriminant.
-                                Types may be indistinguishable when deserialized",
+                                "warning: type definition does not have a proper discriminant. Types may be indistinguishable when deserialized",
                                 None,
-                                "help: add an enum with at least as many variants
-                                as there are struct definitions"
+                                "help: add an enum with at least as many variants as there are struct definitions"
                             )
                         }
                     }
