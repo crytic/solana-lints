@@ -5,13 +5,17 @@
 extern crate rustc_hir;
 extern crate rustc_index;
 extern crate rustc_middle;
+extern crate rustc_span;
 
 use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::match_type};
-use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
+use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind, Mod, HirId};
+use rustc_hir::*;
+use rustc_span::Span;
 use rustc_index::vec::Idx;
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::{AdtDef, TyKind as MiddleTyKind};
 use solana_lints::{paths, utils::visit_expr_no_bodies};
+use rustc_hir::intravisit::Visitor;
 
 use if_chain::if_chain;
 
@@ -36,35 +40,76 @@ dylint_linting::declare_late_lint! {
     "type is equivalent to another type"
 }
 
+// TODO:
+// fix global state issue -- implement check mod
+// change logic to use containers
+
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
-    fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) {
-        // TODO: the following vars are not global, since this is check_expr. Fix!
-        let mut enum_type = None;
+    // check mod can check the entire program. if we are writing this lint for only anchor programs,
+    // we can filter to find the main #program mod. I think there is only 1 mod, but not sure.
+    // fn check_mod(
+    //     &mut self,
+    //     cx: &LateContext<'tcx>,
+    //     module: &'tcx Mod<'tcx>,
+    //     span: Span,
+    //     hir_id: HirId
+    // ) {
+    //     let mut enum_type: Option<MiddleTyKind> = None;
+    //     let mut num_struct_types = 0;
+
+    //     if !span.from_expansion() {
+    //         module.item_ids.iter().for_each(|id| {
+    //             let item = cx.tcx.hir().item(*id);
+
+    //         })
+    //         println!("{:#?}", module);
+    //     }
+    // }
+
+    fn check_body(&mut self, cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) {
+        let mut enum_type: Option<MiddleTyKind> = None;
         let mut num_struct_types = 0;
+
+        let visitor = V {
+            cx,
+        };
+
+        visitor.visit_expr(body.value);
+        // println!("{:#?}", body.value.span);
+        
+    }
+}
+
+struct V<'cx> {
+    cx: &'cx LateContext<'cx>
+}
+
+impl<'cx, 'tcx> Visitor<'tcx> for V<'cx> {
+    fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
+        // all the logic previously in check_expr()
         if_chain! {
-            let _ = println!("{:?}", enum_type);
             if !expr.span.from_expansion();
             if let ExprKind::Call(fnc_expr, args_exprs) = expr.kind;
-            if is_deserialize_function(cx, fnc_expr);
+            if is_deserialize_function(self.cx, fnc_expr);
             // walk each argument expression and see if the data field is referenced
             if args_exprs
                 .iter()
-                .any(|arg| visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr)));
+                .any(|arg| visit_expr_no_bodies(arg, |expr| contains_data_field_reference(self.cx, expr)));
             // Checking the type that the deser function was called on is an enum
             if let ExprKind::Path(qpath) = &fnc_expr.kind;
             if let QPath::TypeRelative(ty, _) = qpath;
             if let TyKind::Path(ty_qpath) = &ty.kind;
-            let res = cx.typeck_results().qpath_res(ty_qpath, ty.hir_id);
+            let res = self.cx.typeck_results().qpath_res(ty_qpath, ty.hir_id);
             if let Res::Def(_, def_id) = res;
             then {
-                let middle_ty = cx.tcx.type_of(def_id);
+                let middle_ty = self.cx.tcx.type_of(def_id);
                 if middle_ty.is_enum() {
                     enum_type = match enum_type {
                         Some(t) => {
                             if t != middle_ty {
                                 // TODO: check spans are correct
                                 span_lint_and_help(
-                                    cx,
+                                    self.cx,
                                     TYPE_COSPLAY,
                                     expr.span,
                                     "warning: multiple enum types detected. Should only have 1 enum type to avoid possible equivalent types",
@@ -79,10 +124,10 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                 } else {
                     if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind() {
                         num_struct_types += 1;
-                        if !has_discriminant(cx, &adt_def, num_struct_types) {
+                        if !has_discriminant(self.cx, &adt_def, num_struct_types) {
                             // TODO: check spans are correct
                             span_lint_and_help(
-                                cx,
+                                self.cx,
                                 TYPE_COSPLAY,
                                 ty.span,
                                 "warning: type definition does not have a proper discriminant. Types may be indistinguishable when deserialized",
@@ -94,6 +139,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                 }
             }
         }
+        self.walk_expr(expr);
     }
 }
 

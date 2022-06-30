@@ -1,0 +1,21 @@
+[package]
+name = "insecure-three"
+version = "0.1.0"
+description = "Structs with an account discriminant, but one without enough variants"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "type_cosplay_insecure"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.24.2"
