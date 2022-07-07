@@ -48,8 +48,8 @@ struct TypeCosplay {
     deser_types: HashMap<AdtKind, Vec<(DefId, Span)>>,
 }
 
-// Returns true if `map` contains a single key-value pair, and the value contains
-// only a single element.
+// Returns the item if `map` contains a single key-value pair, and the value contains
+// only a single element. If `map` contains multiple elements, return none.
 fn contains_single_deserialized_type(map: &HashMap<AdtKind, Vec<(DefId, Span)>>) -> Option<(DefId, Span)> {
     match map.len() {
         1 => {
@@ -85,10 +85,11 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                 let middle_ty = cx.tcx.type_of(def_id);
                 if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind() {
                     let adt_kind = adt_def.adt_kind();
+                    let def_id = adt_def.did();
                     if let Some(vec) = self.deser_types.get_mut(&adt_kind) {
-                        vec.push((adt_def.did(), ty.span));
+                        vec.push((def_id, ty.span));
                     } else {
-                        self.deser_types.insert(adt_kind, vec![(adt_def.did(), ty.span)]);
+                        self.deser_types.insert(adt_kind, vec![(def_id, ty.span)]);
                     }
                 }
             }
@@ -96,7 +97,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
     }
 
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
-        // if the map contains a single deserialized type
+        // map contains a single deserialized type
         if let Some((def_id, _)) = contains_single_deserialized_type(&self.deser_types) {
             let adt_def = cx.tcx.adt_def(def_id);
             if !adt_def.is_enum() {

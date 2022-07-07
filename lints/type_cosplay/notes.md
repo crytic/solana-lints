@@ -39,4 +39,17 @@ Two circumstances avoid the type cosplay attack.
 // 1. All structs are variants of a single enum type--an enum effectively has a
 // built in discriminator because each enum variant is defined to be unique. Thus, if all
 // struct types in the code are defined as a variant under a single enum, then each type
-// can be distinguished. 
+// can be distinguished.
+
+# Test Cases
+Whenever we refer to a type, we refer to whether it was deserialized in the program, not
+to the type definition.
+- single deserialized type; is enum => SECURE
+- single deserialized type; is not enum; has discriminant => SECURE
+- single deserialized type; is not enum; no discriminant => INSECURE (current sealevel example)
+NOTE: do we really need to check if one is an enum? 
+- multiple deserialized types; one is enum; all structs have discriminant => SECURE
+- multiple deserialized types; one is enum; some struct doesn't have discriminant => INSECURE
+- multiple deserialized types; multiple enums => INSECURE (multiple enums)
+- multiple deserialized types; no enums; all structs have discriminant => SECURE
+- multiple deserialized types; no enums; some struct doesn't have discriminant => INSECURE
