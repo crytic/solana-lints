@@ -1,6 +1,5 @@
 #![feature(rustc_private)]
 #![warn(unused_extern_crates)]
-#![recursion_limit = "256"]
 
 extern crate rustc_hir;
 extern crate rustc_index;
@@ -11,10 +10,10 @@ use std::collections::HashMap;
 
 use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::match_type};
 use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
-use rustc_span::{Span, def_id::DefId};
 use rustc_index::vec::Idx;
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::ty::{AdtDef, TyKind as MiddleTyKind, AdtKind};
+use rustc_middle::ty::{AdtDef, AdtKind, TyKind as MiddleTyKind};
+use rustc_span::{def_id::DefId, Span};
 use solana_lints::{paths, utils::visit_expr_no_bodies};
 
 use if_chain::if_chain;
@@ -24,7 +23,7 @@ dylint_linting::impl_late_lint! {
     ///
     /// **Why is this bad?**
     ///
-    /// **Known problems:** None.
+    /// **Known problems:** When only one enum is serialized, may miss certain edge cases.
     ///
     /// **Example:**
     ///
@@ -46,22 +45,6 @@ struct TypeCosplay {
     deser_types: HashMap<AdtKind, Vec<(DefId, Span)>>,
 }
 
-// Returns the item if `map` contains a single key-value pair, and the value contains
-// only a single element. If `map` contains multiple elements, return none.
-fn contains_single_deserialized_type(map: &HashMap<AdtKind, Vec<(DefId, Span)>>) -> Option<(DefId, Span)> {
-    match map.len() {
-        1 => {
-            // if there is only 1 k-v pair, then there will only be a single value
-            let value = map.values().next().unwrap();
-            match value.len() {
-                1 => Some(value[0]),
-                _ => None,
-            }
-        },
-        _ => None,
-    }
-}
-
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) {
         if_chain! {
@@ -79,7 +62,6 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             let res = cx.typeck_results().qpath_res(ty_qpath, ty.hir_id);
             if let Res::Def(_, def_id) = res;
             then {
-                // insert type into hashmap
                 let middle_ty = cx.tcx.type_of(def_id);
                 if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind() {
                     let adt_kind = adt_def.adt_kind();
@@ -94,35 +76,23 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
         }
     }
 
-    // TODO: clean up the logic here
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
-        // map contains a single deserialized type
-        if let Some((def_id, _)) = contains_single_deserialized_type(&self.deser_types) {
-            let adt_def = cx.tcx.adt_def(def_id);
-            if !adt_def.is_enum() {
-                check_structs_have_discriminant(cx, &self.deser_types);
+        if self.deser_types.len() == 1 {
+            let (k, v) = self.deser_types.iter().next().unwrap();
+            match k {
+                AdtKind::Enum => check_enums(cx, v),
+                _ => check_structs_have_discriminant(cx, v), // NOTE: also catches unions
             }
         } else {
-            // check if an enum type was deserialized
-            if let Some(enums) = self.deser_types.get(&AdtKind::Enum) {
-                if enums.len() == 1 {
-                    check_structs_have_discriminant(cx, &self.deser_types);
-                } else {
-                    let first_span = enums[0].1;
-                    let second_span = enums[1].1;
-                    span_lint_and_help(
-                        cx,
-                        TYPE_COSPLAY,
-                        first_span,
-                        "warning: multiple enum types deserialized. Should only have one enum type to avoid possible equivalent types",
-                        Some(second_span),
-                        "help: consider constructing a single enum that contains all type definitions as variants"
-                    )
-                }
-            } else {
-                // no deserialized enum, but multiple deserialized structs. Check each struct for a discriminant
-                check_structs_have_discriminant(cx, &self.deser_types);
-            }
+            // Retrieve spans: iter through map, grab first elem of two different key pairs, then get span
+            // span_lint_and_help(
+            //     cx,
+            //     TYPE_COSPLAY,
+            //     span,
+            //     "Deserializing from multiple ADT types. "
+            //     None,
+            //     "help: deserialize from only structs with a discriminant, or an enum encapsulating all structs."
+            // )
         }
     }
 }
@@ -148,17 +118,35 @@ fn contains_data_field_reference(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool 
     }
 }
 
-// TODO: could be a method
-fn check_structs_have_discriminant(cx: &LateContext<'_>, deser_types: &HashMap<AdtKind, Vec<(DefId, Span)>>) {
-    if let Some(types) = deser_types.get(&AdtKind::Struct) {
-        let num_structs = types.len();
-        types.iter().for_each(|t| has_discriminant(cx, &cx.tcx.adt_def(t.0), num_structs, t.1));
+fn check_enums(cx: &LateContext<'_>, enums: &Vec<(DefId, Span)>) {
+    if enums.len() > 1 {
+        // TODO: can implement loop to print all spans if > 2 enums
+        let first_span = enums[0].1;
+        let second_span = enums[1].1;
+        span_lint_and_help(
+            cx,
+            TYPE_COSPLAY,
+            first_span,
+            "warning: multiple enum types deserialized. Should only have one enum type to avoid possible equivalent types",
+            Some(second_span),
+            "help: consider constructing a single enum that contains all type definitions as variants"
+        )
+    } else if enums.len() == 1 {
+        // future check - check that single enum is safe
+        // check serialization
     }
+}
+
+fn check_structs_have_discriminant(cx: &LateContext<'_>, types: &Vec<(DefId, Span)>) {
+    let num_structs = types.len();
+    types
+        .iter()
+        .for_each(|t| has_discriminant(cx, &cx.tcx.adt_def(t.0), num_structs, t.1));
 }
 
 /// Returns true if the `adt` has a field that is an enum and the number of variants of that enum is at least the number of deserialized struct types collected.
 fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize, span: Span) {
-    // enforce that the first field is the discriminant
+    // TODO: why do we need to enforce that the first field is the discriminant?
     let variant = adt.variants().get(Idx::new(0)).unwrap();
     let has_discriminant = variant.fields.iter().any(|field| {
         let ty = cx.tcx.type_of(field.did);

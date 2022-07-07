@@ -18,10 +18,6 @@ name = "insecure-2"
 path = "ui/insecure/insecure-2/src/lib.rs"
 
 [[example]]
-name = "insecure-three"
-path = "ui/insecure-three/src/lib.rs"
-
-[[example]]
 name = "recommended"
 path = "ui/recommended/src/lib.rs"
 
