@@ -26,7 +26,7 @@ So the strategy we've come up with is first gather all the types that are being 
 Say `n` types are collected. Then one of the following constraints must hold:
 
 1. `n=1`, and the type is an enum.
-2. `1` type is an enum, and `n-1` types are structs AND
+2. All types are structs AND
 each struct has a field that is the enum type found before AND
 the number of variants in the enum must be at least `n-1`.
 
@@ -46,10 +46,10 @@ Whenever we refer to a type, we refer to whether it was deserialized in the prog
 to the type definition.
 - single deserialized type; is enum => SECURE
 - single deserialized type; is not enum; has discriminant => SECURE
-- single deserialized type; is not enum; no discriminant => INSECURE (current sealevel example)
-NOTE: do we really need to check if one is an enum? 
+- single deserialized type; is not enum; no discriminant => INSECURE (insecure-1)
+NOTE: do we really need to check if one is an enum?
 - multiple deserialized types; one is enum; all structs have discriminant => SECURE
 - multiple deserialized types; one is enum; some struct doesn't have discriminant => INSECURE
-- multiple deserialized types; multiple enums => INSECURE (multiple enums)
+- multiple deserialized types; multiple enums => INSECURE (insecure-2)
 - multiple deserialized types; no enums; all structs have discriminant => SECURE
 - multiple deserialized types; no enums; some struct doesn't have discriminant => INSECURE

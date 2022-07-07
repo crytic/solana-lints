@@ -10,14 +10,12 @@ extern crate rustc_span;
 use std::collections::HashMap;
 
 use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::match_type};
-use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind, Mod, HirId, intravisit::{walk_item, walk_expr}};
-use rustc_hir::*;
+use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
 use rustc_span::{Span, def_id::DefId};
 use rustc_index::vec::Idx;
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::ty::{AdtDef, TyKind as MiddleTyKind, Ty as MiddleTy, AdtKind};
+use rustc_middle::ty::{AdtDef, TyKind as MiddleTyKind, AdtKind};
 use solana_lints::{paths, utils::visit_expr_no_bodies};
-use rustc_hir::intravisit::Visitor;
 
 use if_chain::if_chain;
 
@@ -96,6 +94,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
         }
     }
 
+    // TODO: clean up the logic here
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
         // map contains a single deserialized type
         if let Some((def_id, _)) = contains_single_deserialized_type(&self.deser_types) {
@@ -129,15 +128,9 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
 }
 
 fn is_deserialize_function(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool {
-    if_chain! {
-        if let Some(def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id);
-        // for now, only testing borsh deserialize function
-        if match_def_path(cx, def_id, &paths::BORSH_TRY_FROM_SLICE);
-        then {
-            return true;
-        } else {
-            return false;
-        }
+    match cx.typeck_results().type_dependent_def_id(expr.hir_id) {
+        Some(def_id) => match_def_path(cx, def_id, &paths::BORSH_TRY_FROM_SLICE),
+        None => false,
     }
 }
 
@@ -165,6 +158,7 @@ fn check_structs_have_discriminant(cx: &LateContext<'_>, deser_types: &HashMap<A
 
 /// Returns true if the `adt` has a field that is an enum and the number of variants of that enum is at least the number of deserialized struct types collected.
 fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize, span: Span) {
+    // enforce that the first field is the discriminant
     let variant = adt.variants().get(Idx::new(0)).unwrap();
     let has_discriminant = variant.fields.iter().any(|field| {
         let ty = cx.tcx.type_of(field.did);
@@ -185,7 +179,7 @@ fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize, spa
             cx,
             TYPE_COSPLAY,
             span,
-            "warning: type does not have a proper discriminant. It may be indistinguishable when deserialized",
+            "warning: type does not have a proper discriminant. It may be indistinguishable when deserialized.",
             None,
             "help: add an enum with at least as many variants as there are struct definitions"
         )
@@ -193,8 +187,13 @@ fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize, spa
 }
 
 #[test]
-fn insecure() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
+fn insecure_1() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-1");
+}
+
+#[test]
+fn insecure_2() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-2");
 }
 
 #[test]
@@ -205,9 +204,4 @@ fn recommended() {
 #[test]
 fn secure() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
-}
-
-#[test]
-fn insecure_two() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-two");
 }

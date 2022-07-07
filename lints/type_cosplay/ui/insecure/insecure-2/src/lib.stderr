@@ -1,0 +1,15 @@
+error: warning: multiple enum types deserialized. Should only have one enum type to avoid possible equivalent types
+  --> $DIR/lib.rs:27:20
+   |
+LL |         let user = UserInfo::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
+   |                    ^^^^^^^^
+   |
+   = note: `-D type-cosplay` implied by `-D warnings`
+help: help: consider constructing a single enum that contains all type definitions as variants
+  --> $DIR/lib.rs:41:24
+   |
+LL |         let metadata = MetadataInfo::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
+   |                        ^^^^^^^^^^^^
+
+error: aborting due to previous error
+

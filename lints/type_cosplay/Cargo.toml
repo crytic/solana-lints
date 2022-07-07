@@ -10,12 +10,12 @@ publish = false
 crate-type = ["cdylib"]
 
 [[example]]
-name = "insecure"
-path = "ui/insecure/src/lib.rs"
+name = "insecure-1"
+path = "ui/insecure/insecure-1/src/lib.rs"
 
 [[example]]
-name = "insecure-two"
-path = "ui/insecure-two/src/lib.rs"
+name = "insecure-2"
+path = "ui/insecure/insecure-2/src/lib.rs"
 
 [[example]]
 name = "insecure-three"

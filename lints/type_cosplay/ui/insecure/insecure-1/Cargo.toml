@@ -1,7 +1,7 @@
 [package]
 name = "type-cosplay-insecure"
 version = "0.1.0"
-description = "Created with Anchor"
+description = "single deserialized type; is not enum; no discriminant"
 edition = "2018"
 
 [lib]
