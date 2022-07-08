@@ -1,7 +1,7 @@
 #! /bin/bash
 # Updates `../README.md` and `../lints/*/README.md`.
 
-# NOTE: Before commiting, review your changes!
+# NOTE: Before commiting, review your changes to those READMEs!
 
 # set -x
 set -euo pipefail
@@ -11,7 +11,10 @@ if [[ $# -ne 0 ]]; then
     exit 1
 fi
 
-cd "$(dirname "$0")"/../lints
+SCRIPTS="$(dirname "$(realpath "$0")")"
+WORKSPACE="$(realpath "$SCRIPTS"/..)"
+
+cd "$WORKSPACE"/lints
 
 TMP="$(mktemp)"
 
@@ -36,6 +39,8 @@ cat > "$TMP"
 
 mv "$TMP" ../README.md
 
+prettier --write ../README.md
+
 for LIBRARY in *; do
     pushd "$LIBRARY" >/dev/null
 
@@ -45,6 +50,8 @@ for LIBRARY in *; do
         cat src/*.rs |
         sed -n 's,^[[:space:]]*///[[:space:]]*\(.*\)$,\1,;T;p'
     ) > README.md
+
+    prettier --write README.md
 
     popd >/dev/null
 done

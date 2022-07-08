@@ -1,4 +1,4 @@
-# missing_signer_check
+# missing_owner_check
 
 **What it does:**
 
@@ -17,3 +17,5 @@ Use instead:
 ```rust
 // example code that does not raise a warning
 ```
+
+Checks if `expr` is an owner field reference on `account_expr`

@@ -4,10 +4,12 @@ Each subdirectory of [`lints`](lints) contains a Solana lint in the form of a [D
 
 The current lints are:
 
-| Library                                                  | Description          |
-| -------------------------------------------------------- | -------------------- |
-| [`insecure_account_close`](lints/insecure_account_close) | decription goes here |
-| [`missing_signer_check`](lints/missing_signer_check)     | decription goes here |
+| Library                                                  | Description                                                                                        |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [`insecure_account_close`](lints/insecure_account_close) | lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/9-closing-accounts     |
+| [`missing_owner_check`](lints/missing_owner_check)       | lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/2-owner-checks         |
+| [`missing_signer_check`](lints/missing_signer_check)     | lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/0-signer-authorization |
+| [`type_cosplay`](lints/type_cosplay)                     | lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/3-type-cosplay         |
 
 Deprecated lints are listed [here](./DEPRECATED.md).
 
