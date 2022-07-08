@@ -20,20 +20,20 @@ We cannot just detect whether two types are the same to flag the lint, as this d
 core issue. The core issue is whether two types deserialize the same or not. Thus we should hunt for
 any two types that deserialize the same. However, this is kinda impossible to do, since it is dependent
 on what data format is being used. Two types that deserialize the same in one data format might not
- in another.
+in another.
 
 So the strategy we've come up with is first gather all the types that are being deserialized in the code.
 Say `n` types are collected. Then one of the following constraints must hold:
 
 1. `n=1`, and the type is an enum.
 2. All types are structs AND
-each struct has a field that is the enum type found before AND
-the number of variants in the enum must be at least `n-1`.
+   each struct has a field that is the enum type found before AND
+   the number of variants in the enum must be at least `n-1`.
 
 These two constraints encode two scenarios where the code will be safe from the type-cosplay issue:
 
 1. If there is only 1 enum being deserialized, then all types will be unique.
-2. 
+2.
 
 Two circumstances avoid the type cosplay attack.
 // 1. All structs are variants of a single enum type--an enum effectively has a
@@ -42,12 +42,14 @@ Two circumstances avoid the type cosplay attack.
 // can be distinguished.
 
 # Test Cases
+
 Whenever we refer to a type, we refer to whether it was deserialized in the program, not
 to the type definition.
+
 - single deserialized type; is enum => SECURE
 - single deserialized type; is not enum; has discriminant => SECURE
 - single deserialized type; is not enum; no discriminant => INSECURE (insecure)
-NOTE: do we really need to check if one is an enum?
+  NOTE: do we really need to check if one is an enum?
 - multiple deserialized types; one is enum; all structs have discriminant => SECURE
 - multiple deserialized types; one is enum; some struct doesn't have discriminant => INSECURE
 - multiple deserialized types; multiple enums => INSECURE (insecure-2)
