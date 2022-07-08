@@ -1,8 +1,8 @@
 [package]
 name = "missing_signer_check"
 version = "0.1.0"
-authors = ["authors go here"]
-description = "decription goes here"
+authors = ["Samuel Moelius <sam.moelius@trailofbits.com>"]
+description = "lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/0-signer-authorization"
 edition = "2018"
 publish = false
 
