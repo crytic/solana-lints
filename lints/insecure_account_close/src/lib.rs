@@ -1,4 +1,3 @@
-#![feature(bool_to_option)]
 #![feature(rustc_private)]
 #![recursion_limit = "256"]
 #![warn(unused_extern_crates)]
@@ -12,10 +11,7 @@ use if_chain::if_chain;
 use rustc_ast::ast::{LitIntType, LitKind};
 use rustc_hir::{BinOpKind, Body, BorrowKind, Expr, ExprKind, LangItem, Mutability, QPath, UnOp};
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::{
-    mir::interpret::ConstValue,
-    ty::{ConstKind, TyKind, UintTy},
-};
+use rustc_middle::ty::{TyKind, UintTy};
 use solana_lints::utils::visit_expr_no_bodies;
 
 dylint_linting::declare_late_lint! {
@@ -80,7 +76,7 @@ fn contains_initial_eight_byte_copy_slice<'tcx>(body: &'tcx Body<'tcx>) -> bool 
     .is_some()
 }
 
-fn is_initial_eight_byte_copy_from_slice<'tcx>(expr: &Expr<'tcx>) -> bool {
+fn is_initial_eight_byte_copy_from_slice(expr: &Expr<'_>) -> bool {
     if_chain! {
         if let ExprKind::MethodCall(method_name, args, _) = expr.kind;
         if method_name.ident.as_str() == "copy_from_slice";
@@ -130,8 +126,7 @@ fn is_eight_byte_array<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool 
     if_chain! {
         if let TyKind::Array(ty, length) = ty.kind();
         if *ty.kind() == TyKind::Uint(UintTy::U8);
-        if let ConstKind::Value(ConstValue::Scalar(length)) = length.val();
-        if let Ok(length) = length.to_machine_usize(&cx.tcx);
+        if let Some(length) = length.try_eval_usize(cx.tcx, cx.param_env);
         if length == 8;
         then {
             true
@@ -145,7 +140,7 @@ fn contains_manual_clear<'tcx>(body: &'tcx Body<'tcx>) -> bool {
     visit_expr_no_bodies(&body.value, |expr| is_manual_clear(expr).then_some(())).is_some()
 }
 
-fn is_manual_clear<'tcx>(expr: &Expr<'tcx>) -> bool {
+fn is_manual_clear(expr: &Expr<'_>) -> bool {
     if_chain! {
         if let Some(higher::ForLoop { body, .. }) = higher::ForLoop::hir(expr);
         if contains_zero_assignment(body);
@@ -158,7 +153,7 @@ fn is_manual_clear<'tcx>(expr: &Expr<'tcx>) -> bool {
 }
 
 fn contains_zero_assignment<'tcx>(expr: &'tcx Expr<'tcx>) -> bool {
-    visit_expr_no_bodies(expr, |expr| is_zero_assignment(expr)).is_some()
+    visit_expr_no_bodies(expr, is_zero_assignment).is_some()
 }
 
 fn is_zero_assignment<'tcx>(expr: &'tcx Expr<'tcx>) -> Option<&'tcx Expr<'tcx>> {

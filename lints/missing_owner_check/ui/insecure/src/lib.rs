@@ -1,8 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{
-  program_pack::Pack,
-  entrypoint::ProgramResult,
-};
+use anchor_lang::solana_program::{entrypoint::ProgramResult, program_pack::Pack};
 use spl_token::state::Account as SplTokenAccount;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");

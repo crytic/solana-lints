@@ -47,17 +47,11 @@ impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
         span: Span,
         hir_id: HirId,
     ) {
-        let local_def_id = cx.tcx.hir().local_def_id(hir_id);
         if_chain! {
             if matches!(fn_kind, FnKind::ItemFn(..));
-            let fn_sig = cx.tcx.fn_sig(local_def_id.to_def_id()).skip_binder();
-            if let Some(ty) = fn_sig
-                .inputs()
-                .iter()
-                .find(|ty| match_type(cx, **ty, &paths::ANCHOR_LANG_CONTEXT));
-            if let ty::Adt(_, substs) = ty.kind();
-            if !substs.iter().any(|arg| contains_signer_field(cx, arg));
-            if !contains_is_signer_use(cx, body);
+            if body_uses_account_info(cx, body);
+            if !context_contains_signer_field(cx, hir_id);
+            if !body_contains_is_signer_use(cx, body);
             then {
                 span_lint(
                     cx,
@@ -70,7 +64,32 @@ impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
     }
 }
 
-fn contains_signer_field<'tcx>(cx: &LateContext<'tcx>, arg: GenericArg<'tcx>) -> bool {
+fn body_uses_account_info<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool {
+    visit_expr_no_bodies(&body.value, |expr| {
+        let ty = cx.typeck_results().expr_ty(expr);
+        match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO)
+    })
+}
+
+fn context_contains_signer_field(cx: &LateContext<'_>, hir_id: HirId) -> bool {
+    let local_def_id = cx.tcx.hir().local_def_id(hir_id);
+    let fn_sig = cx.tcx.fn_sig(local_def_id.to_def_id()).skip_binder();
+    if_chain! {
+        if let Some(ty) = fn_sig
+            .inputs()
+            .iter()
+            .find(|ty| match_type(cx, **ty, &paths::ANCHOR_LANG_CONTEXT));
+        if let ty::Adt(_, substs) = ty.kind();
+        if substs.iter().any(|arg| arg_contains_signer_field(cx, arg));
+        then {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+fn arg_contains_signer_field<'tcx>(cx: &LateContext<'tcx>, arg: GenericArg<'tcx>) -> bool {
     if_chain! {
         if let GenericArgKind::Type(ty) = arg.unpack();
         if let ty::Adt(adt_def, substs) = ty.kind();
@@ -86,7 +105,7 @@ fn contains_signer_field<'tcx>(cx: &LateContext<'tcx>, arg: GenericArg<'tcx>) ->
     }
 }
 
-fn contains_is_signer_use<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool {
+fn body_contains_is_signer_use<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool {
     visit_expr_no_bodies(&body.value, |expr| is_is_signer_use(cx, expr))
 }
 
@@ -101,22 +120,6 @@ fn is_is_signer_use<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
         } else {
             false
         }
-    }
-}
-
-trait Conclusive: Default {
-    fn concluded(&self) -> bool;
-}
-
-impl<T> Conclusive for Option<T> {
-    fn concluded(&self) -> bool {
-        self.is_some()
-    }
-}
-
-impl Conclusive for bool {
-    fn concluded(&self) -> bool {
-        *self
     }
 }
 

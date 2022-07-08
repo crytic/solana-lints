@@ -8,7 +8,7 @@ edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "account_data_matching_secure_fixed"
+name = "owner_checks_secure_fixed"
 
 [features]
 no-entrypoint = []

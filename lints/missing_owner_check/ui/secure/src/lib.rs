@@ -1,11 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{
-  program_pack::Pack,
-  entrypoint::ProgramResult,
-};
+use anchor_lang::solana_program::program_error::ProgramError;
+use anchor_lang::solana_program::{entrypoint::ProgramResult, program_pack::Pack};
 use spl_token::state::Account as SplTokenAccount;
 use spl_token::ID;
-use anchor_lang::solana_program::program_error::ProgramError;
 
 #[program]
 pub mod owner_checks_secure {

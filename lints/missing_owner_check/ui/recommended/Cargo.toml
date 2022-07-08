@@ -1,12 +1,12 @@
 [package]
-name = "account-data-matching-recommended"
+name = "owner-checks-recommended"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "account_data_matching_recommended"
+name = "owner_checks_recommended"
 
 [features]
 no-entrypoint = []

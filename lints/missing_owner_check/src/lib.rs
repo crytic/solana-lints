@@ -6,7 +6,10 @@ extern crate rustc_span;
 
 use clippy_utils::{diagnostics::span_lint, ty::match_type, SpanlessEq};
 use if_chain::if_chain;
-use rustc_hir::{intravisit::{FnKind, Visitor, walk_expr}, Body, Expr, ExprKind, FnDecl, HirId};
+use rustc_hir::{
+    intravisit::{walk_expr, FnKind, Visitor},
+    Body, Expr, ExprKind, FnDecl, HirId,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::Span;
 use solana_lints::{paths, utils::visit_expr_no_bodies};
@@ -52,8 +55,8 @@ impl<'tcx> LateLintPass<'tcx> for MissingOwnerCheck {
                         cx,
                         MISSING_OWNER_CHECK,
                         account_expr.span,
-                        "this Account struct is used but there is no check on its owner field"
-                    )
+                        "this Account struct is used but there is no check on its owner field",
+                    );
                 }
             }
         }
@@ -65,7 +68,10 @@ struct AccountUses<'cx, 'tcx> {
     uses: Vec<&'tcx Expr<'tcx>>,
 }
 
-fn get_referenced_accounts<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> Vec<&'tcx Expr<'tcx>> {
+fn get_referenced_accounts<'tcx>(
+    cx: &LateContext<'tcx>,
+    body: &'tcx Body<'tcx>,
+) -> Vec<&'tcx Expr<'tcx>> {
     let mut accounts = AccountUses {
         cx,
         uses: Vec::new(),
@@ -87,20 +93,24 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
                 self.uses.push(expr);
             }
         }
-        walk_expr(self, expr)
+        walk_expr(self, expr);
     }
 }
 
 fn contains_owner_use<'tcx>(
-    cx: &LateContext<'tcx>, 
+    cx: &LateContext<'tcx>,
     body: &'tcx Body<'tcx>,
-    account_expr: &Expr<'tcx>
+    account_expr: &Expr<'tcx>,
 ) -> bool {
     visit_expr_no_bodies(&body.value, |expr| uses_owner_field(cx, expr, account_expr))
 }
 
 /// Checks if `expr` is an owner field reference on `account_expr`
-fn uses_owner_field<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>, account_expr: &Expr<'tcx>) -> bool {
+fn uses_owner_field<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &Expr<'tcx>,
+    account_expr: &Expr<'tcx>,
+) -> bool {
     if_chain! {
         if let ExprKind::Field(object, field_name) = expr.kind;
         // TODO: add check for key, is_signer
