@@ -1,0 +1,52 @@
+name: CI
+
+on: [pull_request, push, workflow_dispatch]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Prettier
+        run: |
+          npm install -g prettier && prettier --check '**/*.md' '**/*.yml'
+
+      - name: Markdown link check
+        run: |
+          npm install -g markdown-link-check && find . -name '*.md' | xargs markdown-link-check
+
+      - name: Cargo sort
+        run: |
+          cargo install cargo-sort
+          find . -name Cargo.toml | xargs -n 1 dirname | xargs -n 1 cargo sort --check --grouped
+
+      - name: Format
+        run: |
+          rustup component add rustfmt
+          find . -name '*.rs' -exec rustfmt {} \; && git diff --exit-code
+
+      - name: Format example READMEs
+        run: ./scripts/update_readmes.sh && git diff --exit-code
+
+      - name: Clippy
+        run: |
+          rustup component add clippy
+          ./scripts/clippy.sh
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dylint-link
+        run: cargo install dylint-link
+
+      - name: Test
+        run: cargo test
