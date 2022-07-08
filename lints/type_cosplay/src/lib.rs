@@ -52,9 +52,9 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             if let ExprKind::Call(fnc_expr, args_exprs) = expr.kind;
             if is_deserialize_function(cx, fnc_expr);
             // walk each argument expression and see if the data field is referenced
-            if args_exprs
-                .iter()
-                .any(|arg| visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr)));
+            if args_exprs.iter().any(|arg| {
+                visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr))
+            });
             // get the type that the function was called on, ie X in X::deser()
             if let ExprKind::Path(qpath) = &fnc_expr.kind;
             if let QPath::TypeRelative(ty, _) = qpath;
@@ -119,6 +119,7 @@ fn contains_data_field_reference(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool 
 }
 
 fn check_enums(cx: &LateContext<'_>, enums: &Vec<(DefId, Span)>) {
+    #[allow(clippy::comparison_chain)]
     if enums.len() > 1 {
         // TODO: can implement loop to print all spans if > 2 enums
         let first_span = enums[0].1;
@@ -130,7 +131,7 @@ fn check_enums(cx: &LateContext<'_>, enums: &Vec<(DefId, Span)>) {
             "warning: multiple enum types deserialized. Should only have one enum type to avoid possible equivalent types",
             Some(second_span),
             "help: consider constructing a single enum that contains all type definitions as variants"
-        )
+        );
     } else if enums.len() == 1 {
         // future check - check that single enum is safe
         // check serialization
@@ -141,11 +142,11 @@ fn check_structs_have_discriminant(cx: &LateContext<'_>, types: &Vec<(DefId, Spa
     let num_structs = types.len();
     types
         .iter()
-        .for_each(|t| has_discriminant(cx, &cx.tcx.adt_def(t.0), num_structs, t.1));
+        .for_each(|t| has_discriminant(cx, cx.tcx.adt_def(t.0), num_structs, t.1));
 }
 
 /// Returns true if the `adt` has a field that is an enum and the number of variants of that enum is at least the number of deserialized struct types collected.
-fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize, span: Span) {
+fn has_discriminant(cx: &LateContext, adt: AdtDef, num_struct_types: usize, span: Span) {
     // TODO: why do we need to enforce that the first field is the discriminant?
     let variant = adt.variants().get(Idx::new(0)).unwrap();
     let has_discriminant = variant.fields.iter().any(|field| {
@@ -170,18 +171,23 @@ fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize, spa
             "warning: type does not have a proper discriminant. It may be indistinguishable when deserialized.",
             None,
             "help: add an enum with at least as many variants as there are struct definitions"
-        )
+        );
     }
 }
 
 #[test]
 fn insecure_1() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-1");
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
 }
 
 #[test]
 fn insecure_2() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-2");
+}
+
+#[test]
+fn insecure_3() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-3");
 }
 
 #[test]

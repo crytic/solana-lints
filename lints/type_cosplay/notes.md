@@ -46,7 +46,7 @@ Whenever we refer to a type, we refer to whether it was deserialized in the prog
 to the type definition.
 - single deserialized type; is enum => SECURE
 - single deserialized type; is not enum; has discriminant => SECURE
-- single deserialized type; is not enum; no discriminant => INSECURE (insecure-1)
+- single deserialized type; is not enum; no discriminant => INSECURE (insecure)
 NOTE: do we really need to check if one is an enum?
 - multiple deserialized types; one is enum; all structs have discriminant => SECURE
 - multiple deserialized types; one is enum; some struct doesn't have discriminant => INSECURE
