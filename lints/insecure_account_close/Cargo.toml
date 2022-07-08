@@ -42,5 +42,7 @@ dylint_testing = "2.0.2"
 predicates = "2.1.1"
 tempfile = "3.3.0"
 
+[workspace]
+
 [package.metadata.rust-analyzer]
 rustc_private = true

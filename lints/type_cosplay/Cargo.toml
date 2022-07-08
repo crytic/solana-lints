@@ -35,5 +35,7 @@ solana-lints = { path = "../../crate" }
 dylint_testing = "2.0.1"
 anchor-lang = "0.24.2"
 
+[workspace]
+
 [package.metadata.rust-analyzer]
 rustc_private = true
