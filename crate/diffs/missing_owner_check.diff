@@ -1,0 +1,39 @@
+Only in ../../../../lints/missing_owner_check/ui: fixed-secure
+diff -r ./insecure/Cargo.toml ../../../../lints/missing_owner_check/ui/insecure/Cargo.toml
+19,20c19,20
+< anchor-lang = "0.20.1"
+< anchor-spl = "0.20.1"
+---
+> anchor-lang = "0.24.2"
+> anchor-spl = "0.24.2"
+diff -r ./insecure/src/lib.rs ../../../../lints/missing_owner_check/ui/insecure/src/lib.rs
+2,3c2
+< use anchor_lang::solana_program::program_error::ProgramError;
+< use anchor_lang::solana_program::program_pack::Pack;
+---
+> use anchor_lang::solana_program::{entrypoint::ProgramResult, program_pack::Pack};
+26a26,27
+> 
+> fn main() {}
+Only in ../../../../lints/missing_owner_check/ui/insecure/src: lib.stderr
+diff -r ./recommended/src/lib.rs ../../../../lints/missing_owner_check/ui/recommended/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+21a23,24
+> 
+> fn main() {}
+Only in ../../../../lints/missing_owner_check/ui/recommended/src: lib.stderr
+diff -r ./secure/src/lib.rs ../../../../lints/missing_owner_check/ui/secure/src/lib.rs
+3c3
+< use anchor_lang::solana_program::program_pack::Pack;
+---
+> use anchor_lang::solana_program::{entrypoint::ProgramResult, program_pack::Pack};
+5,6c5
+< 
+< declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+---
+> use spl_token::ID;
+29a29,30
+> 
+> fn main() {}
+Only in ../../../../lints/missing_owner_check/ui/secure/src: lib.stderr

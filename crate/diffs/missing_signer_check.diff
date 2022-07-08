@@ -1,0 +1,35 @@
+diff -r ./insecure/src/lib.rs ../../../../lints/missing_signer_check/ui/insecure/src/lib.rs
+3a4
+> 
+8c9,11
+<     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
+---
+>     pub fn log_message(
+>         ctx: Context<LogMessage>,
+>     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+17a21,22
+> 
+> fn main() {}
+Only in ../../../../lints/missing_signer_check/ui/insecure/src: lib.stderr
+diff -r ./recommended/src/lib.rs ../../../../lints/missing_signer_check/ui/recommended/src/lib.rs
+9c9,11
+<     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
+---
+>     pub fn log_message(
+>         ctx: Context<LogMessage>,
+>     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+18a21,22
+> 
+> fn main() {}
+Only in ../../../../lints/missing_signer_check/ui/recommended/src: lib.stderr
+diff -r ./secure/src/lib.rs ../../../../lints/missing_signer_check/ui/secure/src/lib.rs
+9c9,11
+<     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
+---
+>     pub fn log_message(
+>         ctx: Context<LogMessage>,
+>     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+21a24,25
+> 
+> fn main() {}
+Only in ../../../../lints/missing_signer_check/ui/secure/src: lib.stderr
