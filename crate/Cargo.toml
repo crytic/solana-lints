@@ -5,5 +5,10 @@ edition = "2021"
 
 [dependencies]
 
+[dev-dependencies]
+assert_cmd = "2.0.4"
+predicates = "2.1.1"
+tempfile = "3.3.0"
+
 [package.metadata.rust-analyzer]
 rustc_private = true
