@@ -145,33 +145,29 @@ fn check_structs_have_discriminant(cx: &LateContext<'_>, types: &Vec<(DefId, Spa
         .for_each(|t| has_discriminant(cx, cx.tcx.adt_def(t.0), num_structs, t.1));
 }
 
-/// Returns true if the `adt` has a field that is an enum and the number of variants of that enum is at least the number of deserialized struct types collected.
-fn has_discriminant(cx: &LateContext, adt: AdtDef, num_struct_types: usize, span: Span) {
-    // TODO: why do we need to enforce that the first field is the discriminant?
+/// Checks if `adt` has a proper discriminant. We define a proper discriminant as being an enum with
+/// the number of variants at least the number of deserialized structs. Further the discriminant should
+/// be the first field in the adt.
+fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize, span: Span) {
     let variant = adt.variants().get(Idx::new(0)).unwrap();
-    let has_discriminant = variant.fields.iter().any(|field| {
-        let ty = cx.tcx.type_of(field.did);
-        if_chain! {
-            if let MiddleTyKind::Adt(adt_def, _) = ty.kind();
-            if adt_def.is_enum();
-            if adt_def.variants().len() >= num_struct_types;
-            then {
-                true
-            } else {
-                false
-            }
+    let first_field_def = &variant.fields[0];
+    let ty = cx.tcx.type_of(first_field_def.did);
+    if_chain! {
+        if let MiddleTyKind::Adt(adt_def, _) = ty.kind();
+        if adt_def.is_enum();
+        if adt_def.variants().len() >= num_struct_types;
+        then {
+            // struct has a proper discriminant
+        } else {
+            span_lint_and_help(
+                cx,
+                TYPE_COSPLAY,
+                span,
+                "warning: type does not have a proper discriminant. It may be indistinguishable when deserialized.",
+                None,
+                "help: add an enum with at least as many variants as there are struct definitions"
+            )
         }
-    });
-
-    if !has_discriminant {
-        span_lint_and_help(
-            cx,
-            TYPE_COSPLAY,
-            span,
-            "warning: type does not have a proper discriminant. It may be indistinguishable when deserialized.",
-            None,
-            "help: add an enum with at least as many variants as there are struct definitions"
-        );
     }
 }
 
