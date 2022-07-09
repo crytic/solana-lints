@@ -1,5 +1,5 @@
 error: warning: type does not have a proper discriminant. It may be indistinguishable when deserialized.
-  --> $DIR/lib.rs:14:20
+  --> $DIR/lib.rs:13:20
    |
 LL |         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
    |                    ^^^^

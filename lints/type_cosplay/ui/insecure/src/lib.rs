@@ -3,7 +3,6 @@ use borsh::{BorshDeserialize, BorshSerialize};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
-// single deserialized type; is not enum; no discriminant
 #[program]
 pub mod type_cosplay_insecure {
     use super::*;

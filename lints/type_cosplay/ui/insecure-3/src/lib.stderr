@@ -1,0 +1,15 @@
+error: Deserializing from different ADT types.
+  --> $DIR/lib.rs:16:20
+   |
+LL |         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
+   |                    ^^^^
+   |
+   = note: `-D type-cosplay` implied by `-D warnings`
+help: help: deserialize from only structs with a discriminant, or an enum encapsulating all structs.
+  --> $DIR/lib.rs:28:21
+   |
+LL |         let extra = AnotherDiscriminant::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
+   |                     ^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to previous error
+

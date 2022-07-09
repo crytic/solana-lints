@@ -3,6 +3,9 @@ use borsh::{BorshDeserialize, BorshSerialize};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
+// This example is insecure because AnotherDiscriminant could be deserialized as a
+// User, if the variant is Extra(Extra). The first byte would be 0, to indicate the discriminant
+// in both cases, and the next 32 bytes would be the pubkey.
 #[program]
 pub mod type_cosplay_secure {
     use super::*;
@@ -21,6 +24,8 @@ pub mod type_cosplay_secure {
             return Err(ProgramError::InvalidAccountData);
         }
         msg!("GM {}", user.authority);
+
+        let extra = AnotherDiscriminant::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
         Ok(())
     }
 }
@@ -45,13 +50,18 @@ pub struct Metadata {
 
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct Extra {
-    discriminant: AccountDiscriminant,
     account: Pubkey,
 }
 
 #[derive(BorshSerialize, BorshDeserialize, PartialEq)]
 pub enum AccountDiscriminant {
     User,
+    Metadata,
+}
+
+#[derive(BorshSerialize, BorshDeserialize)]
+pub enum AnotherDiscriminant {
+    Extra(Extra),
     Metadata,
 }
 
