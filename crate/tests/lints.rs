@@ -15,6 +15,7 @@ fn lints() {
         let entry = entry.unwrap();
         let path = entry.path();
 
+        #[allow(clippy::explicit_write)]
         writeln!(stderr(), "{:?}", path.canonicalize().unwrap()).unwrap();
 
         std::process::Command::new("cargo")
