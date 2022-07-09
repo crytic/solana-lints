@@ -46,12 +46,10 @@ Two circumstances avoid the type cosplay attack.
 Whenever we refer to a type, we refer to whether it was deserialized in the program, not
 to the type definition.
 
-- single deserialized type; is enum => SECURE
-- single deserialized type; is not enum; has discriminant => SECURE
-- single deserialized type; is not enum; no discriminant => INSECURE (insecure)
-  NOTE: do we really need to check if one is an enum?
-- multiple deserialized types; one is enum; all structs have discriminant => SECURE
-- multiple deserialized types; one is enum; some struct doesn't have discriminant => INSECURE
-- multiple deserialized types; multiple enums => INSECURE (insecure-2)
-- multiple deserialized types; no enums; all structs have discriminant => SECURE
-- multiple deserialized types; no enums; some struct doesn't have discriminant => INSECURE
+- single deserialized type-kind; is not enum; no discriminant => INSECURE (insecure)
+- single deserialized type-kind; is enum; multiple enums => INSECURE (insecure-2)
+- multiple deserialized type-kinds => INSECURE (insecure-3)
+- single deserialized type-kind; is not enum; has discriminant => SECURE (secure)
+- single deserialized type-kind; is enum; single enum => SECURE* (secure-2)
+
+*caveat: if the program defines another identical enum, but never uses it, could be a vulnerability

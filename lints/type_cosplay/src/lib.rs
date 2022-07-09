@@ -93,7 +93,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                 cx,
                 TYPE_COSPLAY,
                 spans[0],
-                "Deserializing from multiple ADT types.",
+                "Deserializing from different ADT types.",
                 Some(spans[1]),
                 "help: deserialize from only structs with a discriminant, or an enum encapsulating all structs."
             )
@@ -191,11 +191,16 @@ fn insecure_3() {
 }
 
 #[test]
-fn recommended() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
+fn secure() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
 }
 
 #[test]
-fn secure() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
+fn secure_two() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure-2");
+}
+
+#[test]
+fn recommended() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
 }

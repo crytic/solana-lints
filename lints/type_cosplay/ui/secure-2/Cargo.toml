@@ -1,12 +1,12 @@
 [package]
-name = "type-cosplay-insecure"
+name = "type-cosplay-secure-2"
 version = "0.1.0"
-description = "Deserializes a single type-kind that is not an enum and does not have a proper discriminant"
+description = "Created with Anchor"
 edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "type_cosplay_insecure"
+name = "type_cosplay_secure"
 
 [features]
 no-entrypoint = []
@@ -16,4 +16,4 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.24.2"
+anchor-lang = "0.20.1"
