@@ -84,15 +84,19 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                 _ => check_structs_have_discriminant(cx, v), // NOTE: also catches unions
             }
         } else {
-            // Retrieve spans: iter through map, grab first elem of two different key pairs, then get span
-            // span_lint_and_help(
-            //     cx,
-            //     TYPE_COSPLAY,
-            //     span,
-            //     "Deserializing from multiple ADT types. "
-            //     None,
-            //     "help: deserialize from only structs with a discriminant, or an enum encapsulating all structs."
-            // )
+            // Retrieve spans: iter through map, grab first elem of each key-pair, then get span
+            let mut spans = vec![];
+            self.deser_types.iter().for_each(|(_, v)| {
+                spans.push(v[0].1);
+            });
+            span_lint_and_help(
+                cx,
+                TYPE_COSPLAY,
+                spans[0],
+                "Deserializing from multiple ADT types.",
+                Some(spans[1]),
+                "help: deserialize from only structs with a discriminant, or an enum encapsulating all structs."
+            )
         }
     }
 }
@@ -148,7 +152,7 @@ fn check_structs_have_discriminant(cx: &LateContext<'_>, types: &Vec<(DefId, Spa
 /// Checks if `adt` has a proper discriminant. We define a proper discriminant as being an enum with
 /// the number of variants at least the number of deserialized structs. Further the discriminant should
 /// be the first field in the adt.
-fn has_discriminant(cx: &LateContext, adt: &AdtDef, num_struct_types: usize, span: Span) {
+fn has_discriminant(cx: &LateContext, adt: AdtDef, num_struct_types: usize, span: Span) {
     let variant = adt.variants().get(Idx::new(0)).unwrap();
     let first_field_def = &variant.fields[0];
     let ty = cx.tcx.type_of(first_field_def.did);
