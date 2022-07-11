@@ -6,7 +6,11 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod duplicate_mutable_accounts_insecure {
     use super::*;
 
-    pub fn update(ctx: Context<Update>, a: u64, b: u64) -> ProgramResult {
+    pub fn update(
+        ctx: Context<Update>,
+        a: u64,
+        b: u64,
+    ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
         let user_a = &mut ctx.accounts.user_a;
         let user_b = &mut ctx.accounts.user_b;
 
@@ -26,3 +30,5 @@ pub struct Update<'info> {
 pub struct User {
     data: u64,
 }
+
+fn main() {}
