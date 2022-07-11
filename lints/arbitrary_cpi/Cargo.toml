@@ -1,0 +1,39 @@
+[package]
+name = "arbitrary_cpi"
+version = "0.1.0"
+authors = ["Andrew Haberlandt (andrew.haberlandt@trailofbits.com)"]
+description = "lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/4-arbitrary-cpi"
+edition = "2018"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[[example]]
+name = "insecure"
+path = "ui/insecure/src/lib.rs"
+
+[[example]]
+name = "recommended"
+path = "ui/recommended/src/lib.rs"
+
+[[example]]
+name = "secure"
+path = "ui/secure/src/lib.rs"
+
+[dependencies]
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "0cb0f7636851f9fcc57085cf80197a2ef6db098f" }
+dylint_linting = "2.0.1"
+if_chain = "1.0.2"
+solana-lints = { path = "../../crate" }
+
+[dev-dependencies]
+anchor-lang = "0.24.2"
+anchor-spl = "0.24.2"
+dylint_testing = "2.0.1"
+spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
+
+[workspace]
+
+[package.metadata.rust-analyzer]
+rustc_private = true

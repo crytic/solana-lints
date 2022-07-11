@@ -1,0 +1,16 @@
+error: program_id may not be checked
+  --> $DIR/lib.rs:18:9
+   |
+LL | /         solana_program::program::invoke(
+LL | |             &ins,
+LL | |             &[
+LL | |                 ctx.accounts.source.clone(),
+...  |
+LL | |             ],
+LL | |         )
+   | |_________^
+   |
+   = note: `-D arbitrary-cpi` implied by `-D warnings`
+
+error: aborting due to previous error
+
