@@ -20,7 +20,7 @@ use if_chain::if_chain;
 
 dylint_linting::impl_late_lint! {
     /// **What it does:**
-    ///
+    /// 
     /// **Why is this bad?**
     ///
     /// **Known problems:** When only one enum is serialized, may miss certain edge cases.
