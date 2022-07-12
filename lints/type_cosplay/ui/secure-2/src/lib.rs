@@ -23,16 +23,15 @@ pub mod type_cosplay_secure {
                 }
                 msg!("GM {}", user.authority);
                 Ok(())
-            },
+            }
             AccountDiscriminant::Metadata(metadata) => {
                 if ctx.accounts.user.owner != ctx.program_id {
                     return Err(ProgramError::IllegalOwner);
                 }
                 msg!("GM {}", metadata.account);
                 Ok(())
-            },
+            }
         }
-
     }
 }
 
