@@ -25,7 +25,7 @@ pub mod type_cosplay_secure {
         }
         msg!("GM {}", user.authority);
 
-        let extra = AnotherDiscriminant::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
+        let extra = Instruction::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
         Ok(())
     }
 }
@@ -60,7 +60,7 @@ pub enum AccountDiscriminant {
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]
-pub enum AnotherDiscriminant {
+pub enum Instruction {
     Extra(Extra),
     Metadata,
 }
