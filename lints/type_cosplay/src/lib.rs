@@ -77,13 +77,14 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
     }
 
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
+        // NOTE: the case where len == 0 does nothing, since no types are deserialized
         if self.deser_types.len() == 1 {
             let (k, v) = self.deser_types.iter().next().unwrap();
             match k {
                 AdtKind::Enum => check_enums(cx, v),
                 _ => check_structs_have_discriminant(cx, v), // NOTE: also catches unions
             }
-        } else {
+        } else if self.deser_types.len() > 1 {
             // Retrieve spans: iter through map, grab first elem of each key-pair, then get span
             let mut spans = vec![];
             self.deser_types.iter().for_each(|(_, v)| {
