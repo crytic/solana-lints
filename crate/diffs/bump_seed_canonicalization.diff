@@ -1,0 +1,44 @@
+Only in ../../../../lints/bump_seed_canonicalization/ui/insecure: Cargo.lock
+diff -r ./insecure/Cargo.toml ../../../../lints/bump_seed_canonicalization/ui/insecure/Cargo.toml
+19c19,20
+< anchor-lang = "0.20.1"
+---
+> anchor-lang = "0.24.2"
+> 
+diff -r ./insecure/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/insecure/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+7c8
+<     use super::*;
+---
+>     use super::{BumpSeed, Context, Key, ProgramError, ProgramResult, Pubkey};
+30a32,33
+> 
+> fn main() {}
+Only in ../../../../lints/bump_seed_canonicalization/ui/insecure/src: lib.stderr
+Only in ../../../../lints/bump_seed_canonicalization/ui: insecure-2
+Only in ../../../../lints/bump_seed_canonicalization/ui: insecure-3
+diff -r ./recommended/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/recommended/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+7c8
+<     use super::*;
+---
+>     use super::{BumpSeed, Context, ProgramResult};
+9c10
+<     pub fn set_value(ctx: Context<BumpSeed>, key: u64, new_value: u64) -> ProgramResult {
+---
+>     pub fn set_value(ctx: Context<BumpSeed>, _key: u64, new_value: u64) -> ProgramResult {
+35a37,38
+> 
+> fn main() {}
+diff -r ./secure/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/secure/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+7c8
+<     use super::*;
+---
+>     use super::{BumpSeed, Context, Key, ProgramError, ProgramResult, Pubkey};
+38a40,41
+> 
+> fn main() {}

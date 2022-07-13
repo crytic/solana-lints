@@ -1,0 +1,14 @@
+error: Bump seed comes from structure, ensure it is constrained to a single value and not user-controlled.
+  --> $DIR/lib.rs:12:23
+   |
+LL |           let address = Pubkey::create_program_address(
+   |  _______________________^
+LL | |             &[key.to_le_bytes().as_ref(), &[s.bump]],
+LL | |             ctx.program_id,
+LL | |         )?;
+   | |_________^
+   |
+   = note: `-D bump-seed-canonicalization` implied by `-D warnings`
+
+error: aborting due to previous error
+
