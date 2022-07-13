@@ -6,13 +6,14 @@ The lints are inspired by the [Sealevel Attacks](https://github.com/coral-xyz/se
 
 The current lints are:
 
-| Library                                                  | Description                                                                                                                  |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [`arbitrary_cpi`](lints/arbitrary_cpi)                   | lint for [5-arbitrary-cpi](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/5-arbitrary-cpi)               |
-| [`insecure_account_close`](lints/insecure_account_close) | lint for [9-closing-accounts](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/9-closing-accounts)         |
-| [`missing_owner_check`](lints/missing_owner_check)       | lint for [2-owner-checks](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/2-owner-checks)                 |
-| [`missing_signer_check`](lints/missing_signer_check)     | lint for [0-signer-authorization](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/0-signer-authorization) |
-| [`type_cosplay`](lints/type_cosplay)                     | lint for [3-type-cosplay](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/3-type-cosplay)                 |
+| Library                                                          | Description                                                                                                                              |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| [`arbitrary_cpi`](lints/arbitrary_cpi)                           | lint for [5-arbitrary-cpi](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/5-arbitrary-cpi)                           |
+| [`bump_seed_canonicalization`](lints/bump_seed_canonicalization) | lint for [6-bump-seed-canonicalization](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/7-bump-seed-canonicalization) |
+| [`insecure_account_close`](lints/insecure_account_close)         | lint for [9-closing-accounts](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/9-closing-accounts)                     |
+| [`missing_owner_check`](lints/missing_owner_check)               | lint for [2-owner-checks](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/2-owner-checks)                             |
+| [`missing_signer_check`](lints/missing_signer_check)             | lint for [0-signer-authorization](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/0-signer-authorization)             |
+| [`type_cosplay`](lints/type_cosplay)                             | lint for [3-type-cosplay](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/3-type-cosplay)                             |
 
 ## Usage
 

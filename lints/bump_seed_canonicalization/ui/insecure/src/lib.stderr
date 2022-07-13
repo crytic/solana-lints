@@ -1,0 +1,10 @@
+error: Bump seed may not be constrained. If stored in an account, use anchor's #[account(seed=..., bump=...)] macro instead
+  --> $DIR/lib.rs:12:13
+   |
+LL |             Pubkey::create_program_address(&[key.to_le_bytes().as_ref(), &[bump]], ctx.program_id)?;
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `-D bump-seed-canonicalization` implied by `-D warnings`
+
+error: aborting due to previous error
+
