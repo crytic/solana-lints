@@ -14,6 +14,10 @@ name = "insecure"
 path = "ui/insecure/src/lib.rs"
 
 [[example]]
+name = "insecure-2"
+path = "ui/insecure-2/src/lib.rs"
+
+[[example]]
 name = "secure"
 path = "ui/secure/src/lib.rs"
 
@@ -21,6 +25,8 @@ path = "ui/secure/src/lib.rs"
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "7b2896a8fc9f0b275692677ee6d2d66a7cbde16a" }
 dylint_linting = "2.0.1"
 if_chain = "1.0.2"
+proc-macro2 = "1.0.40"
+quote = "1.0.20"
 solana-lints = { path = "../../crate" }
 
 [dev-dependencies]
