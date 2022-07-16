@@ -22,7 +22,7 @@ name = "secure"
 path = "ui/secure/src/lib.rs"
 
 [dependencies]
-clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "7b2896a8fc9f0b275692677ee6d2d66a7cbde16a" }
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "0cb0f7636851f9fcc57085cf80197a2ef6db098f" }
 dylint_linting = "2.0.1"
 if_chain = "1.0.2"
 proc-macro2 = "1.0.40"
