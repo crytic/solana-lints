@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
-pub mod duplicate_mutable_accounts_secure {
+pub mod duplicate_mutable_accounts_recommended {
     use super::*;
 
     pub fn update(
@@ -11,9 +11,6 @@ pub mod duplicate_mutable_accounts_secure {
         a: u64,
         b: u64,
     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-        if ctx.accounts.user_a.key() == ctx.accounts.user_b.key() {
-            return Err(ProgramError::InvalidArgument);
-        }
         let user_a = &mut ctx.accounts.user_a;
         let user_b = &mut ctx.accounts.user_b;
 
@@ -25,8 +22,12 @@ pub mod duplicate_mutable_accounts_secure {
 
 #[derive(Accounts)]
 pub struct Update<'info> {
+    #[account(constraint = user_a.key() != user_b.key())]
+    #[account(constraint = user_a.key() != user_c.key())]
+    #[account(constraint = user_c.key() != user_b.key())]
     user_a: Account<'info, User>,
     user_b: Account<'info, User>,
+    user_c: Account<'info, User>,
 }
 
 #[account]
