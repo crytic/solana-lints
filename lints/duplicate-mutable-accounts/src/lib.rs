@@ -5,27 +5,27 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
+use std::collections::{HashMap, VecDeque};
+use std::default::Default;
+
 use rustc_ast::{
     token::{Delimiter, Token, TokenKind},
     tokenstream::{CursorRef, DelimSpan, TokenStream, TokenTree, TreeAndSpacing},
     AttrKind, Attribute, MacArgs,
 };
-use rustc_hir::def::Res;
-use rustc_hir::*;
+use rustc_hir::{def::Res, FieldDef, GenericArg, QPath, TyKind, VariantData};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_span::{
     def_id::DefId,
     symbol::{Ident, Symbol},
     Span, DUMMY_SP,
 };
-use std::collections::{HashMap, VecDeque};
-use std::default::Default;
-
-
 
 use clippy_utils::{diagnostics::span_lint_and_help, ty::match_type};
 use if_chain::if_chain;
 use solana_lints::paths;
+
+const ANCHOR_ACCOUNT_GENERIC_ARG_COUNT: usize = 2;
 
 dylint_linting::impl_late_lint! {
     /// **What it does:**
@@ -56,42 +56,14 @@ struct DuplicateMutableAccounts {
 }
 
 impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
-    // fn check_mod(
-    //     &mut self,
-    //     cx: &LateContext<'tcx>,
-    //     _: &'tcx Mod<'tcx>,
-    //     span: Span,
-    //     _: HirId
-    // ) {
-    //     println!("new");
-    //     for _ in 0..3 {
-    //         println!("linting");
-    //         span_lint_and_help(
-    //             cx,
-    //             DUPLICATE_MUTABLE_ACCOUNTS,
-    //             span,
-    //             "dummy",
-    //             None,
-    //             ""
-    //         );
-    //     }
-    // }
-
     fn check_struct_def(&mut self, cx: &LateContext<'tcx>, variant_data: &'tcx VariantData<'tcx>) {
         if let VariantData::Struct(fields, _) = variant_data {
             fields.iter().for_each(|field| {
                 if_chain! {
-                    // grab the def_id of the field type
-                    let ty = field.ty;
-                    if let TyKind::Path(qpath) = &ty.kind;
-                    if let QPath::Resolved(_, path) = qpath;
-                    if let Res::Def(_, def_id) = path.res;
-                    // match the type of the field
-                    let ty = cx.tcx.type_of(def_id);
-                    // check it is an anchor account type
-                    if match_type(cx, ty, &paths::ANCHOR_ACCOUNT);
-                    // check the type of T, the second generic arg
-                    let account_id = get_anchor_account_type(&path.segments[0]).unwrap();
+                    if let Some(def_id) = get_def_id(field.ty);
+                    let middle_ty = cx.tcx.type_of(def_id);
+                    if match_type(cx, middle_ty, &paths::ANCHOR_ACCOUNT);
+                    if let Some(account_id) = get_anchor_account_type_def_id(field);
                     then {
                         if let Some(v) = self.accounts.get_mut(&account_id) {
                             v.push((field.ident.name, field.span));
@@ -105,37 +77,29 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
     }
 
     fn check_attribute(&mut self, _: &LateContext<'tcx>, attribute: &'tcx Attribute) {
-        // println!("{:#?}", self.accounts);
         if_chain! {
             if let AttrKind::Normal(attr_item, _) = &attribute.kind;
-            let name = attr_item.path.segments[0].ident.name; // TODO: can use name_or_empty
-            // for some reason #[account] doesn't match when no args, maybe take away
-            // the code to check name, and just check it has constraint args?
+            let name = attribute.name_or_empty();
             if name.as_str() == "account";
             if let MacArgs::Delimited(_, _, token_stream) = &attr_item.args;
             then {
-                for split in split(token_stream.trees(), TokenKind::Comma) {
-                    // println!("{:#?}", split);
-                    self.streams.0.push(split);
+                // Parse each constraint as a separate TokenStream
+                for delimited_stream in split(token_stream.trees(), TokenKind::Comma) {
+                    self.streams.0.push(delimited_stream);
                 }
-
             }
         }
     }
 
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
         // println!("{:#?}", self);
-        for (_k, v) in self.accounts.iter() {
+        for (_, v) in self.accounts.iter() {
             if v.len() > 1 {
-                // generate static set of possible constraints
                 let gen_constraints = generate_possible_expected_constraints(v);
 
                 for ((one, symmetric), symbols) in gen_constraints {
-                    // println!("{:#?}\n {:#?}", one, symmetric);
                     if !(self.streams.contains(one) || self.streams.contains(symmetric)) {
-                        println!("lint for {} {}", symbols.0, symbols.1);
-
-                        // stupid way to get spans for offending types
+                        // get spans for offending types
                         let mut spans: Vec<Span> = Vec::new();
                         for (sym, span) in v {
                             if &symbols.0 == sym || &symbols.1 == sym {
@@ -144,7 +108,6 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
                         }
 
                         // TODO: for some reason, will only print out 2 messages, not 3
-                        // println!("{:?}", spans);
                         span_lint_and_help(
                             cx,
                             DUPLICATE_MUTABLE_ACCOUNTS,
@@ -160,11 +123,27 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
     }
 }
 
-fn get_anchor_account_type(segment: &PathSegment<'_>) -> Option<DefId> {
+/// Returns the `DefId` of the anchor account type, ie, `T` in `Account<'info, T>`.
+/// Returns `None` if the type of `field` is not an anchor account.
+fn get_anchor_account_type_def_id(field: &FieldDef) -> Option<DefId> {
     if_chain! {
-        // TODO: the following logic to get def_id is a repeated pattern
-        if let Some(generic_args) = segment.args;
-        if let GenericArg::Type(ty) = &generic_args.args[1]; // the account type is the second generic arg
+        if let TyKind::Path(qpath) = &field.ty.kind;
+        if let QPath::Resolved(_, path) = qpath;
+        if path.segments.len() > 0;
+        if let Some(generic_args) = path.segments[0].args;
+        if generic_args.args.len() == ANCHOR_ACCOUNT_GENERIC_ARG_COUNT;
+        if let GenericArg::Type(hir_ty) = &generic_args.args[1];
+        then {
+            get_def_id(hir_ty)
+        } else {
+            None
+        }
+    }
+}
+
+/// Returns the `DefId` of `ty`, an hir type. Returns `None` if cannot resolve type.
+fn get_def_id(ty: &rustc_hir::Ty) -> Option<DefId> {
+    if_chain! {
         if let TyKind::Path(qpath) = &ty.kind;
         if let QPath::Resolved(_, path) = qpath;
         if let Res::Def(_, def_id) = path.res;
@@ -176,8 +155,7 @@ fn get_anchor_account_type(segment: &PathSegment<'_>) -> Option<DefId> {
     }
 }
 
-// collect elements into a TokenStream until encounter delim then stop collecting. create a new vec.
-// continue until reaching end of stream
+/// Splits `stream` into a vector of substreams, separated by `delimiter`.
 fn split(stream: CursorRef, delimiter: TokenKind) -> Vec<TokenStream> {
     let mut split_streams: Vec<TokenStream> = Vec::new();
     let mut temp: Vec<TreeAndSpacing> = Vec::new();
@@ -195,12 +173,17 @@ fn split(stream: CursorRef, delimiter: TokenKind) -> Vec<TokenStream> {
     split_streams
 }
 
-/// Generates a static set of a possible expected key check constraints necessary for `values`.
+/// Generates a static set of possible expected key check constraints necessary for `identical_types`.
+/// `identical_types` is a set of identical types that must have a key check constraint. A vector of tuples
+/// is returned, where each element represents a particular constraint.
+///
+/// Specifically, the first field of the tuple is a tuple of `TokenStream`s, which represent the constraint and its
+/// symmetric value, e.g., `a!=b` and `b!=a`. The second field of the tuple is a tuple of symbols, which
+/// represent the identifiers being compared. Following the previous example, this would be `(a, b)`.
 fn generate_possible_expected_constraints(
-    values: &Vec<(Symbol, Span)>,
+    identical_types: &Vec<(Symbol, Span)>,
 ) -> Vec<((TokenStream, TokenStream), (Symbol, Symbol))> {
-    // TODO: may start with a VecDeque in the first place?
-    let mut deq = VecDeque::from(values.clone());
+    let mut deq = VecDeque::from(identical_types.clone());
     let mut gen_set = Vec::new();
 
     for _ in 0..deq.len() - 1 {
@@ -209,32 +192,31 @@ fn generate_possible_expected_constraints(
         for (other, _) in &deq {
             let stream = create_key_check_constraint_tokenstream(&first, other);
             let symmetric_stream = create_key_check_constraint_tokenstream(other, &first);
-            // println!("{:#?}", stream);
-
             gen_set.push(((stream, symmetric_stream), (first, other.clone())));
         }
     }
     gen_set
 }
 
-// TODO: figure out more efficient way to do this
+/// Returns a `TokenStream` of form: constraint = `a`.key() != `b`.key().
 fn create_key_check_constraint_tokenstream(a: &Symbol, b: &Symbol) -> TokenStream {
+    // TODO: may be more efficient way to do this, since the stream is effectively fixed
+    // and determined. Only two tokens are variable.
     let constraint = vec![
-        // TODO: test string matching by changing some string
-        TreeAndSpacing::from(create_token("constraint")),
+        TreeAndSpacing::from(create_token_from_ident("constraint")),
         TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Eq, DUMMY_SP))),
-        TreeAndSpacing::from(create_token(a.as_str())),
+        TreeAndSpacing::from(create_token_from_ident(a.as_str())),
         TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Dot, DUMMY_SP))),
-        TreeAndSpacing::from(create_token("key")),
+        TreeAndSpacing::from(create_token_from_ident("key")),
         TreeAndSpacing::from(TokenTree::Delimited(
             DelimSpan::dummy(),
             Delimiter::Parenthesis,
             TokenStream::new(vec![]),
         )),
         TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Ne, DUMMY_SP))),
-        TreeAndSpacing::from(create_token(b.as_str())),
+        TreeAndSpacing::from(create_token_from_ident(b.as_str())),
         TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Dot, DUMMY_SP))),
-        TreeAndSpacing::from(create_token("key")),
+        TreeAndSpacing::from(create_token_from_ident("key")),
         TreeAndSpacing::from(TokenTree::Delimited(
             DelimSpan::dummy(),
             Delimiter::Parenthesis,
@@ -245,7 +227,8 @@ fn create_key_check_constraint_tokenstream(a: &Symbol, b: &Symbol) -> TokenStrea
     TokenStream::new(constraint)
 }
 
-fn create_token(s: &str) -> TokenTree {
+/// Returns a `TokenTree::Token` which has `TokenKind::Ident`, with the string set to `s`.
+fn create_token_from_ident(s: &str) -> TokenTree {
     let ident = Ident::from_str(s);
     TokenTree::Token(Token::from_ast_ident(ident))
 }
@@ -254,6 +237,8 @@ fn create_token(s: &str) -> TokenTree {
 pub struct Streams(Vec<TokenStream>);
 
 impl Streams {
+    /// Returns true if `self` contains `other`, by comparing if there is an
+    /// identical `TokenStream` in `self` regardless of span.
     fn contains(&self, other: TokenStream) -> bool {
         self.0.iter().any(|stream| stream.eq_unspanned(&other))
     }
