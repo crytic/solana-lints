@@ -5,21 +5,23 @@ extern crate rustc_ast;
 extern crate rustc_hir;
 extern crate rustc_span;
 
-use proc_macro2::*;
-use quote::quote;
-use std::str::FromStr;
-
 use rustc_ast::{
-    token::TokenKind,
-    tokenstream::{TokenStream, TokenTree},
+    token::{Delimiter, Token, TokenKind},
+    tokenstream::{CursorRef, DelimSpan, TokenStream, TokenTree, TreeAndSpacing},
     AttrKind, Attribute, MacArgs,
 };
 use rustc_hir::def::Res;
 use rustc_hir::*;
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_span::{def_id::DefId, symbol::Symbol, Span};
-use std::collections::{HashMap, HashSet, VecDeque};
+use rustc_span::{
+    def_id::DefId,
+    symbol::{Ident, Symbol},
+    Span, DUMMY_SP,
+};
+use std::collections::{HashMap, VecDeque};
 use std::default::Default;
+
+
 
 use clippy_utils::{diagnostics::span_lint_and_help, ty::match_type};
 use if_chain::if_chain;
@@ -54,6 +56,27 @@ struct DuplicateMutableAccounts {
 }
 
 impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
+    // fn check_mod(
+    //     &mut self,
+    //     cx: &LateContext<'tcx>,
+    //     _: &'tcx Mod<'tcx>,
+    //     span: Span,
+    //     _: HirId
+    // ) {
+    //     println!("new");
+    //     for _ in 0..3 {
+    //         println!("linting");
+    //         span_lint_and_help(
+    //             cx,
+    //             DUPLICATE_MUTABLE_ACCOUNTS,
+    //             span,
+    //             "dummy",
+    //             None,
+    //             ""
+    //         );
+    //     }
+    // }
+
     fn check_struct_def(&mut self, cx: &LateContext<'tcx>, variant_data: &'tcx VariantData<'tcx>) {
         if let VariantData::Struct(fields, _) = variant_data {
             fields.iter().for_each(|field| {
@@ -91,11 +114,11 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
             if name.as_str() == "account";
             if let MacArgs::Delimited(_, _, token_stream) = &attr_item.args;
             then {
-                // TODO: figure out stream representation. At this point, may parse?
-                // TODO: filter mechanism: only insert constraints that match form "constraint = _.key() != _.key()"
-                // TODO: may need to parse each constraint as a separate stream, as comma-delimited
-                self.streams.0.push(token_stream.clone());
-                // println!("{:#?}", attribute);
+                for split in split(token_stream.trees(), TokenKind::Comma) {
+                    // println!("{:#?}", split);
+                    self.streams.0.push(split);
+                }
+
             }
         }
     }
@@ -107,17 +130,29 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
                 // generate static set of possible constraints
                 let gen_constraints = generate_possible_expected_constraints(v);
 
-                // assert the following checks:
-                for (one, reflexive) in gen_constraints {
-                    if !(self.streams.contains(one) || self.streams.contains(reflexive)) {
-                        //     span_lint_and_help(
-                        //         cx,
-                        //         DUPLICATE_MUTABLE_ACCOUNTS,
-                        //         v[0].1,
-                        //         "identical account types",
-                        //         Some(v[1].1),
-                        //         &format!("add an anchor key check constraint: #[account(constraint = {}.key() != {}.key())]", v[0].0, v[1].0)
-                        //     );
+                for ((one, symmetric), symbols) in gen_constraints {
+                    // println!("{:#?}\n {:#?}", one, symmetric);
+                    if !(self.streams.contains(one) || self.streams.contains(symmetric)) {
+                        println!("lint for {} {}", symbols.0, symbols.1);
+
+                        // stupid way to get spans for offending types
+                        let mut spans: Vec<Span> = Vec::new();
+                        for (sym, span) in v {
+                            if &symbols.0 == sym || &symbols.1 == sym {
+                                spans.push(span.clone());
+                            }
+                        }
+
+                        // TODO: for some reason, will only print out 2 messages, not 3
+                        // println!("{:?}", spans);
+                        span_lint_and_help(
+                            cx,
+                            DUPLICATE_MUTABLE_ACCOUNTS,
+                            spans[0],
+                            "identical account types without a key check constraint",
+                            Some(spans[1]),
+                            &format!("add an anchor key check constraint: #[account(constraint = {}.key() != {}.key())]", symbols.0, symbols.1)
+                        );
                     }
                 }
             }
@@ -141,8 +176,29 @@ fn get_anchor_account_type(segment: &PathSegment<'_>) -> Option<DefId> {
     }
 }
 
+// collect elements into a TokenStream until encounter delim then stop collecting. create a new vec.
+// continue until reaching end of stream
+fn split(stream: CursorRef, delimiter: TokenKind) -> Vec<TokenStream> {
+    let mut split_streams: Vec<TokenStream> = Vec::new();
+    let mut temp: Vec<TreeAndSpacing> = Vec::new();
+    let delim = TokenTree::Token(Token::new(delimiter, DUMMY_SP));
+
+    stream.for_each(|t| {
+        if t.eq_unspanned(&delim) {
+            split_streams.push(TokenStream::new(temp.clone()));
+            temp.clear();
+        } else {
+            temp.push(TreeAndSpacing::from(t.to_owned()));
+        }
+    });
+    split_streams.push(TokenStream::new(temp));
+    split_streams
+}
+
 /// Generates a static set of a possible expected key check constraints necessary for `values`.
-fn generate_possible_expected_constraints(values: &Vec<(Symbol, Span)>) -> Vec<(proc_macro2::TokenStream, proc_macro2::TokenStream)> {
+fn generate_possible_expected_constraints(
+    values: &Vec<(Symbol, Span)>,
+) -> Vec<((TokenStream, TokenStream), (Symbol, Symbol))> {
     // TODO: may start with a VecDeque in the first place?
     let mut deq = VecDeque::from(values.clone());
     let mut gen_set = Vec::new();
@@ -151,20 +207,47 @@ fn generate_possible_expected_constraints(values: &Vec<(Symbol, Span)>) -> Vec<(
         let first = deq.pop_front().unwrap().0;
         // generate stream for all other values in vec
         for (other, _) in &deq {
-            let constraint = format!("constraint = {}.key() != {}.key()", first.as_str(), other.as_str());
-            let reflexive = format!("constraint = {}.key() != {}.key()", other.as_str(), first.as_str());      
-
-            // using quote
-            // let stream = quote!(constraint = first.as_str().key() != other.as_str().key());
-
-            let stream: proc_macro2::TokenStream = constraint.parse().unwrap();
-            let reflex_stream: proc_macro2::TokenStream = reflexive.parse().unwrap();
+            let stream = create_key_check_constraint_tokenstream(&first, other);
+            let symmetric_stream = create_key_check_constraint_tokenstream(other, &first);
             // println!("{:#?}", stream);
 
-            gen_set.push((stream, reflex_stream));
+            gen_set.push(((stream, symmetric_stream), (first, other.clone())));
         }
     }
     gen_set
+}
+
+// TODO: figure out more efficient way to do this
+fn create_key_check_constraint_tokenstream(a: &Symbol, b: &Symbol) -> TokenStream {
+    let constraint = vec![
+        // TODO: test string matching by changing some string
+        TreeAndSpacing::from(create_token("constraint")),
+        TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Eq, DUMMY_SP))),
+        TreeAndSpacing::from(create_token(a.as_str())),
+        TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Dot, DUMMY_SP))),
+        TreeAndSpacing::from(create_token("key")),
+        TreeAndSpacing::from(TokenTree::Delimited(
+            DelimSpan::dummy(),
+            Delimiter::Parenthesis,
+            TokenStream::new(vec![]),
+        )),
+        TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Ne, DUMMY_SP))),
+        TreeAndSpacing::from(create_token(b.as_str())),
+        TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Dot, DUMMY_SP))),
+        TreeAndSpacing::from(create_token("key")),
+        TreeAndSpacing::from(TokenTree::Delimited(
+            DelimSpan::dummy(),
+            Delimiter::Parenthesis,
+            TokenStream::new(vec![]),
+        )),
+    ];
+
+    TokenStream::new(constraint)
+}
+
+fn create_token(s: &str) -> TokenTree {
+    let ident = Ident::from_str(s);
+    TokenTree::Token(Token::from_ast_ident(ident))
 }
 
 #[derive(Debug, Default)]
@@ -172,7 +255,7 @@ pub struct Streams(Vec<TokenStream>);
 
 impl Streams {
     fn contains(&self, other: TokenStream) -> bool {
-        self.0.iter().any(|stream| stream == &other)
+        self.0.iter().any(|stream| stream.eq_unspanned(&other))
     }
 }
 
@@ -190,27 +273,3 @@ fn insecure_2() {
 fn secure() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
 }
-
-// fn has_satisfying_stream(streams: &Vec<Stream>, field_names: &Vec<(Symbol, Span)>) -> bool {
-//     for stream in streams {
-//         if stream.contains(TokenKind::Ne)
-//             && field_names
-//                 .iter()
-//                 // TODO: if true, will not match. figure out what the bool signifies
-//                 .all(|(sym, _)| stream.contains(TokenKind::Ident(*sym, false)))
-//         {
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-
-// Generates a TokenStream that matches `constraint = a.key() != b.key()` and its reflexive
-// fn generate_key_check_constraint(a: Symbol, b: Symbol) -> (TokenStream, TokenStream) {
-//     let mut tree_and_spacing = vec![];
-//     // create token
-//     let tree = TokenTree::token(TokenKind::Ident(Symbol::intern("constraint"), false), span); // TODO: generate span somehow
-//     tree_and_spacing.push(TreeAndSpacing::from(tree));
-
-//     TokenStream::new(tree_and_spacing)
-// }

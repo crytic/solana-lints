@@ -22,9 +22,8 @@ pub mod duplicate_mutable_accounts_insecure {
 
 #[derive(Accounts)]
 pub struct Update<'info> {
-    #[account(constraint = user_a.key() != user_b.key())]
+    #[account(constraint = user_a.key() != user_b.key(), constraint = user_b.key() != user_c.key())]
     user_a: Account<'info, User>,
-    #[account(constraint = user_c.key() != user_b.key())]
     user_b: Account<'info, User>,
     user_c: Account<'info, User>,
 }
