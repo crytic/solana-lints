@@ -93,17 +93,17 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
 
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
         // println!("{:#?}", self);
-        for (_, v) in self.accounts.iter() {
+        for v in self.accounts.values() {
             if v.len() > 1 {
                 let gen_constraints = generate_possible_expected_constraints(v);
 
                 for ((one, symmetric), symbols) in gen_constraints {
-                    if !(self.streams.contains(one) || self.streams.contains(symmetric)) {
+                    if !(self.streams.contains(&one) || self.streams.contains(&symmetric)) {
                         // get spans for offending types
                         let mut spans: Vec<Span> = Vec::new();
                         for (sym, span) in v {
                             if &symbols.0 == sym || &symbols.1 == sym {
-                                spans.push(span.clone());
+                                spans.push(*span);
                             }
                         }
 
@@ -129,7 +129,7 @@ fn get_anchor_account_type_def_id(field: &FieldDef) -> Option<DefId> {
     if_chain! {
         if let TyKind::Path(qpath) = &field.ty.kind;
         if let QPath::Resolved(_, path) = qpath;
-        if path.segments.len() > 0;
+        if !path.segments.is_empty();
         if let Some(generic_args) = path.segments[0].args;
         if generic_args.args.len() == ANCHOR_ACCOUNT_GENERIC_ARG_COUNT;
         if let GenericArg::Type(hir_ty) = &generic_args.args[1];
@@ -166,7 +166,7 @@ fn split(stream: CursorRef, delimiter: TokenKind) -> Vec<TokenStream> {
             split_streams.push(TokenStream::new(temp.clone()));
             temp.clear();
         } else {
-            temp.push(TreeAndSpacing::from(t.to_owned()));
+            temp.push(TreeAndSpacing::from(t.clone()));
         }
     });
     split_streams.push(TokenStream::new(temp));
@@ -181,25 +181,25 @@ fn split(stream: CursorRef, delimiter: TokenKind) -> Vec<TokenStream> {
 /// symmetric value, e.g., `a!=b` and `b!=a`. The second field of the tuple is a tuple of symbols, which
 /// represent the identifiers being compared. Following the previous example, this would be `(a, b)`.
 fn generate_possible_expected_constraints(
-    identical_types: &Vec<(Symbol, Span)>,
+    identical_types: &[(Symbol, Span)],
 ) -> Vec<((TokenStream, TokenStream), (Symbol, Symbol))> {
-    let mut deq = VecDeque::from(identical_types.clone());
+    let mut deq = VecDeque::from(identical_types.to_owned());
     let mut gen_set = Vec::new();
 
     for _ in 0..deq.len() - 1 {
         let first = deq.pop_front().unwrap().0;
         // generate stream for all other values in vec
         for (other, _) in &deq {
-            let stream = create_key_check_constraint_tokenstream(&first, other);
-            let symmetric_stream = create_key_check_constraint_tokenstream(other, &first);
-            gen_set.push(((stream, symmetric_stream), (first, other.clone())));
+            let stream = create_key_check_constraint_tokenstream(first, *other);
+            let symmetric_stream = create_key_check_constraint_tokenstream(*other, first);
+            gen_set.push(((stream, symmetric_stream), (first, *other)));
         }
     }
     gen_set
 }
 
 /// Returns a `TokenStream` of form: constraint = `a`.key() != `b`.key().
-fn create_key_check_constraint_tokenstream(a: &Symbol, b: &Symbol) -> TokenStream {
+fn create_key_check_constraint_tokenstream(a: Symbol, b: Symbol) -> TokenStream {
     // TODO: may be more efficient way to do this, since the stream is effectively fixed
     // and determined. Only two tokens are variable.
     let constraint = vec![
@@ -239,8 +239,8 @@ pub struct Streams(Vec<TokenStream>);
 impl Streams {
     /// Returns true if `self` contains `other`, by comparing if there is an
     /// identical `TokenStream` in `self` regardless of span.
-    fn contains(&self, other: TokenStream) -> bool {
-        self.0.iter().any(|stream| stream.eq_unspanned(&other))
+    fn contains(&self, other: &TokenStream) -> bool {
+        self.0.iter().any(|stream| stream.eq_unspanned(other))
     }
 }
 
@@ -257,4 +257,14 @@ fn insecure_2() {
 #[test]
 fn secure() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
+}
+
+#[test]
+fn recommended() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
+}
+
+#[test]
+fn recommended_2() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended-2");
 }
