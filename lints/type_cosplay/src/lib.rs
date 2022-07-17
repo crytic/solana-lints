@@ -94,6 +94,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
 
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
         // NOTE: the case where len == 0 does nothing, since no types are deserialized
+        #[allow(clippy::comparison_chain)]
         if self.deser_types.len() == 1 {
             let (k, v) = self.deser_types.iter().next().unwrap();
             match k {
@@ -113,7 +114,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                 "Deserializing from different ADT types.",
                 Some(spans[1]),
                 "help: deserialize from only structs with a discriminant, or an enum encapsulating all structs."
-            )
+            );
         }
     }
 }
