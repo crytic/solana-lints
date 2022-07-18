@@ -1,22 +1,16 @@
 diff -r ./insecure/Cargo.toml ../../../../lints/type_cosplay/ui/insecure/Cargo.toml
-4c4
-< description = "Created with Anchor"
----
-> description = "single deserialized type; is not enum; no discriminant"
 19c19
 < anchor-lang = "0.20.1"
 ---
 > anchor-lang = "0.24.2"
 diff -r ./insecure/src/lib.rs ../../../../lints/type_cosplay/ui/insecure/src/lib.rs
-5a6
-> // single deserialized type; is not enum; no discriminant
-10c11,13
+10c10,12
 <     pub fn update_user(ctx: Context<UpdateUser>) -> ProgramResult {
 ---
 >     pub fn update_user(
 >         ctx: Context<UpdateUser>,
 >     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-37a41,42
+37a40,41
 > 
 > fn main() {}
 Only in ../../../../lints/type_cosplay/ui/insecure/src: lib.stderr
@@ -32,6 +26,7 @@ diff -r ./recommended/src/lib.rs ../../../../lints/type_cosplay/ui/recommended/s
 31a34,35
 > 
 > fn main() {}
+Only in ../../../../lints/type_cosplay/ui/recommended/src: lib.stderr
 diff -r ./secure/src/lib.rs ../../../../lints/type_cosplay/ui/secure/src/lib.rs
 10c10,12
 <     pub fn update_user(ctx: Context<UpdateUser>) -> ProgramResult {
@@ -43,3 +38,4 @@ diff -r ./secure/src/lib.rs ../../../../lints/type_cosplay/ui/secure/src/lib.rs
 > 
 > fn main() {}
 Only in ../../../../lints/type_cosplay/ui/secure/src: lib.stderr
+Only in ../../../../lints/type_cosplay/ui: secure-2
