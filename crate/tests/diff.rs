@@ -28,6 +28,10 @@ const DIFFS: &[Diff] = &[
         solana_lint: "type_cosplay",
     },
     Diff {
+        sealevel_attacks_programs_dir: "5-arbitrary-cpi",
+        solana_lint: "arbitrary_cpi",
+    },
+    Diff {
         sealevel_attacks_programs_dir: "9-closing-accounts",
         solana_lint: "insecure_account_close",
     },

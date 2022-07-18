@@ -1,0 +1,51 @@
+diff -r ./insecure/Cargo.toml ../../../../lints/arbitrary_cpi/ui/insecure/Cargo.toml
+21c21
+< spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
+\ No newline at end of file
+---
+> spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
+diff -r ./insecure/src/lib.rs ../../../../lints/arbitrary_cpi/ui/insecure/src/lib.rs
+0a1,2
+> use crate::solana_program::entrypoint::ProgramResult;
+> use crate::solana_program::instruction::Instruction;
+10a13,17
+>         let ins = Instruction {
+>             program_id: *ctx.accounts.token_program.key,
+>             accounts: vec![],
+>             data: vec![],
+>         };
+12,19c19
+<             &spl_token::instruction::transfer(
+<                 ctx.accounts.token_program.key,
+<                 ctx.accounts.source.key,
+<                 ctx.accounts.destination.key,
+<                 ctx.accounts.authority.key,
+<                 &[],
+<                 amount,
+<             )?,
+---
+>             &ins,
+35a36,37
+> 
+> fn main() {}
+Only in ../../../../lints/arbitrary_cpi/ui/insecure/src: lib.stderr
+diff -r ./recommended/Cargo.toml ../../../../lints/arbitrary_cpi/ui/recommended/Cargo.toml
+21c21
+< spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
+\ No newline at end of file
+---
+> spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
+diff -r ./recommended/src/lib.rs ../../../../lints/arbitrary_cpi/ui/recommended/src/lib.rs
+10c10
+<     pub fn cpi(ctx: Context<Cpi>, amount: u64) -> ProgramResult {
+---
+>     pub fn cpi(ctx: Context<Cpi>, amount: u64) -> Result<()> {
+33a34,35
+> 
+> fn main() {}
+diff -r ./secure/src/lib.rs ../../../../lints/arbitrary_cpi/ui/secure/src/lib.rs
+0a1
+> use crate::solana_program::entrypoint::ProgramResult;
+38a40,41
+> 
+> fn main() {}
