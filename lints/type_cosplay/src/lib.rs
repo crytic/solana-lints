@@ -113,7 +113,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                 spans[0],
                 "Deserializing from different ADT types.",
                 Some(spans[1]),
-                "help: deserialize from only structs with a discriminant, or an enum encapsulating all structs."
+                "deserialize from only structs with a discriminant, or an enum encapsulating all structs."
             );
         }
     }
@@ -150,9 +150,9 @@ fn check_enums(cx: &LateContext<'_>, enums: &Vec<(DefId, Span)>) {
             cx,
             TYPE_COSPLAY,
             first_span,
-            "warning: multiple enum types deserialized. Should only have one enum type to avoid possible equivalent types",
+            "multiple enum types deserialized. Should only have one enum type to avoid possible equivalent types",
             Some(second_span),
-            "help: consider constructing a single enum that contains all type definitions as variants"
+            "consider constructing a single enum that contains all type definitions as variants"
         );
     } else if enums.len() == 1 {
         // future check - check that single enum is safe
@@ -185,16 +185,16 @@ fn has_discriminant(cx: &LateContext, adt: AdtDef, num_struct_types: usize, span
                 cx,
                 TYPE_COSPLAY,
                 span,
-                "warning: type does not have a proper discriminant. It may be indistinguishable when deserialized.",
+                "type does not have a proper discriminant. It may be indistinguishable when deserialized.",
                 None,
-                "help: add an enum with at least as many variants as there are struct definitions"
+                "add an enum with at least as many variants as there are struct definitions"
             )
         }
     }
 }
 
 #[test]
-fn insecure_1() {
+fn insecure() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
 }
 
