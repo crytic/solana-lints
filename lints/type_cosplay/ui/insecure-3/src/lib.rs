@@ -3,7 +3,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
-// This example is insecure because AnotherDiscriminant could be deserialized as a
+// This example is insecure because AccountWithDiscriminant could be deserialized as a
 // User, if the variant is Extra(Extra). The first byte would be 0, to indicate the discriminant
 // in both cases, and the next 32 bytes would be the pubkey.
 #[program]
@@ -60,7 +60,7 @@ pub enum AccountDiscriminant {
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]
-pub enum Instruction {
+pub enum AccountWithDiscriminant {
     Extra(Extra),
     Metadata,
 }
