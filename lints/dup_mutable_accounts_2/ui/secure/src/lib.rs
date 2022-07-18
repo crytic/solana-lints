@@ -14,6 +14,11 @@ pub mod duplicate_mutable_accounts_secure {
         if ctx.accounts.user_a.key() == ctx.accounts.user_b.key() {
             return Err(ProgramError::InvalidArgument);
         }
+
+        // if ctx.accounts.user_a.key() != ctx.accounts.user_b.key() {
+        //     // do program stuff
+        // }
+
         let user_a = &mut ctx.accounts.user_a;
         let user_b = &mut ctx.accounts.user_b;
 
