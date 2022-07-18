@@ -115,41 +115,101 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
                     }
                 }
             }
+        } else {
+            // perform alternate constraint check, e.g., check fn bodies, then check key checks
+            self.check_fn()
+        }
+
+        // TODO: how to enforce that this is only called when necessary?
+        fn check_fn(
+            &mut self,
+            cx: &LateContext<'tcx>,
+            _: FnKind<'tcx>,
+            _: &'tcx FnDecl<'tcx>,
+            body: &'tcx Body<'tcx>,
+            span: Span,
+            _: HirId,
+        ) {
+            if !span.from_expansion() {
+                let accounts = get_referenced_accounts(cx, body);
+                
+                accounts.values().for_each(|exprs| {
+                    // TODO: figure out handling of >2 accounts
+                    match exprs.len() {
+                        2 => {
+                            let first = exprs[0];
+                            let second = exprs[1];
+                            if !contains_key_call(cx, body, first) {
+                                span_lint_and_help(
+                                    cx,
+                                    DUP_MUTABLE_ACCOUNTS_2,
+                                    first.span,
+                                    "this expression does not have a key check but has the same account type as another expression",
+                                    Some(second.span),
+                                    "add a key check to make sure the accounts have different keys, e.g., x.key() != y.key()",
+                                );
+                            }
+                            if !contains_key_call(cx, body, second) {
+                                span_lint_and_help(
+                                    cx,
+                                    DUP_MUTABLE_ACCOUNTS_2,
+                                    second.span,
+                                    "this expression does not have a key check but has the same account type as another expression",
+                                    Some(first.span),
+                                    "add a key check to make sure the accounts have different keys, e.g., x.key() != y.key()",
+                                );
+                            }
+                        },
+                        n if n > 2 => {
+                            span_lint_and_note(
+                                cx,
+                                DUP_MUTABLE_ACCOUNTS_2,
+                                exprs[0].span,
+                                &format!("the following expression has the same account type as {} other accounts", exprs.len()),
+                                None,
+                                "might not check that each account has a unique key"
+                            )
+                        },
+                        _ => {}
+                    }
+                });
+            }
         }
     }
 }
 
-/// Returns the `DefId` of the anchor account type, ie, `T` in `Account<'info, T>`.
-/// Returns `None` if the type of `field` is not an anchor account.
-fn get_anchor_account_type_def_id(field: &FieldDef) -> Option<DefId> {
-    if_chain! {
-        if let TyKind::Path(qpath) = &field.ty.kind;
-        if let QPath::Resolved(_, path) = qpath;
-        if !path.segments.is_empty();
-        if let Some(generic_args) = path.segments[0].args;
-        if generic_args.args.len() == ANCHOR_ACCOUNT_GENERIC_ARG_COUNT;
-        if let GenericArg::Type(hir_ty) = &generic_args.args[1];
-        then {
-            get_def_id(hir_ty)
-        } else {
-            None
+mod anchor_constraint_check {
+    /// Returns the `DefId` of the anchor account type, ie, `T` in `Account<'info, T>`.
+    /// Returns `None` if the type of `field` is not an anchor account.
+    fn get_anchor_account_type_def_id(field: &FieldDef) -> Option<DefId> {
+        if_chain! {
+            if let TyKind::Path(qpath) = &field.ty.kind;
+            if let QPath::Resolved(_, path) = qpath;
+            if !path.segments.is_empty();
+            if let Some(generic_args) = path.segments[0].args;
+            if generic_args.args.len() == ANCHOR_ACCOUNT_GENERIC_ARG_COUNT;
+            if let GenericArg::Type(hir_ty) = &generic_args.args[1];
+            then {
+                get_def_id(hir_ty)
+            } else {
+                None
+            }
         }
     }
-}
 
-/// Returns the `DefId` of `ty`, an hir type. Returns `None` if cannot resolve type.
-fn get_def_id(ty: &rustc_hir::Ty) -> Option<DefId> {
-    if_chain! {
-        if let TyKind::Path(qpath) = &ty.kind;
-        if let QPath::Resolved(_, path) = qpath;
-        if let Res::Def(_, def_id) = path.res;
-        then {
-            Some(def_id)
-        } else {
-            None
+    /// Returns the `DefId` of `ty`, an hir type. Returns `None` if cannot resolve type.
+    fn get_def_id(ty: &rustc_hir::Ty) -> Option<DefId> {
+        if_chain! {
+            if let TyKind::Path(qpath) = &ty.kind;
+            if let QPath::Resolved(_, path) = qpath;
+            if let Res::Def(_, def_id) = path.res;
+            then {
+                Some(def_id)
+            } else {
+                None
+            }
         }
     }
-}
 
 /// Returns a `TokenStream` of form: `a`.key() != `b`.key().
 fn create_key_check_constraint_tokenstream(a: Symbol, b: Symbol) -> TokenStream {
@@ -175,17 +235,27 @@ fn create_key_check_constraint_tokenstream(a: Symbol, b: Symbol) -> TokenStream 
         )),
     ];
 
-    TokenStream::new(constraint)
+        TokenStream::new(constraint)
+    }
+
+    /// Returns a `TokenTree::Token` which has `TokenKind::Ident`, with the string set to `s`.
+    fn create_token_from_ident(s: &str) -> TokenTree {
+        let ident = Ident::from_str(s);
+        TokenTree::Token(Token::from_ast_ident(ident))
+    }
+
+    #[derive(Debug, Default)]
+    pub struct Streams(Vec<TokenStream>);
+
+    impl Streams {
+        /// Returns true if `self` contains `other`, by comparing if there is an
+        /// identical `TokenStream` in `self` regardless of span.
+        fn contains(&self, other: &TokenStream) -> bool {
+            self.0.iter().any(|stream| stream.eq_unspanned(other))
+        }
+    }
 }
 
-/// Returns a `TokenTree::Token` which has `TokenKind::Ident`, with the string set to `s`.
-fn create_token_from_ident(s: &str) -> TokenTree {
-    let ident = Ident::from_str(s);
-    TokenTree::Token(Token::from_ast_ident(ident))
-}
-
-#[derive(Debug, Default)]
-pub struct Streams(Vec<TokenStream>);
 
 impl Streams {
     /// Returns true if `self` has a TokenStream that `other` is a substream of
@@ -221,6 +291,98 @@ impl Streams {
         false
     }
 }
+
+mod alternate_constraint_check {
+    struct AccountUses<'cx, 'tcx> {
+        cx: &'cx LateContext<'tcx>,
+        uses: HashMap<DefId, Vec<&'tcx Expr<'tcx>>>,
+    }
+    
+    fn get_referenced_accounts<'tcx>(
+        cx: &LateContext<'tcx>,
+        body: &'tcx Body<'tcx>,
+    ) -> HashMap<DefId, Vec<&'tcx Expr<'tcx>>> {
+        let mut accounts = AccountUses {
+            cx,
+            uses: HashMap::new(),
+        };
+    
+        accounts.visit_expr(&body.value);
+        accounts.uses
+    }
+    
+    impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
+        fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
+            if_chain! {
+                // get mutable reference expressions
+                if let ExprKind::AddrOf(_, mutability, mut_expr) = expr.kind;
+                if let Mutability::Mut = mutability;
+                // check type of expr == Account<'info, T>
+                let middle_ty = self.cx.typeck_results().expr_ty(mut_expr);
+                if match_type(self.cx, middle_ty, &paths::ANCHOR_ACCOUNT);
+                // grab T generic parameter
+                if let TyKind::Adt(_adt_def, substs) = middle_ty.kind();
+                if substs.len() == ANCHOR_ACCOUNT_GENERIC_ARG_COUNT;
+                let account_type = substs[1].expect_ty(); // TODO: could just store middle::Ty instead of DefId?
+                if let Some(adt_def) = account_type.ty_adt_def();
+                then {
+                    let def_id = adt_def.did();
+                    if let Some(exprs) = self.uses.get_mut(&def_id) {
+                        let mut spanless_eq = SpanlessEq::new(self.cx);
+                        // check that expr is not a duplicate within its particular key-pair
+                        if exprs.iter().all(|e| !spanless_eq.eq_expr(e, mut_expr)) {
+                            exprs.push(mut_expr);
+                        }
+                    } else {
+                        self.uses.insert(def_id, vec![mut_expr]);
+                    }
+                }
+            }
+            walk_expr(self, expr);
+        }
+    }
+    
+    /// Performs a walk on `body`, checking whether there exists an expression that contains
+    /// a `key()` method call on `account_expr`.
+    fn contains_key_call<'tcx>(
+        cx: &LateContext<'tcx>,
+        body: &'tcx Body<'tcx>,
+        account_expr: &Expr<'tcx>,
+    ) -> bool {
+        visit_expr_no_bodies(&body.value, |expr| {
+            if_chain! {
+                if let ExprKind::MethodCall(path_seg, exprs, _span) = expr.kind;
+                if path_seg.ident.name.as_str() == "key";
+                if !exprs.is_empty();
+                let mut spanless_eq = SpanlessEq::new(cx);
+                if spanless_eq.eq_expr(&exprs[0], account_expr);
+                then {
+                    true
+                } else {
+                    false
+                }
+            }
+        })
+    }
+}
+
+// /// Splits `stream` into a vector of substreams, separated by `delimiter`.
+// fn split(stream: CursorRef, delimiter: TokenKind) -> Vec<TokenStream> {
+//     let mut split_streams: Vec<TokenStream> = Vec::new();
+//     let mut temp: Vec<TreeAndSpacing> = Vec::new();
+//     let delim = TokenTree::Token(Token::new(delimiter, DUMMY_SP));
+
+//     stream.for_each(|t| {
+//         if t.eq_unspanned(&delim) {
+//             split_streams.push(TokenStream::new(temp.clone()));
+//             temp.clear();
+//         } else {
+//             temp.push(TreeAndSpacing::from(t.clone()));
+//         }
+//     });
+//     split_streams.push(TokenStream::new(temp));
+//     split_streams
+// }
 
 #[test]
 fn insecure() {
