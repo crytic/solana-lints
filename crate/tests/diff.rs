@@ -1,3 +1,10 @@
+// smoelius: The purpose of this test is to check the differences between each lint's ui tests and
+// their corresponding subdirectory of:
+//   https://github.com/coral-xyz/sealevel-attacks/tree/master/programs
+// Ideally, those changes should be small.
+//   The changes to a lint's ui tests are stored in a file in the `diffs` subdirectory. If any
+// lint's actual changes differ from the changes reflected in the lint's diff file, the test fails.
+
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::{fs::read_to_string, path::Path};
