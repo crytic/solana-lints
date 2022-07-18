@@ -1,14 +1,14 @@
 #![feature(rustc_private)]
 #![warn(unused_extern_crates)]
 
+extern crate rustc_data_structures;
 extern crate rustc_hir;
 extern crate rustc_index;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use std::collections::HashMap;
-
 use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::match_type};
+use rustc_data_structures::fx::FxHashMap;
 use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
 use rustc_index::vec::Idx;
 use rustc_lint::{LateContext, LateLintPass};
@@ -58,7 +58,7 @@ dylint_linting::impl_late_lint! {
 
 #[derive(Default)]
 struct TypeCosplay {
-    deser_types: HashMap<AdtKind, Vec<(DefId, Span)>>,
+    deser_types: FxHashMap<AdtKind, Vec<(DefId, Span)>>,
 }
 
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
