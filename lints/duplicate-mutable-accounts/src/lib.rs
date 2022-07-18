@@ -95,27 +95,27 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
         // println!("{:#?}", self);
         for v in self.accounts.values() {
             if v.len() > 1 {
-                let gen_constraints = generate_possible_expected_constraints(v);
+                let mut deq = VecDeque::from(v.to_owned());
+                for _ in 0..deq.len() - 1 {
+                    let (first, first_span) = deq.pop_front().unwrap();
+                    for (other, other_span) in &deq {
+                        let stream = create_key_check_constraint_tokenstream(first, *other);
+                        let symmetric_stream =
+                            create_key_check_constraint_tokenstream(*other, first);
 
-                for ((one, symmetric), symbols) in gen_constraints {
-                    if !(self.streams.contains(&one) || self.streams.contains(&symmetric)) {
-                        // get spans for offending types
-                        let mut spans: Vec<Span> = Vec::new();
-                        for (sym, span) in v {
-                            if &symbols.0 == sym || &symbols.1 == sym {
-                                spans.push(*span);
-                            }
+                        if !(self.streams.contains(&stream)
+                            || self.streams.contains(&symmetric_stream))
+                        {
+                            // NOTE: for some reason, will only print out 2 messages, not 3
+                            span_lint_and_help(
+                                cx,
+                                DUPLICATE_MUTABLE_ACCOUNTS,
+                                first_span,
+                                "identical account types without a key check constraint",
+                                Some(*other_span),
+                                &format!("add an anchor key check constraint: #[account(constraint = {}.key() != {}.key())]", first, other)
+                            );
                         }
-
-                        // TODO: for some reason, will only print out 2 messages, not 3
-                        span_lint_and_help(
-                            cx,
-                            DUPLICATE_MUTABLE_ACCOUNTS,
-                            spans[0],
-                            "identical account types without a key check constraint",
-                            Some(spans[1]),
-                            &format!("add an anchor key check constraint: #[account(constraint = {}.key() != {}.key())]", symbols.0, symbols.1)
-                        );
                     }
                 }
             }
@@ -171,31 +171,6 @@ fn split(stream: CursorRef, delimiter: TokenKind) -> Vec<TokenStream> {
     });
     split_streams.push(TokenStream::new(temp));
     split_streams
-}
-
-/// Generates a static set of possible expected key check constraints necessary for `identical_types`.
-/// `identical_types` is a set of identical types that must have a key check constraint. A vector of tuples
-/// is returned, where each element represents a particular constraint.
-///
-/// Specifically, the first field of the tuple is a tuple of `TokenStream`s, which represent the constraint and its
-/// symmetric value, e.g., `a!=b` and `b!=a`. The second field of the tuple is a tuple of symbols, which
-/// represent the identifiers being compared. Following the previous example, this would be `(a, b)`.
-fn generate_possible_expected_constraints(
-    identical_types: &[(Symbol, Span)],
-) -> Vec<((TokenStream, TokenStream), (Symbol, Symbol))> {
-    let mut deq = VecDeque::from(identical_types.to_owned());
-    let mut gen_set = Vec::new();
-
-    for _ in 0..deq.len() - 1 {
-        let first = deq.pop_front().unwrap().0;
-        // generate stream for all other values in vec
-        for (other, _) in &deq {
-            let stream = create_key_check_constraint_tokenstream(first, *other);
-            let symmetric_stream = create_key_check_constraint_tokenstream(*other, first);
-            gen_set.push(((stream, symmetric_stream), (first, *other)));
-        }
-    }
-    gen_set
 }
 
 /// Returns a `TokenStream` of form: constraint = `a`.key() != `b`.key().
