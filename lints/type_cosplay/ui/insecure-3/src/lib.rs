@@ -25,7 +25,8 @@ pub mod type_cosplay_secure {
         }
         msg!("GM {}", user.authority);
 
-        let extra = Instruction::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
+        let _extra =
+            AccountWithDiscriminant::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
         Ok(())
     }
 }

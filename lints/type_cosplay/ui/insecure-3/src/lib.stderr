@@ -5,11 +5,11 @@ LL |         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).u
    |                    ^^^^
    |
    = note: `-D type-cosplay` implied by `-D warnings`
-help: help: deserialize from only structs with a discriminant, or an enum encapsulating all structs.
-  --> $DIR/lib.rs:28:21
+help: deserialize from only structs with a discriminant, or an enum encapsulating all structs.
+  --> $DIR/lib.rs:29:13
    |
-LL |         let extra = Instruction::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
-   |                     ^^^^^^^^^^^
+LL |             AccountWithDiscriminant::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
+   |             ^^^^^^^^^^^^^^^^^^^^^^^
 
 error: aborting due to previous error
 
