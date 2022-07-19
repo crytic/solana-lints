@@ -83,10 +83,6 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
             if name.as_str() == "account";
             if let MacArgs::Delimited(_, _, token_stream) = &attr_item.args;
             then {
-                // Parse each constraint as a separate TokenStream
-                // for delimited_stream in split(token_stream.trees(), TokenKind::Comma) {
-                //     self.streams.0.push(delimited_stream);
-                // }
                 self.streams.0.push(token_stream.clone());
             }
         }
@@ -107,13 +103,11 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
                         if !(self.streams.contains(&stream)
                             || self.streams.contains(&symmetric_stream))
                         {
-                            // NOTE: for some reason, will only print out 2 messages, not 3
-                            // println!("spanning lint");
                             span_lint_and_help(
                                 cx,
                                 DUPLICATE_MUTABLE_ACCOUNTS,
                                 first_span,
-                                "identical account types without a key check constraint",
+                                &format!("{} and {} have identical account types but do not have a key check constraint", first, other),
                                 Some(*other_span),
                                 &format!("add an anchor key check constraint: #[account(constraint = {}.key() != {}.key())]", first, other)
                             );
@@ -212,7 +206,6 @@ impl Streams {
             for (j, other_token) in other.trees().enumerate() {
                 match stream.trees().nth(i + j) {
                     Some(token_tree) => {
-                        // println!("Comparing {:#?} with {:#?}", token_tree, other_tokens[j]);
                         if !token_tree.eq_unspanned(other_token) {
                             break;
                         }
@@ -228,24 +221,6 @@ impl Streams {
         false
     }
 }
-
-// /// Splits `stream` into a vector of substreams, separated by `delimiter`.
-// fn split(stream: CursorRef, delimiter: TokenKind) -> Vec<TokenStream> {
-//     let mut split_streams: Vec<TokenStream> = Vec::new();
-//     let mut temp: Vec<TreeAndSpacing> = Vec::new();
-//     let delim = TokenTree::Token(Token::new(delimiter, DUMMY_SP));
-
-//     stream.for_each(|t| {
-//         if t.eq_unspanned(&delim) {
-//             split_streams.push(TokenStream::new(temp.clone()));
-//             temp.clear();
-//         } else {
-//             temp.push(TreeAndSpacing::from(t.clone()));
-//         }
-//     });
-//     split_streams.push(TokenStream::new(temp));
-//     split_streams
-// }
 
 #[test]
 fn insecure() {

@@ -1,4 +1,4 @@
-error: identical account types without a key check constraint
+error: user_a and user_b have identical account types but do not have a key check constraint
   --> $DIR/lib.rs:25:5
    |
 LL |     user_a: Account<'info, User>,
