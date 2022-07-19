@@ -2,7 +2,7 @@
 
 **What it does:** Checks to make sure there is a key check on identical Anchor accounts.
 The key check serves to make sure that two identical accounts do not have the same key,
-ie, they are unique. An Anchor account (`Account<'info, T>`) is identical to another if 
+ie, they are unique. An Anchor account (`Account<'info, T>`) is identical to another if
 the generic parameter `T` is the same type for each account.
 
 **Why is this bad?** If a program contains two identical, mutable Anchor accounts, and
