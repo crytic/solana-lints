@@ -9,8 +9,10 @@ extern crate rustc_span;
 mod alternate_constraint;
 mod anchor_constraint;
 
-use crate::alternate_constraint::*;
-use crate::anchor_constraint::*;
+use crate::alternate_constraint::Values;
+use crate::anchor_constraint::{
+    create_key_check_constraint_tokenstream, get_anchor_account_type_def_id, get_def_id, Streams,
+};
 
 use std::collections::{HashMap, VecDeque};
 use std::default::Default;
@@ -148,10 +150,23 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
 
     fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
         // if collected some anchor macro constraints then perform v1 lint
-        if !self.streams.0.is_empty() {
+        if self.streams.0.is_empty() {
+            // TODO: Not a fan of having it span lints for this check when there are no checks whatsoever.
+            // I'd rather have it span lints to recommended anchor macros, if no checks are found at all
+            for (first, second) in &self.spans {
+                span_lint_and_help(
+                    cx,
+                    DUPLICATE_MUTABLE_ACCOUNTS,
+                    *first,
+                    &format!("the expressions on line {:?} and {:?} have identical Account types, yet do not contain a proper key check.", first, second),
+                    Some(*second),
+                    "add a key check to make sure the accounts have different keys, e.g., x.key() != y.key()",
+                );
+            }
+        } else {
             for v in self.accounts.values() {
                 if v.len() > 1 {
-                    let mut deq = VecDeque::from(v.to_owned());
+                    let mut deq = VecDeque::from(v.clone());
                     for _ in 0..deq.len() - 1 {
                         let (first, first_span) = deq.pop_front().unwrap();
                         for (other, other_span) in &deq {
@@ -174,19 +189,6 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
                         }
                     }
                 }
-            }
-        } else {
-            // TODO: Not a fan of having it span lints for this check when there are no checks whatsoever.
-            // I'd rather have it span lints to recommended anchor macros, if no checks are found at all
-            for (first, second) in &self.spans {
-                span_lint_and_help(
-                    cx,
-                    DUPLICATE_MUTABLE_ACCOUNTS,
-                    *first,
-                    &format!("the expressions on line {:?} and {:?} have identical Account types, yet do not contain a proper key check.", first, second),
-                    Some(*second),
-                    "add a key check to make sure the accounts have different keys, e.g., x.key() != y.key()",
-                );
             }
         }
     }

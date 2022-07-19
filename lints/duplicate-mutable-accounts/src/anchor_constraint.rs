@@ -83,7 +83,7 @@ fn create_token_from_ident(s: &str) -> TokenTree {
 pub struct Streams(pub Vec<TokenStream>);
 
 impl Streams {
-    /// Returns true if `self` has a TokenStream that `other` is a substream of
+    /// Returns true if `self` has a `TokenStream` that `other` is a substream of
     pub fn contains(&self, other: &TokenStream) -> bool {
         self.0
             .iter()
