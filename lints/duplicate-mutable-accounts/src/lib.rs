@@ -29,7 +29,7 @@ const ANCHOR_ACCOUNT_GENERIC_ARG_COUNT: usize = 2;
 dylint_linting::impl_late_lint! {
     /// **What it does:** Checks to make sure there is a key check on identical Anchor accounts.
     /// The key check serves to make sure that two identical accounts do not have the same key,
-    /// ie, they are unique. An Anchor account (`Account<'info, T>`) is identical to another if 
+    /// ie, they are unique. An Anchor account (`Account<'info, T>`) is identical to another if
     /// the generic parameter `T` is the same type for each account.
     ///
     /// **Why is this bad?** If a program contains two identical, mutable Anchor accounts, and
@@ -46,12 +46,12 @@ dylint_linting::impl_late_lint! {
     /// lint regards expressions with `==` as a secure check, since it assumes the program will
     /// then return an error (see the secure example). However, it does not explicitly check that
     /// an error is returned.
-    /// 
+    ///
     /// In general, this lint will catch all vulnerabilities if the anchor macro constraints are
     /// used (see the recommended example). It is not as robust if alternative methods are utilized.
     /// Thus it is encouraged to use the anchor `#[account]` macro constraints.
     ///
-    /// **Example:** 
+    /// **Example:**
     ///
     /// ```rust
     /// #[derive(Accounts)]
