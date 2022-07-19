@@ -1,39 +1,39 @@
-error: user_a and user_b have identical account types but do not have a key check constraint
-  --> $DIR/lib.rs:25:5
+error: the expressions on line $DIR/lib.rs:15:27: 15:46 (#0) and $DIR/lib.rs:16:27: 16:46 (#0) have identical Account types, yet do not contain a proper key check.
+  --> $DIR/lib.rs:15:27
    |
-LL |     user_a: Account<'info, User>,
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL |         let user_a = &mut ctx.accounts.user_a;
+   |                           ^^^^^^^^^^^^^^^^^^^
    |
    = note: `-D duplicate-mutable-accounts` implied by `-D warnings`
-help: add an anchor key check constraint: #[account(constraint = user_a.key() != user_b.key())]
-  --> $DIR/lib.rs:26:5
+help: add a key check to make sure the accounts have different keys, e.g., x.key() != y.key()
+  --> $DIR/lib.rs:16:27
    |
-LL |     user_b: Account<'info, User>,
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL |         let user_b = &mut ctx.accounts.user_b;
+   |                           ^^^^^^^^^^^^^^^^^^^
 
-error: user_a and user_c have identical account types but do not have a key check constraint
-  --> $DIR/lib.rs:25:5
+error: the expressions on line $DIR/lib.rs:15:27: 15:46 (#0) and $DIR/lib.rs:17:27: 17:46 (#0) have identical Account types, yet do not contain a proper key check.
+  --> $DIR/lib.rs:15:27
    |
-LL |     user_a: Account<'info, User>,
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL |         let user_a = &mut ctx.accounts.user_a;
+   |                           ^^^^^^^^^^^^^^^^^^^
    |
-help: add an anchor key check constraint: #[account(constraint = user_a.key() != user_c.key())]
-  --> $DIR/lib.rs:27:5
+help: add a key check to make sure the accounts have different keys, e.g., x.key() != y.key()
+  --> $DIR/lib.rs:17:27
    |
-LL |     user_c: Account<'info, User>,
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL |         let user_c = &mut ctx.accounts.user_c;
+   |                           ^^^^^^^^^^^^^^^^^^^
 
-error: user_b and user_c have identical account types but do not have a key check constraint
-  --> $DIR/lib.rs:26:5
+error: the expressions on line $DIR/lib.rs:16:27: 16:46 (#0) and $DIR/lib.rs:17:27: 17:46 (#0) have identical Account types, yet do not contain a proper key check.
+  --> $DIR/lib.rs:16:27
    |
-LL |     user_b: Account<'info, User>,
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL |         let user_b = &mut ctx.accounts.user_b;
+   |                           ^^^^^^^^^^^^^^^^^^^
    |
-help: add an anchor key check constraint: #[account(constraint = user_b.key() != user_c.key())]
-  --> $DIR/lib.rs:27:5
+help: add a key check to make sure the accounts have different keys, e.g., x.key() != y.key()
+  --> $DIR/lib.rs:17:27
    |
-LL |     user_c: Account<'info, User>,
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL |         let user_c = &mut ctx.accounts.user_c;
+   |                           ^^^^^^^^^^^^^^^^^^^
 
 error: aborting due to 3 previous errors
 

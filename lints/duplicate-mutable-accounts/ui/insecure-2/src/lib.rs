@@ -10,12 +10,15 @@ pub mod duplicate_mutable_accounts_insecure {
         ctx: Context<Update>,
         a: u64,
         b: u64,
+        c: u64,
     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
         let user_a = &mut ctx.accounts.user_a;
         let user_b = &mut ctx.accounts.user_b;
+        let user_c = &mut ctx.accounts.user_c;
 
         user_a.data = a;
         user_b.data = b;
+        user_c.data = c;
         Ok(())
     }
 }
