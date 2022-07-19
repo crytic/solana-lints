@@ -337,9 +337,13 @@ impl ArbitraryCpi {
     }
 }
 
+// We do not test the sealevel-attacks 'insecure' example, because it calls
+// spl_token::instruction::transfer, which in newer versions of the crate, includes a program_id
+// check.
+
 #[test]
-fn insecure() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
+fn insecure_2() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure_2");
 }
 
 #[test]

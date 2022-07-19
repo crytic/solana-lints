@@ -1,4 +1,5 @@
 use crate::solana_program::entrypoint::ProgramResult;
+use crate::solana_program::instruction::Instruction;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
 
@@ -9,15 +10,13 @@ pub mod arbitrary_cpi_insecure {
     use super::*;
 
     pub fn cpi(ctx: Context<Cpi>, amount: u64) -> ProgramResult {
+        let ins = Instruction {
+            program_id: *ctx.accounts.token_program.key,
+            accounts: vec![],
+            data: vec![],
+        };
         solana_program::program::invoke(
-            &spl_token::instruction::transfer(
-                ctx.accounts.token_program.key,
-                ctx.accounts.source.key,
-                ctx.accounts.destination.key,
-                ctx.accounts.authority.key,
-                &[],
-                amount,
-            )?,
+            &ins,
             &[
                 ctx.accounts.source.clone(),
                 ctx.accounts.destination.clone(),
@@ -35,4 +34,4 @@ pub struct Cpi<'info> {
     token_program: AccountInfo<'info>,
 }
 
-pub fn main() {}
+fn main() {}
