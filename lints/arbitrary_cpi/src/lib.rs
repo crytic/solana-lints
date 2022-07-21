@@ -68,10 +68,9 @@ impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
     fn check_body(&mut self, cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) {
         let hir_map = cx.tcx.hir();
         let body_did = hir_map.body_owner_def_id(body.id()).to_def_id();
-        if !cx.tcx.def_kind(body_did).is_fn_like() {
+        if !cx.tcx.def_kind(body_did).is_fn_like() || !cx.tcx.is_mir_available(body_did) {
             return;
         }
-        assert!(cx.tcx.is_mir_available(body_did));
         let body_mir = cx.tcx.optimized_mir(body_did);
         let terminators = body_mir
             .basic_blocks()
@@ -80,7 +79,7 @@ impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
         for (_idx, (block_id, terminator)) in terminators.enumerate() {
             if_chain! {
                 if let t = terminator.as_ref().unwrap();
-                if let TerminatorKind::Call { func: func_operand, args, destination: _, cleanup: _, .. } = &t.kind;
+                if let TerminatorKind::Call { func: func_operand, args, .. } = &t.kind;
                 if let mir::Operand::Constant(box func) = func_operand;
                 if let TyKind::FnDef(def_id, _callee_substs) = func.literal.ty().kind();
                 then {
@@ -149,6 +148,7 @@ impl ArbitraryCpi {
                     {
                         if_chain! {
                             if let TyKind::FnDef(def_id, _callee_substs) = func.literal.ty().kind();
+                            if !args.is_empty();
                             if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = &args[0];
                             then {
                                 // in order to trace back to the call which creates the
@@ -303,14 +303,12 @@ impl ArbitraryCpi {
             // check every statement
             if_chain! {
                 if let Some(t) = &bbs[cur_block].terminator;
-                if let TerminatorKind::Call { func: func_operand, args, destination: _, cleanup: _, .. } = &t.kind;
+                if let TerminatorKind::Call { func: func_operand, args, .. } = &t.kind;
                 if let mir::Operand::Constant(box func) = func_operand;
                 if let TyKind::FnDef(def_id, _callee_substs) = func.literal.ty().kind();
                 if match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "ne"]) || match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "eq"]);
                 if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = args[0];
                 if let Operand::Copy(arg1_pl) | Operand::Move(arg1_pl) = args[1];
-                // if let Some(arg0) = arg0_pl.local_or_deref_local();
-                // if let Some(arg1) = arg1_pl.local_or_deref_local();
                 then {
                     // if either arg0 or arg1 came from one of the programid_locals, then we know
                     // this eq/ne check was operating on the program_id.
