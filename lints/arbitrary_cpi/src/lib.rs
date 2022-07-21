@@ -79,7 +79,11 @@ impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
         for (_idx, (block_id, terminator)) in terminators.enumerate() {
             if_chain! {
                 if let t = terminator.as_ref().unwrap();
-                if let TerminatorKind::Call { func: func_operand, args, .. } = &t.kind;
+                if let TerminatorKind::Call {
+                    func: func_operand,
+                    args,
+                    ..
+                } = &t.kind;
                 if let mir::Operand::Constant(box func) = func_operand;
                 if let TyKind::FnDef(def_id, _callee_substs) = func.literal.ty().kind();
                 then {
@@ -88,9 +92,18 @@ impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
                     if match_def_path(cx, callee_did, &paths::SOLANA_INVOKE) {
                         let inst_arg = &args[0];
                         if let Operand::Move(p) = inst_arg {
-                            let (is_whitelist, programid_places) = Self::find_program_id_for_instru(cx, body_mir, block_id, p);
-                            let likely_programid_locals: Vec<Local> = programid_places.iter().map(|pl| pl.local).collect();
-                            if !is_whitelist && !Self::is_programid_checked(cx, body_mir, block_id, likely_programid_locals.as_ref()) {
+                            let (is_whitelist, programid_places) =
+                                Self::find_program_id_for_instru(cx, body_mir, block_id, p);
+                            let likely_programid_locals: Vec<Local> =
+                                programid_places.iter().map(|pl| pl.local).collect();
+                            if !is_whitelist
+                                && !Self::is_programid_checked(
+                                    cx,
+                                    body_mir,
+                                    block_id,
+                                    likely_programid_locals.as_ref(),
+                                )
+                            {
                                 span_lint(
                                     cx,
                                     ARBITRARY_CPI,
@@ -159,10 +172,9 @@ impl ArbitraryCpi {
                                     let path = cx.get_def_path(*def_id);
                                     let token_path = paths::SPL_TOKEN.map(Symbol::intern);
                                     if path.iter().take(2).eq(&token_path) {
-                                        return (true, likely_program_id_aliases)
+                                        return (true, likely_program_id_aliases);
                                     }
                                 }
-
                             }
                         }
                     }
@@ -207,17 +219,22 @@ impl ArbitraryCpi {
                             if let ProjectionElem::Field(f, ty) = proj;
                             if f.index() == 0;
                             if let Some(adtdef) = ty.ty_adt_def();
-                            if match_def_path(cx, adtdef.did(), &["solana_program", "pubkey", "Pubkey"]);
+                            if match_def_path(
+                                cx,
+                                adtdef.did(),
+                                &["solana_program", "pubkey", "Pubkey"],
+                            );
                             then {
                                 // We found the field
-                                if let Rvalue::Use(Operand::Copy(pl) | Operand::Move(pl)) | Rvalue::Ref(_, _, pl) = rvalue {
+                                if let Rvalue::Use(Operand::Copy(pl) | Operand::Move(pl))
+                                | Rvalue::Ref(_, _, pl) = rvalue
+                                {
                                     inst_arg = pl;
                                     likely_program_id_aliases.push(*pl);
                                     // println!("Found program ID: {:?}", rvalue);
                                     found_program_id = true;
-                                    break
+                                    break;
                                 }
-
                             }
                         };
                     }
@@ -303,16 +320,23 @@ impl ArbitraryCpi {
             // check every statement
             if_chain! {
                 if let Some(t) = &bbs[cur_block].terminator;
-                if let TerminatorKind::Call { func: func_operand, args, .. } = &t.kind;
+                if let TerminatorKind::Call {
+                    func: func_operand,
+                    args,
+                    ..
+                } = &t.kind;
                 if let mir::Operand::Constant(box func) = func_operand;
                 if let TyKind::FnDef(def_id, _callee_substs) = func.literal.ty().kind();
-                if match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "ne"]) || match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "eq"]);
+                if match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "ne"])
+                    || match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "eq"]);
                 if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = args[0];
                 if let Operand::Copy(arg1_pl) | Operand::Move(arg1_pl) = args[1];
                 then {
                     // if either arg0 or arg1 came from one of the programid_locals, then we know
                     // this eq/ne check was operating on the program_id.
-                    if Self::is_moved_from(cx, body, cur_block, &arg0_pl, programid_locals) || Self::is_moved_from(cx, body, cur_block, &arg1_pl, programid_locals) {
+                    if Self::is_moved_from(cx, body, cur_block, &arg0_pl, programid_locals)
+                        || Self::is_moved_from(cx, body, cur_block, &arg1_pl, programid_locals)
+                    {
                         // we found the check. if it dominates the call to invoke, then the check
                         // is assumed to be sufficient!
                         return body.dominators().is_dominated_by(block, cur_block);
