@@ -9,7 +9,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod arbitrary_cpi_insecure {
     use super::*;
 
-    pub fn cpi(ctx: Context<Cpi>, amount: u64) -> ProgramResult {
+    pub fn cpi(ctx: Context<Cpi>, _amount: u64) -> ProgramResult {
         let ins = Instruction {
             program_id: *ctx.accounts.token_program.key,
             accounts: vec![],
