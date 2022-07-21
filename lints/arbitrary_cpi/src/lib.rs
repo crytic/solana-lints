@@ -21,7 +21,7 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-dylint_linting::impl_late_lint! {
+dylint_linting::declare_late_lint! {
     /// **What it does:**
     /// Finds uses of solana_program::program::invoke that do not check the program_id
     ///
@@ -61,12 +61,8 @@ dylint_linting::impl_late_lint! {
 
     pub ARBITRARY_CPI,
     Warn,
-    "Finds unconstrained inter-contract calls",
-    ArbitraryCpi::default()
+    "Finds unconstrained inter-contract calls"
 }
-
-#[derive(Default)]
-struct ArbitraryCpi {}
 
 impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
     fn check_body(&mut self, cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) {
@@ -119,7 +115,7 @@ impl ArbitraryCpi {
     // We handle two cases:
     // 1. The instruction is initialized within this Body, in which case the returned
     //    likely_program_id_places will contain all the Places containing a program_id,
-    //    and we can then look for comparisions with those places to see if the program id is
+    //    and we can then look for comparisons with those places to see if the program id is
     //    checked.
     //
     // 2. The instruction passed to invoke is returned from a function call. In the general case,
