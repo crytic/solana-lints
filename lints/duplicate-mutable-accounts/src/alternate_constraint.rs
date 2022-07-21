@@ -13,9 +13,12 @@ use clippy_utils::{ty::match_type, SpanlessEq};
 use if_chain::if_chain;
 use solana_lints::paths;
 
+/// Stores the accounts and if-statements (constraints) found in a function body.
 pub struct Values<'cx, 'tcx> {
     cx: &'cx LateContext<'tcx>,
+    /// Lists of account expressions, partitioned by the Account type T
     pub accounts: HashMap<DefId, Vec<&'tcx Expr<'tcx>>>,
+    /// List of tuples, where (x, y), where x is the left operand of the if statement and y is the right
     pub if_statements: Vec<(&'tcx Expr<'tcx>, &'tcx Expr<'tcx>)>,
 }
 
@@ -34,7 +37,6 @@ impl<'cx, 'tcx> Values<'cx, 'tcx> {
     }
 
     /// Checks if there is a valid key constraint for `first_account` and `second_account`.
-    /// NOTE: currently only considers `first.key() == second.key()` or the symmetric relation as valid constraints.
     /// TODO: if == relation used, should return some error in the THEN block
     pub fn check_key_constraint(
         &self,

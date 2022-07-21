@@ -1,15 +1,15 @@
-error: the expressions on line $DIR/lib.rs:14:27: 14:46 (#0) and $DIR/lib.rs:15:27: 15:46 (#0) have identical Account types, yet do not contain a proper key check.
-  --> $DIR/lib.rs:14:27
+error: user_a and user_b have identical account types but do not have a key check constraint
+  --> $DIR/lib.rs:25:5
    |
-LL |         let user_a = &mut ctx.accounts.user_a;
-   |                           ^^^^^^^^^^^^^^^^^^^
+LL |     user_a: Account<'info, User>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: `-D duplicate-mutable-accounts` implied by `-D warnings`
-help: add a key check to make sure the accounts have different keys, e.g., x.key() != y.key()
-  --> $DIR/lib.rs:15:27
+help: add an anchor key check constraint: #[account(constraint = user_a.key() != user_b.key())]
+  --> $DIR/lib.rs:26:5
    |
-LL |         let user_b = &mut ctx.accounts.user_b;
-   |                           ^^^^^^^^^^^^^^^^^^^
+LL |     user_b: Account<'info, User>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 error: aborting due to previous error
 
