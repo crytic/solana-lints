@@ -102,7 +102,8 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
                         if let Some(v) = self.anchor_accounts.get_mut(&account_id) {
                             v.push((field.ident.name, field.span));
                         } else {
-                            self.anchor_accounts.insert(account_id, vec![(field.ident.name, field.span)]);
+                            self.anchor_accounts
+                                .insert(account_id, vec![(field.ident.name, field.span)]);
                         }
                     }
                 }
@@ -140,11 +141,11 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
                     self.no_alternate_constraints = true; // assume no alternate constraints
                     for current in 0..exprs.len() - 1 {
                         for next in current + 1..exprs.len() {
-                            if !values.check_key_constraint(exprs[current], exprs[next]) {
-                                self.spans.push((exprs[current].span, exprs[next].span));
-                            } else {
+                            if values.check_key_constraint(exprs[current], exprs[next]) {
                                 // if there is at least one alt constraint, set flag to false
                                 self.no_alternate_constraints = false;
+                            } else {
+                                self.spans.push((exprs[current].span, exprs[next].span));
                             }
                         }
                     }

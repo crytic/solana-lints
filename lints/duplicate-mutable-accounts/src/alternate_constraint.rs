@@ -47,11 +47,14 @@ impl<'cx, 'tcx> Values<'cx, 'tcx> {
             if_chain! {
                 if let ExprKind::MethodCall(path_seg_left, exprs_left, _span) = left.kind;
                 if let ExprKind::MethodCall(path_seg_right, exprs_right, _span) = right.kind;
-                if path_seg_left.ident.name.as_str() == "key" && path_seg_right.ident.name.as_str() == "key";
+                if path_seg_left.ident.name.as_str() == "key"
+                    && path_seg_right.ident.name.as_str() == "key";
                 if !exprs_left.is_empty() && !exprs_right.is_empty();
                 let mut spanless_eq = SpanlessEq::new(self.cx);
-                if (spanless_eq.eq_expr(&exprs_left[0], first_account) && spanless_eq.eq_expr(&exprs_right[0], second_account))
-                || (spanless_eq.eq_expr(&exprs_left[0], second_account) && spanless_eq.eq_expr(&exprs_right[0], first_account));
+                if (spanless_eq.eq_expr(&exprs_left[0], first_account)
+                    && spanless_eq.eq_expr(&exprs_right[0], second_account))
+                    || (spanless_eq.eq_expr(&exprs_left[0], second_account)
+                        && spanless_eq.eq_expr(&exprs_right[0], first_account));
                 then {
                     return true;
                 }

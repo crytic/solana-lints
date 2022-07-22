@@ -90,27 +90,21 @@ impl Streams {
             .any(|token_stream| Self::is_substream(token_stream, other))
     }
 
-    /// Returns true if `other` is a substream of `stream`. By substream we mean in the
-    /// sense of a substring.
+    /// Returns true if `other` is a substream of `stream`. By substream we mean in the sense of a substring.
     // NOTE: a possible optimization is when a match is found, to remove the matched
     // TokenTrees from the TokenStream, since the constraint has been "checked" so it never
     // needs to be validated again. This cuts down the number of comparisons.
     fn is_substream(stream: &TokenStream, other: &TokenStream) -> bool {
-        let other_len = other.len();
         for i in 0..stream.len() {
-            for (j, other_token) in other.trees().enumerate() {
-                match stream.trees().nth(i + j) {
-                    Some(token_tree) => {
-                        if !token_tree.eq_unspanned(other_token) {
-                            break;
-                        }
-                        // reached last index, so we have a match
-                        if j == other_len - 1 {
-                            return true;
-                        }
-                    }
-                    None => return false, // reached end of stream
-                }
+            if other
+                .trees()
+                .enumerate()
+                .all(|(j, other_token)| match stream.trees().nth(i + j) {
+                    Some(token_tree) => token_tree.eq_unspanned(other_token),
+                    None => false,
+                })
+            {
+                return true;
             }
         }
         false
