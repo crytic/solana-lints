@@ -2,7 +2,7 @@
 name = "invalid_account_data"
 version = "0.1.0"
 authors = ["Victor Wei (victor.wei@trailofbits.com)"]
-description = "lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/2-owner-checks"
+description = "lint for [2-owner-checks](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/2-owner-checks)"
 edition = "2018"
 publish = false
 

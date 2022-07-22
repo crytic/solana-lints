@@ -2,7 +2,7 @@
 name = "insecure_account_close"
 version = "0.1.0"
 authors = ["Samuel Moelius <samuel.moelius@trailofbits.com>"]
-description = "lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/9-closing-accounts"
+description = "lint for [9-closing-accounts](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/9-closing-accounts)"
 edition = "2018"
 publish = false
 

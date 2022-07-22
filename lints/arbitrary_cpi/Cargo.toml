@@ -2,7 +2,7 @@
 name = "arbitrary_cpi"
 version = "0.1.0"
 authors = ["Andrew Haberlandt (andrew.haberlandt@trailofbits.com)"]
-description = "lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/5-arbitrary-cpi"
+description = "lint for [5-arbitrary-cpi](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/5-arbitrary-cpi)"
 edition = "2018"
 publish = false
 

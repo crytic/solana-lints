@@ -2,7 +2,7 @@
 name = "type_cosplay"
 version = "0.1.0"
 authors = ["Victor Wei (victor.wei@trailofbits.com)"]
-description = "lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/3-type-cosplay"
+description = "lint for [3-type-cosplay](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/3-type-cosplay)"
 edition = "2018"
 publish = false
 
