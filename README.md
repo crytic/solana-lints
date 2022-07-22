@@ -8,6 +8,7 @@ The current lints are:
 
 | Library                                                  | Description                                                                                        |
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [`arbitrary_cpi`](lints/arbitrary_cpi)                   | lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/5-arbitrary-cpi        |
 | [`insecure_account_close`](lints/insecure_account_close) | lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/9-closing-accounts     |
 | [`missing_owner_check`](lints/missing_owner_check)       | lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/2-owner-checks         |
 | [`missing_signer_check`](lints/missing_signer_check)     | lint for https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/0-signer-authorization |
