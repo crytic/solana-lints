@@ -1,5 +1,5 @@
 [package]
-name = "invalid_account_data"
+name = "missing_owner_check"
 version = "0.1.0"
 authors = ["Victor Wei (victor.wei@trailofbits.com)"]
 description = "lint for [2-owner-checks](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/2-owner-checks)"
