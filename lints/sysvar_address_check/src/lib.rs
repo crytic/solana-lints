@@ -1,19 +1,20 @@
 #![feature(rustc_private)]
 #![warn(unused_extern_crates)]
-#![recursion_limit = "256"]
 
 extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use rustc_lint::{LateContext, LateLintPass};
-use rustc_hir::*;
 use rustc_hir::def::Res;
-use rustc_span::Span;
-use rustc_hir::{intravisit::{Visitor, walk_expr, FnKind}};
+use rustc_hir::intravisit::{walk_expr, FnKind, Visitor};
+use rustc_hir::{Body, Expr, ExprKind, FnDecl, HirId};
+use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::TyKind;
+use rustc_span::Span;
 
-use clippy_utils::{match_def_path};
+use clippy_utils::{
+    diagnostics::span_lint_and_note, get_trait_def_id, match_def_path, ty::implements_trait,
+};
 use if_chain::if_chain;
 mod paths;
 
@@ -40,13 +41,13 @@ dylint_linting::declare_late_lint! {
 
 impl<'tcx> LateLintPass<'tcx> for SysvarAddressCheck {
     fn check_fn(
-    &mut self,
-    cx: &LateContext<'tcx>,
-    _: FnKind<'tcx>,
-    _: &'tcx FnDecl<'tcx>,
-    body: &'tcx Body<'tcx>,
-    span: Span,
-    _: HirId
+        &mut self,
+        cx: &LateContext<'tcx>,
+        _: FnKind<'tcx>,
+        _: &'tcx FnDecl<'tcx>,
+        body: &'tcx Body<'tcx>,
+        _: Span,
+        _: HirId,
     ) {
         // 1. grab types
         // check for calls to bincode::deserialize and grab argument
@@ -54,46 +55,26 @@ impl<'tcx> LateLintPass<'tcx> for SysvarAddressCheck {
         // if so store the AccountInfo
         // 2. check for key checks
         // there is some check on AccountInfo.key == ID of Sysvar program
-        let mut accounts = AccountUses {
-            cx,
-            uses: Vec::new(),
-        };
+
+        // 1. walk function body and search for calls to bincode::deserialize
+        // 2. retrieve the type of this expression (which is what is being deserialized to),
+        // and check that the type implements the Sysvar trait
+        // 3. if so, flag the lint and issue warning that user should not deserialize directly,
+        // but instead use from_account_info() method from Sysvar trait
+        let mut accounts = AccountUses { cx };
         accounts.visit_expr(&body.value);
-        
     }
-
-    // fn check_block(&mut self, cx: &LateContext<'tcx>, block: &'tcx Block<'tcx>) {
-    //     // if !block.span.from_expansion() {
-    //     //     println!("{:#?}", block);
-    //     // }
-    //     for stmt in block.stmts {
-    //         if_chain! {
-    //             if !stmt.span.from_expansion();
-    //             if let StmtKind::Local(local) = stmt.kind;
-    //             if let Some(expr) = local.init;
-    //             let _ = println!("{:#?}", expr);
-    //             if is_deserialize_call(cx, expr);
-    //             // if let Some(ty) = local.ty;
-    //             then {
-    //                 // derives_sysvar(ty);
-    //                 // println!("{:#?}", local);
-    //             }
-    //         }
-
-    //     }
-    // }
 }
 
 struct AccountUses<'cx, 'tcx> {
     cx: &'cx LateContext<'tcx>,
-    uses: Vec<&'tcx Expr<'tcx>>,
 }
 
 impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         if_chain! {
             // check if bincode::deserialize call
-            if let ExprKind::Call(fnc_expr, args_expr) = expr.kind;
+            if let ExprKind::Call(fnc_expr, _args_expr) = expr.kind;
             if let ExprKind::Path(qpath) = &fnc_expr.kind;
             let res = self.cx.qpath_res(qpath, fnc_expr.hir_id);
             if let Res::Def(_, def_id) = res;
@@ -103,32 +84,24 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
             // assumes type is always Result type, which should be the case
             if let TyKind::Adt(_, substs) = ty.kind();
             if !substs.is_empty();
-            let deser_type = substs[0];
-            let _ = println!("{:#?}", deser_type);
-            // // temp code for grabbing DefId of generic arg: Rent
-            // if let QPath::Resolved(_, path) = qpath;
-            // if let Some(generic_args) = path.segments[1].args;
-            // if let GenericArg::Type(ty) = &generic_args.args[0];
-            // if let TyKind::Path(qpath_sub) = &ty.kind;
-            // let res_sub = self.cx.qpath_res(qpath_sub, ty.hir_id);
-            // if let Res::Def(_, ty_id) = res_sub;
+            let deser_type = substs[0].expect_ty();
+            // check type implements Sysvar
+            if let Some(trait_id) = get_trait_def_id(self.cx, &paths::ANCHOR_SYSVAR_TRAIT);
+            if implements_trait(self.cx, deser_type, trait_id, &[]);
             then {
-                println!("{:#?}", def_id);
-                
+                // grab AccountInfo
+                span_lint_and_note(
+                    self.cx,
+                    SYSVAR_ADDRESS_CHECK,
+                    expr.span,
+                    "raw deserialization of a type that implements Sysvar",
+                    None,
+                    "use from_account_info() instead"
+                );
             }
         }
         walk_expr(self, expr);
     }
-}
-
-fn is_deserialize_call<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> bool {
-    let mut accounts = AccountUses {
-        cx,
-        uses: Vec::new(),
-    };
-
-    accounts.visit_expr(expr);
-    true
 }
 
 #[test]
