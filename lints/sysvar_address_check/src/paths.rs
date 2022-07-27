@@ -1,0 +1,1 @@
+pub const BINCODE_DESERIALIZE: [&str; 2] = ["bincode", "deserialize"];
