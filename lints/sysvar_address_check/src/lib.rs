@@ -96,7 +96,7 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
                     expr.span,
                     "raw deserialization of a type that implements Sysvar",
                     None,
-                    "use from_account_info() instead"
+                    "use from_account_info() instead",
                 );
             }
         }
@@ -112,7 +112,15 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
 //     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure");
 // }
 
+// Not testing sealevel secure case because this lint will flag any attempt to do a "raw"
+// deserialization. The canonical way should be using from_account_info().
+
 #[test]
 fn insecure_2() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-2");
+}
+
+#[test]
+fn secure_2() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure-2");
 }
