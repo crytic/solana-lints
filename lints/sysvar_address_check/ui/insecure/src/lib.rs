@@ -16,3 +16,5 @@ pub mod insecure {
 pub struct CheckSysvarAddress<'info> {
     rent: AccountInfo<'info>,
 }
+
+fn main() {}
