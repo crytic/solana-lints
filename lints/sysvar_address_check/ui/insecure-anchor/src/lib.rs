@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
-use solana_program::sysvar::SysvarId;
+use serde::{Deserialize, Serialize};
 use solana_program::pubkey;
-use serde::{Serialize, Deserialize};
+use solana_program::sysvar::SysvarId;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 

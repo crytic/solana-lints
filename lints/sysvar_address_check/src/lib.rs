@@ -6,38 +6,65 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use rustc_hir::def::Res;
-use rustc_hir::intravisit::{walk_expr, FnKind, Visitor};
-use rustc_hir::{Body, Expr, ExprKind, FnDecl, HirId, FieldDef, TyKind as HirTyKind, GenericArg, QPath};
+use rustc_hir::{
+    def::Res,
+    intravisit::{walk_expr, FnKind, Visitor},
+    Body, Expr, ExprKind, FieldDef, FnDecl, GenericArg, HirId, QPath, TyKind as HirTyKind,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::TyKind;
 use rustc_span::Span;
 
 use clippy_utils::{
-    diagnostics::span_lint_and_help, get_trait_def_id, match_def_path, ty::{implements_trait, match_type}
+    diagnostics::span_lint_and_help,
+    get_trait_def_id, match_def_path,
+    ty::{implements_trait, match_type},
 };
 use if_chain::if_chain;
 use solana_lints::paths;
 
 dylint_linting::declare_late_lint! {
-    /// **What it does:**
+    /// **What it does:** This lint checks to ensure that programs using Solana types that derive the
+    /// `Sysvar` trait (e.g. Rent, Clock) check the address of the account. The recommended way to
+    /// deal with these types is using the `from_account_info()` method from the `Sysvar` trait.
+    /// This method performs the ID check and only deserializes from an `AccountInfo` if the check
+    /// passes, and is thus secure.
+
+    /// This lint catches direct calls to deserialize (via `bincode::deserialize`) a byte array into
+    /// a type deriving Sysvar. Furthermore, if using the Anchor framework, this lint will catch
+    /// uses of `Account<'info, T>`, where `T` derives `Sysvar`. This is insecure since Anchor
+    /// will not perform the ID check in this case.
     ///
-    /// **Why is this bad?**
+    /// **Why is this bad?** If a program deserializes an `AccountInfo.data` directly, without
+    /// checking the ID first, a malicious user could pass in an `AccountInfo` with spoofed data
+    /// and the same structure as a `Sysvar` type. Then the program would be dealing with incorrect
+    /// data.
     ///
-    /// **Known problems:** None.
+    /// **Known problems:** This lint will flag any calls to deserialize some bytes into a type deriving
+    /// `Sysvar`, regardless of whether the ID check is done or not. Thus, if a program manually does the ID
+    /// check and deserialization, the lint will still flag this as insecure, thus possibly generating
+    /// some false positives. However, one should really prefer to use `from_account_info()`.
     ///
     /// **Example:**
     ///
     /// ```rust
-    /// // example code where a warning is issued
+    /// pub fn check_sysvar_address(ctx: Context<CheckSysvarAddress>) -> Result<()> {
+    ///     let rent: Rent = bincode::deserialize(&ctx.accounts.rent.data.borrow()).unwrap();
+    ///     msg!("Rent -> {}", rent.lamports_per_byte_year);
+    ///     Ok(())
+    /// }
     /// ```
     /// Use instead:
     /// ```rust
-    /// // example code that does not raise a warning
+    /// pub fn check_sysvar_address(ctx: Context<CheckSysvarAddress>) -> Result<()> {
+    ///     let rent = Rent::from_account_info(&ctx.accounts.rent).unwrap();
+    ///     msg!("Rent -> {}", rent.lamports_per_byte_year);
+    ///     Ok(())
+    /// }
     /// ```
     pub SYSVAR_ADDRESS_CHECK,
     Warn,
-    "description goes here"
+    "missing address check for Sysvar types"
 }
 
 impl<'tcx> LateLintPass<'tcx> for SysvarAddressCheck {
@@ -69,9 +96,15 @@ impl<'tcx> LateLintPass<'tcx> for SysvarAddressCheck {
                     cx,
                     SYSVAR_ADDRESS_CHECK,
                     field.span,
-                    &format!("Anchor Account type T is '{}', which derives the Sysvar trait", account_type),
+                    &format!(
+                        "Anchor Account type T is '{}', which derives the Sysvar trait",
+                        account_type
+                    ),
                     None,
-                    &format!("Account type does not perform an ID check. Use Sysvar<'info, {}> instead", account_type),
+                    &format!(
+                        "Account type does not perform an ID check. Use Sysvar<'info, {}> instead",
+                        account_type
+                    ),
                 );
             }
         }
