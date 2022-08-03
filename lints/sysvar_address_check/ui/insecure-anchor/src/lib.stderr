@@ -1,0 +1,11 @@
+error: Anchor Account type T is 'RentCopy', which derives the Sysvar trait
+  --> $DIR/lib.rs:20:5
+   |
+LL |     rent: Account<'info, RentCopy>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `-D sysvar-address-check` implied by `-D warnings`
+   = help: Account type does not perform an ID check. Use Sysvar<'info, RentCopy> instead
+
+error: aborting due to previous error
+

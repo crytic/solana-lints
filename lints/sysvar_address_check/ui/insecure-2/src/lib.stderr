@@ -1,0 +1,11 @@
+error: raw deserialization of a type that implements Sysvar
+  --> $DIR/lib.rs:10:26
+   |
+LL |         let rent: Rent = bincode::deserialize(&ctx.accounts.rent.data.borrow()).unwrap();
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `-D sysvar-address-check` implied by `-D warnings`
+   = help: use from_account_info() instead
+
+error: aborting due to previous error
+
