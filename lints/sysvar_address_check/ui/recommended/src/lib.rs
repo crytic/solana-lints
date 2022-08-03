@@ -16,3 +16,5 @@ pub mod recommended {
 pub struct CheckSysvarAddress<'info> {
     rent: Sysvar<'info, Rent>,
 }
+
+fn main() {}
