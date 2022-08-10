@@ -33,6 +33,7 @@ Furthermore, one may have alternative definitions of a discriminant, such as usi
 or u8, and not an enum. This will flag a false positive.
 
 ## Note on Tests
+
 **insecure-anchor**: insecure because `User` type derives Discriminator trait (via `#[account]`),
 thus one may expect this code to be secure. However, the program tries to deserialize with
 `try_from_slice`, the default borsh deserialization method, which does _not_ check for the
