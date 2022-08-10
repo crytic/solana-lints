@@ -8,7 +8,9 @@ extern crate rustc_index;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::implements_trait, get_trait_def_id};
+use clippy_utils::{
+    diagnostics::span_lint_and_help, get_trait_def_id, match_def_path, ty::implements_trait,
+};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
 use rustc_index::vec::Idx;
@@ -89,7 +91,8 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             if let Some(trait_did) = get_trait_def_id(cx, &paths::ANCHOR_DISCRIMINATOR_TRAIT);
             then {
                 if implements_trait(cx, middle_ty, trait_did, &[]) {
-                    if let Some(def_id) = cx.typeck_results().type_dependent_def_id(fnc_expr.hir_id) {
+                    if let Some(def_id) = cx.typeck_results().type_dependent_def_id(fnc_expr.hir_id)
+                    {
                         if !match_def_path(cx, def_id, &paths::ANCHOR_TRY_DESERIALIZE) {
                             span_lint_and_help(
                                 cx,
