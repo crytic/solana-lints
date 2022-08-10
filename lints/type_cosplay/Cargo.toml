@@ -22,6 +22,10 @@ name = "insecure-3"
 path = "ui/insecure-3/src/lib.rs"
 
 [[example]]
+name = "insecure-anchor"
+path = "ui/insecure-anchor/src/lib.rs"
+
+[[example]]
 name = "recommended"
 path = "ui/recommended/src/lib.rs"
 

@@ -31,3 +31,16 @@ and, if it deserializes the same as the first enum, then this may be a possible 
 
 Furthermore, one may have alternative definitions of a discriminant, such as using a bool,
 or u8, and not an enum. This will flag a false positive.
+
+## Note on Tests
+**insecure-anchor**: insecure because `User` type derives Discriminator trait (via `#[account]`),
+thus one may expect this code to be secure. However, the program tries to deserialize with
+`try_from_slice`, the default borsh deserialization method, which does _not_ check for the
+discriminator. Thus, one could potentially serialize a `Metadata` struct, and then later
+deserialize without any problem into a `User` struct, leading to a type-cosplay vulnerability.
+
+**recommended**: this is secure code because all structs have an `#[account]` macro attributed
+on them, thus deriving the `Discriminator` trait for each. Further, unlike the insecure-anchor
+example, the program uses the proper deserialization method, `try_deserialize`, to deserialize
+bytes as `User`. This is "proper" because in the derived implementation of `try_deserialize`,
+the discriminator of the type is checked first.

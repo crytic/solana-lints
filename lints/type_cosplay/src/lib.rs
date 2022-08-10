@@ -1,5 +1,6 @@
 #![feature(rustc_private)]
 #![warn(unused_extern_crates)]
+#![recursion_limit = "256"]
 
 extern crate rustc_data_structures;
 extern crate rustc_hir;
@@ -7,14 +8,14 @@ extern crate rustc_index;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::match_type};
+use clippy_utils::{diagnostics::span_lint_and_help, match_def_path, ty::implements_trait, get_trait_def_id};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
 use rustc_index::vec::Idx;
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::{AdtDef, AdtKind, TyKind as MiddleTyKind};
 use rustc_span::{def_id::DefId, Span};
-use solana_lints::{paths, utils::visit_expr_no_bodies};
+use solana_lints::paths;
 
 use if_chain::if_chain;
 
@@ -61,31 +62,58 @@ struct TypeCosplay {
     deser_types: FxHashMap<AdtKind, Vec<(DefId, Span)>>,
 }
 
+// get type X
+// check if implements Discriminator
+// check corresponding function call type:
+// if !try_deserialize
+// emit lint with warning to use try_deserialize (because any types deriving Discriminator should since it guaranteed to check discrim)
+
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) {
         if_chain! {
-            if !expr.span.from_expansion();
-            if let ExprKind::Call(fnc_expr, args_exprs) = expr.kind;
-            if is_deserialize_function(cx, fnc_expr);
+            if let ExprKind::Call(fnc_expr, _args_exprs) = expr.kind;
+            // TODO: is the following if statement really needed?? don't think it's ever used.
+            // all it does is check if AccountInfo.data is referenced...but what bytes we deser
+            // from shouldn't impact if this is a type-cosplay issue or not.
             // walk each argument expression and see if the data field is referenced
-            if args_exprs.iter().any(|arg| {
-                visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr))
-            });
+            // if args_exprs.iter().any(|arg| {
+            //     visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr))
+            // });
             // get the type that the function was called on, ie X in X::deser()
             if let ExprKind::Path(qpath) = &fnc_expr.kind;
             if let QPath::TypeRelative(ty, _) = qpath;
             if let TyKind::Path(ty_qpath) = &ty.kind;
             let res = cx.typeck_results().qpath_res(ty_qpath, ty.hir_id);
             if let Res::Def(_, def_id) = res;
+            let middle_ty = cx.tcx.type_of(def_id);
+            if let Some(trait_did) = get_trait_def_id(cx, &paths::ANCHOR_DISCRIMINATOR_TRAIT);
             then {
-                let middle_ty = cx.tcx.type_of(def_id);
-                if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind() {
-                    let adt_kind = adt_def.adt_kind();
-                    let def_id = adt_def.did();
-                    if let Some(vec) = self.deser_types.get_mut(&adt_kind) {
-                        vec.push((def_id, ty.span));
-                    } else {
-                        self.deser_types.insert(adt_kind, vec![(def_id, ty.span)]);
+                if implements_trait(cx, middle_ty, trait_did, &[]) {
+                    if let Some(def_id) = cx.typeck_results().type_dependent_def_id(fnc_expr.hir_id) {
+                        if !match_def_path(cx, def_id, &paths::ANCHOR_TRY_DESERIALIZE) {
+                            span_lint_and_help(
+                                cx,
+                                TYPE_COSPLAY,
+                                fnc_expr.span,
+                                &format!("{} type implements the anchor_lang::Discriminator trait. If you are using #[account] to derive Discriminator, use try_deserialize() instead.",
+                                    middle_ty),
+                                None,
+                                "otherwise, make sure you are accounting for this type's discriminator in your deserialization function"
+                            );
+                        }
+                    }
+                } else {
+                    // currently only checks borsh::try_from_slice()
+                    if is_deserialize_function(cx, fnc_expr) {
+                        if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind() {
+                            let adt_kind = adt_def.adt_kind();
+                            let def_id = adt_def.did();
+                            if let Some(vec) = self.deser_types.get_mut(&adt_kind) {
+                                vec.push((def_id, ty.span));
+                            } else {
+                                self.deser_types.insert(adt_kind, vec![(def_id, ty.span)]);
+                            }
+                        }
                     }
                 }
             }
@@ -126,19 +154,19 @@ fn is_deserialize_function(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool {
     }
 }
 
-fn contains_data_field_reference(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool {
-    if_chain! {
-        if let ExprKind::Field(obj_expr, ident) = expr.kind;
-        if ident.as_str() == "data";
-        let ty = cx.typeck_results().expr_ty(obj_expr);
-        if match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
-        then {
-            true
-        } else {
-            false
-        }
-    }
-}
+// fn contains_data_field_reference(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool {
+//     if_chain! {
+//         if let ExprKind::Field(obj_expr, ident) = expr.kind;
+//         if ident.as_str() == "data";
+//         let ty = cx.typeck_results().expr_ty(obj_expr);
+//         if match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
+//         then {
+//             true
+//         } else {
+//             false
+//         }
+//     }
+// }
 
 fn check_enums(cx: &LateContext<'_>, enums: &Vec<(DefId, Span)>) {
     #[allow(clippy::comparison_chain)]
@@ -188,7 +216,7 @@ fn has_discriminant(cx: &LateContext, adt: AdtDef, num_struct_types: usize, span
                 "type does not have a proper discriminant. It may be indistinguishable when deserialized.",
                 None,
                 "add an enum with at least as many variants as there are struct definitions"
-            )
+            );
         }
     }
 }
@@ -206,6 +234,11 @@ fn insecure_2() {
 #[test]
 fn insecure_3() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-3");
+}
+
+#[test]
+fn insecure_anchor() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-anchor");
 }
 
 #[test]
