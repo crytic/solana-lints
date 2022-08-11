@@ -73,15 +73,17 @@ struct TypeCosplay {
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) {
         if_chain! {
+            if !expr.span.from_expansion();
             if let ExprKind::Call(fnc_expr, _args_exprs) = expr.kind;
             // TODO: is the following if statement really needed?? don't think it's ever used.
             // all it does is check if AccountInfo.data is referenced...but what bytes we deser
             // from shouldn't impact if this is a type-cosplay issue or not.
             // walk each argument expression and see if the data field is referenced
+            // TODO: maybe just check arg is a byte array
             // if args_exprs.iter().any(|arg| {
             //     visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr))
             // });
-            // get the type that the function was called on, ie X in X::deser()
+            // get the type that the function was called on, ie X in X::call()
             if let ExprKind::Path(qpath) = &fnc_expr.kind;
             if let QPath::TypeRelative(ty, _) = qpath;
             if let TyKind::Path(ty_qpath) = &ty.kind;
@@ -98,8 +100,10 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                                 cx,
                                 TYPE_COSPLAY,
                                 fnc_expr.span,
-                                &format!("{} type implements the anchor_lang::Discriminator trait. If you are using #[account] to derive Discriminator, use try_deserialize() instead.",
-                                    middle_ty),
+                                &format!("`{}` type implements the `Discriminator` trait. If you are attempting to deserialize\n here and `{}` is annotated with #[account] use try_deserialize() instead.",
+                                    middle_ty,
+                                    middle_ty
+                                ),
                                 None,
                                 "otherwise, make sure you are accounting for this type's discriminator in your deserialization function"
                             );

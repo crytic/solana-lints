@@ -1,4 +1,5 @@
-error: User type implements the anchor_lang::Discriminator trait. If you are using #[account] to derive Discriminator, use try_deserialize() instead.
+error: `User` type implements the `Discriminator` trait. If you are attempting to deserialize
+        here and `User` is annotated with #[account] use try_deserialize() instead.
   --> $DIR/lib.rs:13:20
    |
 LL |         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
