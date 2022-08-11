@@ -3,9 +3,6 @@ use borsh::{BorshDeserialize, BorshSerialize};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
-// This example is secure because it only deserializes from a single enum, and that enum
-// encapsulates all of the user-defined types. Since enums contain an implicit discriminant,
-// this program will always be secure as long as all types are defined under the enum.
 #[program]
 pub mod type_cosplay_secure {
     use super::*;
