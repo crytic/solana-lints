@@ -15,7 +15,5 @@ no-log-ix-name = []
 cpi = ["no-entrypoint"]
 default = []
 
-[workspace]
-
 [dependencies]
 anchor-lang = "0.25.0"
