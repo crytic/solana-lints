@@ -30,6 +30,10 @@ name = "recommended"
 path = "ui/recommended/src/lib.rs"
 
 [[example]]
+name = "recommended-2"
+path = "ui/recommended-2/src/lib.rs"
+
+[[example]]
 name = "secure"
 path = "ui/secure/src/lib.rs"
 

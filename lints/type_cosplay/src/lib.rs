@@ -9,7 +9,9 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use clippy_utils::{
-    diagnostics::span_lint_and_help, get_trait_def_id, match_def_path, ty::{match_type, implements_trait},
+    diagnostics::span_lint_and_help,
+    get_trait_def_id, match_def_path,
+    ty::{implements_trait, match_type},
 };
 use rustc_data_structures::fx::FxHashMap;
 use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
@@ -64,18 +66,12 @@ struct TypeCosplay {
     deser_types: FxHashMap<AdtKind, Vec<(DefId, Span)>>,
 }
 
-// get type X
-// check if implements Discriminator
-// check corresponding function call type:
-// if !try_deserialize
-// emit lint with warning to use try_deserialize (because any types deriving Discriminator should since it guaranteed to check discrim)
-
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
     fn check_expr(&mut self, cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) {
         if_chain! {
             if !expr.span.from_expansion();
             if let ExprKind::Call(fnc_expr, args_exprs) = expr.kind;
-            // TODO: recommended case will exit early since it contains a reference to AccountInfo.data,
+            // TODO: recommended-2 case will exit early since it contains a reference to AccountInfo.data,
             // not a direct argument. In general, any references will fail
             if args_exprs.iter().any(|arg| {
                 visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr))
@@ -258,4 +254,9 @@ fn secure_two() {
 #[test]
 fn recommended() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended");
+}
+
+#[test]
+fn recommended_2() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "recommended-2");
 }
