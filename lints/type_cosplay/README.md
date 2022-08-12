@@ -81,6 +81,12 @@ deserialize without any problem into a `User` struct, leading to a type-cosplay 
 
 ### recommended
 
+The recommended way to address the type-cosplay issue. It adds an `#[account]` macro to each
+struct, which adds a discriminant to each struct. It doesn't actually perform any deserializations,
+which is why the `recommended-2` was created.
+
+### recommended-2
+
 This is secure code because all structs have an `#[account]` macro attributed
 on them, thus deriving the `Discriminator` trait for each. Further, unlike the insecure-anchor
 example, the program uses the proper deserialization method, `try_deserialize`, to deserialize
