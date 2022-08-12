@@ -2,7 +2,7 @@ use std::default::Default;
 
 use rustc_ast::{
     token::{Delimiter, Token, TokenKind},
-    tokenstream::{DelimSpan, TokenStream, TokenTree, TreeAndSpacing},
+    tokenstream::{DelimSpan, Spacing, TokenStream, TokenTree},
 };
 use rustc_hir::{def::Res, FieldDef, GenericArg, QPath, TyKind};
 use rustc_span::{
@@ -51,23 +51,23 @@ pub fn create_key_check_constraint_tokenstream(a: Symbol, b: Symbol) -> TokenStr
     // TODO: may be more efficient way to do this, since the stream is effectively fixed
     // and determined. Only two tokens are variable.
     let constraint = vec![
-        TreeAndSpacing::from(create_token_from_ident(a.as_str())),
-        TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Dot, DUMMY_SP))),
-        TreeAndSpacing::from(create_token_from_ident("key")),
-        TreeAndSpacing::from(TokenTree::Delimited(
+        create_token_from_ident(a.as_str()),
+        TokenTree::Token(Token::new(TokenKind::Dot, DUMMY_SP), Spacing::Alone),
+        create_token_from_ident("key"),
+        TokenTree::Delimited(
             DelimSpan::dummy(),
             Delimiter::Parenthesis,
             TokenStream::new(vec![]),
-        )),
-        TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Ne, DUMMY_SP))),
-        TreeAndSpacing::from(create_token_from_ident(b.as_str())),
-        TreeAndSpacing::from(TokenTree::Token(Token::new(TokenKind::Dot, DUMMY_SP))),
-        TreeAndSpacing::from(create_token_from_ident("key")),
-        TreeAndSpacing::from(TokenTree::Delimited(
+        ),
+        TokenTree::Token(Token::new(TokenKind::Ne, DUMMY_SP), Spacing::Alone),
+        create_token_from_ident(b.as_str()),
+        TokenTree::Token(Token::new(TokenKind::Dot, DUMMY_SP), Spacing::Alone),
+        create_token_from_ident("key"),
+        TokenTree::Delimited(
             DelimSpan::dummy(),
             Delimiter::Parenthesis,
             TokenStream::new(vec![]),
-        )),
+        ),
     ];
 
     TokenStream::new(constraint)
@@ -76,7 +76,7 @@ pub fn create_key_check_constraint_tokenstream(a: Symbol, b: Symbol) -> TokenStr
 /// Returns a `TokenTree::Token` which has `TokenKind::Ident`, with the string set to `s`.
 fn create_token_from_ident(s: &str) -> TokenTree {
     let ident = Ident::from_str(s);
-    TokenTree::Token(Token::from_ast_ident(ident))
+    TokenTree::Token(Token::from_ast_ident(ident), Spacing::Alone)
 }
 
 #[derive(Debug, Default)]
