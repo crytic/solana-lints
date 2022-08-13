@@ -1,12 +1,12 @@
 [package]
-name = "type-cosplay-recommended"
+name = "type-cosplay-insecure-anchor"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "type_cosplay_recommended"
+name = "type_cosplay_inecure_anchor"
 
 [features]
 no-entrypoint = []
