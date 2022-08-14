@@ -73,6 +73,9 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             if let ExprKind::Call(fnc_expr, args_exprs) = expr.kind;
             // TODO: recommended-2 case will exit early since it contains a reference to AccountInfo.data,
             // not a direct argument. In general, any references will fail
+            // smoelius: I updated the `recommended-2` test so that the call contains a reference to
+            // `AccountInfo.data`. But @victor-wei126's comment is still relevant in that we need a
+            // more general solution for finding references to `AccountInfo.data`.
             if args_exprs.iter().any(|arg| {
                 visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr))
             });
@@ -158,7 +161,7 @@ fn contains_data_field_reference(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool 
     if_chain! {
         if let ExprKind::Field(obj_expr, ident) = expr.kind;
         if ident.as_str() == "data";
-        let ty = cx.typeck_results().expr_ty(obj_expr);
+        let ty = cx.typeck_results().expr_ty(obj_expr).peel_refs();
         if match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
         then {
             true
