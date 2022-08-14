@@ -14,7 +14,9 @@ WORKSPACE="$(realpath "$SCRIPTS"/..)"
 cd "$WORKSPACE"
 
 for X in . lints/*; do
-    cargo clippy --manifest-path "$X"/Cargo.toml --workspace --tests -- \
+    pushd "$X"
+    cargo clippy --workspace --tests -- \
         -D warnings \
         -W clippy::pedantic
+    popd
 done
