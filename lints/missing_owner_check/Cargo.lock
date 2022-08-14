@@ -881,20 +881,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "invalid_account_data"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "clippy_utils",
- "dylint_linting",
- "dylint_testing",
- "if_chain",
- "solana-lints",
- "spl-token",
-]
-
-[[package]]
 name = "itertools"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1025,6 +1011,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "missing_owner_check"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "clippy_utils",
+ "dylint_linting",
+ "dylint_testing",
+ "if_chain",
+ "solana-lints",
+ "spl-token",
 ]
 
 [[package]]
