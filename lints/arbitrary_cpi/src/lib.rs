@@ -8,8 +8,9 @@ use rustc_lint::{LateContext, LateLintPass};
 
 use rustc_middle::{
     mir,
-    mir::terminator::TerminatorKind,
-    mir::{BasicBlock, Local, Operand, Place, ProjectionElem, Rvalue, StatementKind},
+    mir::{
+        BasicBlock, Local, Operand, Place, ProjectionElem, Rvalue, StatementKind, TerminatorKind,
+    },
     ty::TyKind,
 };
 use rustc_span::symbol::Symbol;
@@ -142,7 +143,7 @@ impl ArbitraryCpi {
         block: BasicBlock,
         mut inst_arg: &Place<'tcx>,
     ) -> (bool, Vec<Place<'tcx>>) {
-        let preds = body.predecessors();
+        let preds = body.basic_blocks.predecessors();
         let bbs = body.basic_blocks();
         let mut cur_block = block;
         let mut found_program_id = false;
@@ -261,7 +262,7 @@ impl ArbitraryCpi {
         mut search_place: &Place<'tcx>,
         search_list: &[Local],
     ) -> bool {
-        let preds = body.predecessors();
+        let preds = body.basic_blocks.predecessors();
         let bbs = body.basic_blocks();
         let mut cur_block = block;
         if let Some(search_loc) = search_place.local_or_deref_local() {
@@ -313,7 +314,7 @@ impl ArbitraryCpi {
         block: BasicBlock,
         programid_locals: &[Local],
     ) -> bool {
-        let preds = body.predecessors();
+        let preds = body.basic_blocks.predecessors();
         let bbs = body.basic_blocks();
         let mut cur_block = block;
         loop {
@@ -339,7 +340,10 @@ impl ArbitraryCpi {
                     {
                         // we found the check. if it dominates the call to invoke, then the check
                         // is assumed to be sufficient!
-                        return body.dominators().is_dominated_by(block, cur_block);
+                        return body
+                            .basic_blocks
+                            .dominators()
+                            .is_dominated_by(block, cur_block);
                     }
                 }
             }

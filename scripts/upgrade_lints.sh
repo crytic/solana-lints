@@ -16,3 +16,5 @@ cd "$WORKSPACE"
 for X in lints/*; do
     cargo dylint --upgrade "$X"
 done
+
+cp lints/missing_signer_check/rust-toolchain .
