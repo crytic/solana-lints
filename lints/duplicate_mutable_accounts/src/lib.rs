@@ -96,7 +96,7 @@ impl<'tcx> LateLintPass<'tcx> for DuplicateMutableAccounts {
                 if_chain! {
                     if let Some(def_id) = get_def_id(field.ty);
                     let middle_ty = cx.tcx.type_of(def_id);
-                    if match_type(cx, middle_ty, &paths::ANCHOR_ACCOUNT);
+                    if match_type(cx, middle_ty, &paths::ANCHOR_LANG_ACCOUNT);
                     if let Some(account_id) = get_anchor_account_type_def_id(field);
                     then {
                         if let Some(v) = self.anchor_accounts.get_mut(&account_id) {
