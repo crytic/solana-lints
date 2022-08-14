@@ -88,10 +88,10 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             let middle_ty = cx.tcx.type_of(def_id);
             then {
                 if_chain! {
-                    if let Some(trait_did) = get_trait_def_id(cx, &paths::ANCHOR_DISCRIMINATOR_TRAIT);
+                    if let Some(trait_did) = get_trait_def_id(cx, &paths::ANCHOR_LANG_DISCRIMINATOR_TRAIT);
                     if implements_trait(cx, middle_ty, trait_did, &[]);
                     if let Some(def_id) = cx.typeck_results().type_dependent_def_id(fnc_expr.hir_id);
-                    if !match_def_path(cx, def_id, &paths::ANCHOR_TRY_DESERIALIZE);
+                    if !match_def_path(cx, def_id, &paths::ANCHOR_LANG_TRY_DESERIALIZE);
                     then {
                         span_lint_and_help(
                             cx,
