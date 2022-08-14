@@ -11,8 +11,7 @@ pub mod type_cosplay_recommended {
         ctx: Context<UpdateUser>,
     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
         let account_info: &AccountInfo = ctx.accounts.user.as_ref();
-        let mut data = &*account_info.data.take();
-        let user = User::try_deserialize(&mut data).unwrap();
+        let user = User::try_deserialize(&mut &**account_info.data.borrow()).unwrap();
 
         msg!("User: {:?}", user.authority);
         msg!("GM {}", ctx.accounts.user.authority);
