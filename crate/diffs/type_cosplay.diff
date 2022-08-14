@@ -27,6 +27,7 @@ diff -r ./recommended/src/lib.rs ../../../../lints/type_cosplay/ui/recommended/s
 31a34,35
 > 
 > fn main() {}
+Only in ../../../../lints/type_cosplay/ui/recommended/src: lib.stderr
 Only in ../../../../lints/type_cosplay/ui: recommended-2
 diff -r ./secure/src/lib.rs ../../../../lints/type_cosplay/ui/secure/src/lib.rs
 10c10,12
