@@ -8,9 +8,8 @@ use rustc_lint::{LateContext, LateLintPass};
 
 use rustc_middle::{
     mir,
-    mir::terminator::TerminatorKind,
     mir::{
-        AggregateKind, BasicBlock, BinOp, Local, Operand, Place, ProjectionElem, Rvalue,
+        AggregateKind, TerminatorKind, BasicBlock, BinOp, Local, Operand, Place, ProjectionElem, Rvalue,
         StatementKind,
     },
     ty::Ty,
@@ -160,7 +159,7 @@ impl BumpSeedCanonicalization {
         block: BasicBlock,
         mut seeds_arg: &Place<'tcx>,
     ) -> (BackwardDataflowState, Vec<Place<'tcx>>) {
-        let preds = body.predecessors();
+        let preds = body.basic_blocks.predecessors();
         let bbs = body.basic_blocks();
         let mut cur_block = block;
         let mut state = BackwardDataflowState::SeedsArray;
@@ -251,7 +250,7 @@ impl BumpSeedCanonicalization {
         mut search_place: &Place<'tcx>,
         search_list: &[Local],
     ) -> bool {
-        let preds = body.predecessors();
+        let preds = body.basic_blocks.predecessors();
         let bbs = body.basic_blocks();
         let mut cur_block = block;
         if let Some(search_loc) = search_place.local_or_deref_local() {
