@@ -9,8 +9,8 @@ use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::{
     mir,
     mir::{
-        AggregateKind, TerminatorKind, BasicBlock, BinOp, Local, Operand, Place, ProjectionElem, Rvalue,
-        StatementKind,
+        AggregateKind, BasicBlock, BinOp, Local, Operand, Place, ProjectionElem, Rvalue,
+        StatementKind, TerminatorKind,
     },
     ty::Ty,
     ty::TyKind,
