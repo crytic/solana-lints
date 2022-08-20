@@ -2,10 +2,12 @@
 #![feature(box_patterns)]
 #![warn(unused_extern_crates)]
 
+use clippy_utils::{
+    diagnostics::span_lint, get_trait_def_id, match_def_path, ty::implements_trait,
+};
 use if_chain::if_chain;
 use rustc_hir::Body;
 use rustc_lint::{LateContext, LateLintPass};
-
 use rustc_middle::{
     mir,
     mir::{
@@ -14,10 +16,6 @@ use rustc_middle::{
     },
     ty::Ty,
     ty::TyKind,
-};
-
-use clippy_utils::{
-    diagnostics::span_lint, get_trait_def_id, match_def_path, ty::implements_trait,
 };
 use solana_lints::paths;
 
