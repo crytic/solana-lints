@@ -24,7 +24,7 @@ mod paths;
 extern crate rustc_hir;
 extern crate rustc_middle;
 
-dylint_linting::impl_late_lint! {
+dylint_linting::declare_late_lint! {
     /// **What it does:**
     /// Finds uses of solana_program::pubkey::PubKey::create_program_address that do not check the bump_seed
     ///
@@ -44,12 +44,8 @@ dylint_linting::impl_late_lint! {
     ///
     pub BUMP_SEED_CANONICALIZATION,
     Warn,
-    "Finds calls to create_program_address that do not check the bump_seed",
-    BumpSeedCanonicalization::default()
+    "Finds calls to create_program_address that do not check the bump_seed"
 }
-
-#[derive(Default)]
-struct BumpSeedCanonicalization {}
 
 impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
     fn check_body(&mut self, cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) {
@@ -143,6 +139,7 @@ fn is_anchor_account_struct<'tcx>(cx: &LateContext<'tcx>, deser_ty: Ty<'tcx>) ->
     }
     account_deserialize
 }
+
 #[derive(Eq, PartialEq)]
 enum BackwardDataflowState {
     SeedsArray,
@@ -293,6 +290,7 @@ impl BumpSeedCanonicalization {
         }
         false
     }
+
     fn is_bump_seed_checked<'tcx>(
         cx: &LateContext,
         body: &'tcx mir::Body<'tcx>,
