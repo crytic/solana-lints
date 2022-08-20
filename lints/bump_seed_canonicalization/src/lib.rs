@@ -19,7 +19,7 @@ use rustc_middle::{
 use clippy_utils::{
     diagnostics::span_lint, get_trait_def_id, match_def_path, ty::implements_trait,
 };
-mod paths;
+use solana_lints::paths;
 
 extern crate rustc_hir;
 extern crate rustc_middle;
@@ -74,7 +74,7 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
                 then {
                     // Static call
                     let callee_did = *def_id;
-                    if match_def_path(cx, callee_did, &paths::CREATE_PROGRAM_ADDRESS) {
+                    if match_def_path(cx, callee_did, &paths::SOLANA_PROGRAM_CREATE_PROGRAM_ADDRESS) {
                         let seed_arg = &args[0];
                         if let Operand::Move(p) = seed_arg {
                             let (dataflow_state, likely_bump_places): (
@@ -134,7 +134,7 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
 
 fn is_anchor_account_struct<'tcx>(cx: &LateContext<'tcx>, deser_ty: Ty<'tcx>) -> bool {
     let mut account_deserialize = false;
-    if let Some(anchor_trait_id) = get_trait_def_id(cx, &paths::ACCOUNT_DESERIALIZE) {
+    if let Some(anchor_trait_id) = get_trait_def_id(cx, &paths::ANCHOR_LANG_ACCOUNT_DESERIALIZE) {
         account_deserialize = implements_trait(cx, deser_ty, anchor_trait_id, &[]);
     }
     account_deserialize
