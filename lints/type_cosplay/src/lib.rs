@@ -13,6 +13,7 @@ use clippy_utils::{
     get_trait_def_id, match_def_path,
     ty::{implements_trait, match_type},
 };
+use if_chain::if_chain;
 use rustc_data_structures::fx::FxHashMap;
 use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
 use rustc_index::vec::Idx;
@@ -20,8 +21,6 @@ use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::{AdtDef, AdtKind, TyKind as MiddleTyKind};
 use rustc_span::{def_id::DefId, Span};
 use solana_lints::{paths, utils::visit_expr_no_bodies};
-
-use if_chain::if_chain;
 
 dylint_linting::impl_late_lint! {
     /// **What it does:** Checks that all deserialized types have a proper discriminant so that
