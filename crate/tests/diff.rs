@@ -32,12 +32,12 @@ const DIFFS: &[Diff] = &[
         solana_lint: "arbitrary_cpi",
     },
     Diff {
-        sealevel_attacks_programs_dir: "9-closing-accounts",
-        solana_lint: "insecure_account_close",
-    },
-    Diff {
         sealevel_attacks_programs_dir: "7-bump-seed-canonicalization",
         solana_lint: "bump_seed_canonicalization",
+    },
+    Diff {
+        sealevel_attacks_programs_dir: "9-closing-accounts",
+        solana_lint: "insecure_account_close",
     },
 ];
 
