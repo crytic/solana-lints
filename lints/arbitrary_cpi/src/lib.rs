@@ -16,7 +16,7 @@ use rustc_middle::{
 use rustc_span::symbol::Symbol;
 
 use clippy_utils::{diagnostics::span_lint, match_def_path};
-mod paths;
+use solana_lints::paths;
 
 extern crate rustc_hir;
 extern crate rustc_middle;
@@ -90,7 +90,7 @@ impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
                 then {
                     // Static call
                     let callee_did = *def_id;
-                    if match_def_path(cx, callee_did, &paths::SOLANA_INVOKE) {
+                    if match_def_path(cx, callee_did, &paths::SOLANA_PROGRAM_INVOKE) {
                         let inst_arg = &args[0];
                         if let Operand::Move(p) = inst_arg {
                             let (is_whitelist, programid_places) =
@@ -167,11 +167,11 @@ impl ArbitraryCpi {
                             then {
                                 // in order to trace back to the call which creates the
                                 // instruction, we have to trace through a call to Try::branch
-                                if match_def_path(cx, *def_id, &paths::TRY_BRANCH) {
+                                if match_def_path(cx, *def_id, &paths::CORE_BRANCH) {
                                     inst_arg = arg0_pl;
                                 } else {
                                     let path = cx.get_def_path(*def_id);
-                                    let token_path = paths::SPL_TOKEN.map(Symbol::intern);
+                                    let token_path = paths::SPL_TOKEN_INSTRUCTION.map(Symbol::intern);
                                     if path.iter().take(2).eq(&token_path) {
                                         return (true, likely_program_id_aliases);
                                     }
