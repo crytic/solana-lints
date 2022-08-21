@@ -169,7 +169,8 @@ impl ArbitraryCpi {
                                     inst_arg = arg0_pl;
                                 } else {
                                     let path = cx.get_def_path(*def_id);
-                                    let token_path = paths::SPL_TOKEN_INSTRUCTION.map(Symbol::intern);
+                                    let token_path =
+                                        paths::SPL_TOKEN_INSTRUCTION.map(Symbol::intern);
                                     if path.iter().take(2).eq(&token_path) {
                                         return (true, likely_program_id_aliases);
                                     }
