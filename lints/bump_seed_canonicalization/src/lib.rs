@@ -72,7 +72,11 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
                 then {
                     // Static call
                     let callee_did = *def_id;
-                    if match_def_path(cx, callee_did, &paths::SOLANA_PROGRAM_CREATE_PROGRAM_ADDRESS) {
+                    if match_def_path(
+                        cx,
+                        callee_did,
+                        &paths::SOLANA_PROGRAM_CREATE_PROGRAM_ADDRESS,
+                    ) {
                         let seed_arg = &args[0];
                         if let Operand::Move(p) = seed_arg {
                             let (dataflow_state, likely_bump_places): (
