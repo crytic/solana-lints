@@ -28,7 +28,7 @@ dylint_linting::declare_late_lint! {
     /// where a malicious actor passes in an account owned by program `X` when what was expected
     /// was an account owned by program `Y`. The code may then perform unexpected operations
     /// on that spoofed account.
-
+    ///
     /// For example, suppose a program expected an account to be owned by the SPL Token program.
     /// If no owner check is done on the account, then a malicious actor could pass in an
     /// account owned by some other program. The code may then perform some actions on the
@@ -39,6 +39,15 @@ dylint_linting::declare_late_lint! {
     /// Key checks can be strengthened. Currently, the lint only checks that the account's owner
     /// field is referenced somewhere, ie, `AccountInfo.owner`.
     ///
+    /// **Example:**
+    ///
+    /// See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/2-owner-checks/insecure/src/lib.rs
+    /// for an insecure example.
+    ///
+    /// Use instead:
+    ///
+    /// See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/2-owner-checks/secure/src/lib.rs
+    /// for a secure example.
     pub MISSING_OWNER_CHECK,
     Warn,
     "using an account without checking if its owner is as expected"
