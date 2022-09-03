@@ -35,9 +35,8 @@ jobs:
           rustup component add rustfmt
           find . -name '*.rs' -exec rustfmt_if_chain --edition 2021 {} \; && git diff --exit-code
 
-      # smoelius: Disable for now as update_readmes.sh does not handle rustdoc comments correctly.
-      # - name: Format example READMEs
-      #   run: ./scripts/update_readmes.sh && git diff --exit-code
+      - name: Format example READMEs
+        run: ./scripts/update_readmes.sh && git diff --exit-code
 
       - name: Clippy
         run: |

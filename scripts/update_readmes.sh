@@ -48,10 +48,11 @@ for LIBRARY in *; do
         echo "# $LIBRARY"
         echo
         cat src/*.rs |
-        sed -n 's,^[[:space:]]*///[[:space:]]*\(.*\)$,\1,;T;p'
+        sed -n '/^[a-z_:]*_lint! {$/,/^}$/p' |
+        sed -n 's,^[[:space:]]*///\([[:space:]]\(.*\)\)\?$,\2,;T;p'
     ) > README.md
 
-    prettier --write README.md
+    # prettier --write README.md
 
     popd >/dev/null
 done

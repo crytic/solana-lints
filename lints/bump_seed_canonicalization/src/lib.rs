@@ -39,7 +39,6 @@ dylint_linting::declare_late_lint! {
     /// occur in all possible execution paths)
     ///
     /// **Example:**
-    ///
     pub BUMP_SEED_CANONICALIZATION,
     Warn,
     "Finds calls to create_program_address that do not check the bump_seed"

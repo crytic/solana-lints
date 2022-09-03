@@ -17,9 +17,9 @@ occur in all possible execution paths)
 ```rust
 // example code where a warning is issued
 let ix = Instruction {
-program_id: *program_id,
-accounts: vec![AccountMeta::new_readonly(*program_id, false)],
-data: vec![0; 16],
+  program_id: *program_id,
+  accounts: vec![AccountMeta::new_readonly(*program_id, false)],
+  data: vec![0; 16],
 };
 invoke(&ix, accounts.clone());
 
@@ -30,12 +30,12 @@ Use instead:
 ```rust
 // example code that does not raise a warning
 if (*program_id == ...) {
-...
+    ...
 }
 let ix = Instruction {
-program_id: *program_id,
-accounts: vec![AccountMeta::new_readonly(*program_id, false)],
-data: vec![0; 16],
+  program_id: *program_id,
+  accounts: vec![AccountMeta::new_readonly(*program_id, false)],
+  data: vec![0; 16],
 };
 invoke(&ix, accounts.clone());
 ```

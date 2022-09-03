@@ -45,7 +45,9 @@ dylint_linting::declare_late_lint! {
     /// invoke(&ix, accounts.clone());
     ///
     /// ```
+    ///
     /// Use instead:
+    ///
     /// ```rust
     /// // example code that does not raise a warning
     /// if (*program_id == ...) {
@@ -57,7 +59,7 @@ dylint_linting::declare_late_lint! {
     ///   data: vec![0; 16],
     /// };
     /// invoke(&ix, accounts.clone());
-
+    /// ```
     pub ARBITRARY_CPI,
     Warn,
     "Finds unconstrained inter-contract calls"
