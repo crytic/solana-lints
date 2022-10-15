@@ -14,7 +14,8 @@ WORKSPACE="$(realpath "$SCRIPTS"/..)"
 cd "$WORKSPACE"
 
 for X in lints/*; do
-    cargo dylint --upgrade "$X"
+    cargo dylint upgrade "$X"
 done
 
+# smoelius: Ensure the workspace uses the same toolchain as the lints.
 cp lints/missing_signer_check/rust-toolchain .
