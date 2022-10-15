@@ -7,23 +7,18 @@ use std::{
 use toml::Value;
 
 #[test]
-fn all_lints_use_the_same_toolchain() {
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("lints");
+fn one_toolchain_is_used_throughout() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
 
-    let mut channel = None;
+    let channel = toolchain_channel(&root);
+
+    let dir = root.join("lints");
 
     for entry in read_dir(dir).unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
 
-        let curr = toolchain_channel(&path);
-        if let Some(channel) = channel.as_deref() {
-            assert_eq!(channel, curr);
-        } else {
-            channel = Some(curr);
-        }
+        assert_eq!(channel, toolchain_channel(&path));
     }
 }
 
