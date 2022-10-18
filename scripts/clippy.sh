@@ -15,6 +15,7 @@ cd "$WORKSPACE"
 
 for X in . lints/*; do
     pushd "$X"
+    # smoelius: `--all-targets` can't be used here because the lint examples would fail.
     cargo clippy --workspace --tests -- \
         -D warnings \
         -W clippy::pedantic

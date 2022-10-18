@@ -1,0 +1,27 @@
+name: Update dependencies
+
+on:
+  schedule:
+    - cron: 0 3 * * 4 # 4 = Friday
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.PR_SSH_KEY }}
+
+      - name: Install dylint-link
+        run: cargo install dylint-link
+
+      - name: Update dependencies
+        run: scripts/update_dependencies.sh
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          title: Update dependencies
+          token: ${{ secrets.PR_GITHUB_TOKEN }}
