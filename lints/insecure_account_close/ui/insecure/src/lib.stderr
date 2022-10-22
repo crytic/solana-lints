@@ -1,5 +1,5 @@
 error: attempt to close an account without also clearing its data
-  --> $DIR/lib.rs:15:9
+  --> $DIR/lib.rs:16:9
    |
 LL |         **ctx.accounts.account.to_account_info().lamports.borrow_mut() = 0;
    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

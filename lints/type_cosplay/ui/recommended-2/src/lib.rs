@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::entrypoint::ProgramResult;
 use borsh::{BorshDeserialize, BorshSerialize};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
@@ -7,9 +8,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod type_cosplay_recommended {
     use super::*;
 
-    pub fn update_user(
-        ctx: Context<UpdateUser>,
-    ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+    pub fn update_user(ctx: Context<UpdateUser>) -> ProgramResult {
         let account_info: &AccountInfo = ctx.accounts.user.as_ref();
         let user = User::try_deserialize(&mut &**account_info.data.borrow()).unwrap();
 
@@ -36,4 +35,5 @@ pub struct Metadata {
     account: Pubkey,
 }
 
+#[allow(dead_code)]
 fn main() {}

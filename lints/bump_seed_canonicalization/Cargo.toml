@@ -37,9 +37,7 @@ solana-lints = { path = "../../crate" }
 
 [dev-dependencies]
 anchor-lang = "0.24.2"
-anchor-spl = "0.24.2"
 dylint_testing = "2.0.1"
-spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
 
 [workspace]
 

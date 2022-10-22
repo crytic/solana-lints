@@ -1,73 +1,77 @@
 diff -r ./insecure/Cargo.toml ../../../../lints/insecure_account_close/ui/insecure/Cargo.toml
-19c19
+19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.24.2"
-diff -r ./insecure/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure/src/lib.rs
-9c9
-<     pub fn close(ctx: Context<Close>) -> ProgramResult {
----
->     pub fn close(ctx: Context<Close>) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-30a31,32
+> anchor-lang = "0.25.0"
 > 
+> [workspace]
+diff -r ./insecure/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+30a32,34
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/insecure_account_close/ui/insecure/src: lib.stderr
 diff -r ./insecure-still/Cargo.toml ../../../../lints/insecure_account_close/ui/insecure-still/Cargo.toml
-19c19
+19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.24.2"
-diff -r ./insecure-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still/src/lib.rs
-10c10
-<     pub fn close(ctx: Context<Close>) -> ProgramResult {
----
->     pub fn close(ctx: Context<Close>) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-45a46,47
+> anchor-lang = "0.25.0"
 > 
+> [workspace]
+diff -r ./insecure-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+45a47,49
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/insecure_account_close/ui/insecure-still/src: lib.stderr
 diff -r ./insecure-still-still/Cargo.toml ../../../../lints/insecure_account_close/ui/insecure-still-still/Cargo.toml
-19c19
+19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.24.2"
-diff -r ./insecure-still-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still-still/src/lib.rs
-11c11
-<     pub fn close(ctx: Context<Close>) -> ProgramResult {
----
->     pub fn close(ctx: Context<Close>) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-45a46,47
+> anchor-lang = "0.25.0"
 > 
+> [workspace]
+diff -r ./insecure-still-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still-still/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+45a47,49
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/insecure_account_close/ui/insecure-still-still/src: lib.stderr
 diff -r ./recommended/Cargo.toml ../../../../lints/insecure_account_close/ui/recommended/Cargo.toml
-19c19
+19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.24.2"
-diff -r ./recommended/src/lib.rs ../../../../lints/insecure_account_close/ui/recommended/src/lib.rs
-9c9
-<     pub fn close(ctx: Context<Close>) -> ProgramResult {
----
->     pub fn close(ctx: Context<Close>) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-18d17
-<     #[account(mut)]
-25a25,26
+> anchor-lang = "0.25.0"
 > 
+> [workspace]
+diff -r ./recommended/src/lib.rs ../../../../lints/insecure_account_close/ui/recommended/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+18d18
+<     #[account(mut)]
+25a26,28
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/insecure_account_close/ui/recommended/src: lib.stderr
-diff -r ./secure/src/lib.rs ../../../../lints/insecure_account_close/ui/secure/src/lib.rs
-12c12
-<     pub fn close(ctx: Context<Close>) -> ProgramResult {
+diff -r ./secure/Cargo.toml ../../../../lints/insecure_account_close/ui/secure/Cargo.toml
+19c19,21
+< anchor-lang = "0.20.1"
 ---
->     pub fn close(ctx: Context<Close>) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-33c33,35
-<     pub fn force_defund(ctx: Context<ForceDefund>) -> ProgramResult {
----
->     pub fn force_defund(
->         ctx: Context<ForceDefund>,
->     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-71a74,75
+> anchor-lang = "0.25.0"
 > 
+> [workspace]
+diff -r ./secure/src/lib.rs ../../../../lints/insecure_account_close/ui/secure/src/lib.rs
+2a3
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+71a73,75
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/insecure_account_close/ui/secure/src: lib.stderr

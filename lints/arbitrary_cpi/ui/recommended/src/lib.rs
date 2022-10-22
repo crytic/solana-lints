@@ -32,4 +32,5 @@ impl<'info> Cpi<'info> {
     }
 }
 
+#[allow(dead_code)]
 fn main() {}

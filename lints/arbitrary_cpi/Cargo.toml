@@ -14,8 +14,8 @@ name = "insecure"
 path = "ui/insecure/src/lib.rs"
 
 [[example]]
-name = "insecure_2"
-path = "ui/insecure_2/src/lib.rs"
+name = "insecure-2"
+path = "ui/insecure-2/src/lib.rs"
 
 [[example]]
 name = "recommended"
@@ -35,7 +35,6 @@ solana-lints = { path = "../../crate" }
 anchor-lang = "0.24.2"
 anchor-spl = "0.24.2"
 dylint_testing = "2.0.1"
-spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
 
 [workspace]
 

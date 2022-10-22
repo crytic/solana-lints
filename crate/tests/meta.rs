@@ -1,6 +1,8 @@
 use std::{
+    ffi::OsStr,
     fs::{read_dir, read_to_string},
     path::Path,
+    process::Command,
 };
 use toml::Value;
 
@@ -37,4 +39,18 @@ fn toolchain_channel(path: &Path) -> String {
         .and_then(Value::as_str)
         .map(ToOwned::to_owned)
         .unwrap()
+}
+
+#[test]
+fn only_lints_have_lockfiles() {
+    let output = Command::new("git").arg("ls-files").output().unwrap();
+
+    let stdout = std::str::from_utf8(&output.stdout).unwrap();
+
+    for line in stdout.lines() {
+        let path = Path::new(line);
+        if path.file_name() == Some(OsStr::new("Cargo.lock")) {
+            assert_eq!(path.parent(), Some(Path::new("lints")));
+        }
+    }
 }

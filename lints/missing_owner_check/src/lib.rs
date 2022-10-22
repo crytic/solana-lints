@@ -159,6 +159,6 @@ fn secure() {
 }
 
 #[test]
-fn fixed_secure() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "fixed-secure");
+fn secure_fixed() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure-fixed");
 }

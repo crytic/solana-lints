@@ -22,8 +22,8 @@ name = "secure"
 path = "ui/secure/src/lib.rs"
 
 [[example]]
-name = "fixed-secure"
-path = "ui/fixed-secure/src/lib.rs"
+name = "secure-fixed"
+path = "ui/secure-fixed/src/lib.rs"
 
 [dependencies]
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "2b2190cb5667cdd276a24ef8b9f3692209c54a89" }
@@ -35,7 +35,6 @@ solana-lints = { path = "../../crate" }
 anchor-lang = "0.24.2"
 anchor-spl = "0.24.2"
 dylint_testing = "2.0.7"
-spl-token = "3.3.0"
 
 [workspace]
 

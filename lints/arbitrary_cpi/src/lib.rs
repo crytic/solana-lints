@@ -366,7 +366,7 @@ impl ArbitraryCpi {
 
 #[test]
 fn insecure_2() {
-    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure_2");
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-2");
 }
 
 #[test]

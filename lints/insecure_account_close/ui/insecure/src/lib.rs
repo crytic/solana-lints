@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::entrypoint::ProgramResult;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -6,7 +7,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod closing_accounts_insecure {
     use super::*;
 
-    pub fn close(ctx: Context<Close>) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+    pub fn close(ctx: Context<Close>) -> ProgramResult {
         let dest_starting_lamports = ctx.accounts.destination.lamports();
 
         **ctx.accounts.destination.lamports.borrow_mut() = dest_starting_lamports
@@ -29,4 +30,5 @@ pub struct Data {
     data: u64,
 }
 
+#[allow(dead_code)]
 fn main() {}

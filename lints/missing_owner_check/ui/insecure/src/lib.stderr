@@ -1,5 +1,5 @@
 error: this Account struct is used but there is no check on its owner field
-  --> $DIR/lib.rs:12:46
+  --> $DIR/lib.rs:14:46
    |
 LL |         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow())?;
    |                                              ^^^^^^^^^^^^^^^^^^

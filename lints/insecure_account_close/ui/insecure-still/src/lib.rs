@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::entrypoint::ProgramResult;
 use std::ops::DerefMut;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
@@ -7,7 +8,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod closing_accounts_insecure_still {
     use super::*;
 
-    pub fn close(ctx: Context<Close>) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+    pub fn close(ctx: Context<Close>) -> ProgramResult {
         let account = ctx.accounts.account.to_account_info();
 
         let dest_starting_lamports = ctx.accounts.destination.lamports();
@@ -44,4 +45,5 @@ pub struct Data {
     data: u64,
 }
 
+#[allow(dead_code)]
 fn main() {}

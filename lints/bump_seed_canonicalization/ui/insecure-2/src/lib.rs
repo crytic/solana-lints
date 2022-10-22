@@ -6,7 +6,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
 pub mod bump_seed_canonicalization_insecure {
-    use super::{BumpSeed, Context, Key, ProgramError, ProgramResult, Pubkey};
+    use super::*;
 
     pub fn set_value(ctx: Context<BumpSeed>, key: u64, new_value: u64) -> ProgramResult {
         let address = Pubkey::create_program_address(
@@ -34,4 +34,5 @@ pub struct Data {
     bump: u8,
 }
 
+#[allow(dead_code)]
 fn main() {}
