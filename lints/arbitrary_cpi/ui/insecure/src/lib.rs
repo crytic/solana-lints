@@ -1,6 +1,7 @@
-use crate::solana_program::entrypoint::ProgramResult;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
+use anchor_lang::solana_program::entrypoint::ProgramResult;
+use anchor_spl::token::spl_token;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -35,4 +36,5 @@ pub struct Cpi<'info> {
     token_program: AccountInfo<'info>,
 }
 
-pub fn main() {}
+#[allow(dead_code)]
+fn main() {}

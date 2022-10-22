@@ -1024,7 +1024,6 @@ dependencies = [
  "dylint_testing",
  "if_chain",
  "solana-lints",
- "spl-token",
 ]
 
 [[package]]

@@ -21,4 +21,5 @@ pub struct LogMessage<'info> {
     authority: Signer<'info>,
 }
 
+#[allow(dead_code)]
 fn main() {}

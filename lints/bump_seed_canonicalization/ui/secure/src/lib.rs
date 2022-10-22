@@ -5,7 +5,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
 pub mod bump_seed_canonicalization_secure {
-    use super::{BumpSeed, Context, Key, ProgramError, ProgramResult, Pubkey};
+    use super::*;
 
     pub fn set_value_secure(
         ctx: Context<BumpSeed>,
@@ -38,4 +38,5 @@ pub struct Data {
     value: u64,
 }
 
+#[allow(dead_code)]
 fn main() {}

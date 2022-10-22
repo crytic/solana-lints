@@ -1,43 +1,50 @@
 diff -r ./insecure/Cargo.toml ../../../../lints/type_cosplay/ui/insecure/Cargo.toml
-19c19
+19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.24.2"
-diff -r ./insecure/src/lib.rs ../../../../lints/type_cosplay/ui/insecure/src/lib.rs
-10c10,12
-<     pub fn update_user(ctx: Context<UpdateUser>) -> ProgramResult {
----
->     pub fn update_user(
->         ctx: Context<UpdateUser>,
->     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-37a40,41
+> anchor-lang = "0.25.0"
 > 
+> [workspace]
+diff -r ./insecure/src/lib.rs ../../../../lints/type_cosplay/ui/insecure/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+37a39,41
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/type_cosplay/ui/insecure/src: lib.stderr
 Only in ../../../../lints/type_cosplay/ui: insecure-2
 Only in ../../../../lints/type_cosplay/ui: insecure-3
 Only in ../../../../lints/type_cosplay/ui: insecure-anchor
-diff -r ./recommended/src/lib.rs ../../../../lints/type_cosplay/ui/recommended/src/lib.rs
-10c10,12
-<     pub fn update_user(ctx: Context<UpdateUser>) -> ProgramResult {
+diff -r ./recommended/Cargo.toml ../../../../lints/type_cosplay/ui/recommended/Cargo.toml
+19c19,21
+< anchor-lang = "0.20.1"
 ---
->     pub fn update_user(
->         ctx: Context<UpdateUser>,
->     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-31a34,35
+> anchor-lang = "0.25.0"
 > 
+> [workspace]
+diff -r ./recommended/src/lib.rs ../../../../lints/type_cosplay/ui/recommended/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+31a33,35
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/type_cosplay/ui/recommended/src: lib.stderr
 Only in ../../../../lints/type_cosplay/ui: recommended-2
-diff -r ./secure/src/lib.rs ../../../../lints/type_cosplay/ui/secure/src/lib.rs
-10c10,12
-<     pub fn update_user(ctx: Context<UpdateUser>) -> ProgramResult {
+diff -r ./secure/Cargo.toml ../../../../lints/type_cosplay/ui/secure/Cargo.toml
+19c19,21
+< anchor-lang = "0.20.1"
 ---
->     pub fn update_user(
->         ctx: Context<UpdateUser>,
->     ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
-48a51,52
+> anchor-lang = "0.25.0"
 > 
+> [workspace]
+diff -r ./secure/src/lib.rs ../../../../lints/type_cosplay/ui/secure/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+48a50,52
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/type_cosplay/ui/secure/src: lib.stderr
 Only in ../../../../lints/type_cosplay/ui: secure-2

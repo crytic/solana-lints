@@ -29,10 +29,7 @@ solana-lints = { path = "../../crate" }
 
 [dev-dependencies]
 anchor-lang = "0.24.2"
-assert_cmd = "2.0.4"
 dylint_testing = "2.0.7"
-predicates = "2.1.1"
-tempfile = "3.3.0"
 
 [workspace]
 

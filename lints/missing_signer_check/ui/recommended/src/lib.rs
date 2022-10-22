@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::entrypoint::ProgramResult;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -6,9 +7,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod signer_authorization_recommended {
     use super::*;
 
-    pub fn log_message(
-        ctx: Context<LogMessage>,
-    ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+    pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
         msg!("GM {}", ctx.accounts.authority.key().to_string());
         Ok(())
     }
@@ -19,4 +18,5 @@ pub struct LogMessage<'info> {
     authority: Signer<'info>,
 }
 
+#[allow(dead_code)]
 fn main() {}

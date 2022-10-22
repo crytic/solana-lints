@@ -1,17 +1,23 @@
 diff -r ./insecure/Cargo.toml ../../../../lints/arbitrary_cpi/ui/insecure/Cargo.toml
-21c21,22
+19,21c19,22
+< anchor-lang = "0.20.1"
+< anchor-spl = "0.20.1"
 < spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
 \ No newline at end of file
 ---
-> spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
+> anchor-lang = "0.25.0"
+> anchor-spl = "0.25.0"
 > 
+> [workspace]
 diff -r ./insecure/src/lib.rs ../../../../lints/arbitrary_cpi/ui/insecure/src/lib.rs
-0a1
-> use crate::solana_program::entrypoint::ProgramResult;
-35a37,38
+2a3,4
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+> use anchor_spl::token::spl_token;
+35a38,40
 > 
-> pub fn main() {}
-Only in ../../../../lints/arbitrary_cpi/ui: insecure_2
+> #[allow(dead_code)]
+> fn main() {}
+Only in ../../../../lints/arbitrary_cpi/ui: insecure-2
 diff -r ./recommended/Cargo.toml ../../../../lints/arbitrary_cpi/ui/recommended/Cargo.toml
 19,21c19,22
 < anchor-lang = "0.20.1"
@@ -19,30 +25,34 @@ diff -r ./recommended/Cargo.toml ../../../../lints/arbitrary_cpi/ui/recommended/
 < spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
 \ No newline at end of file
 ---
-> anchor-lang = "0.24.2"
-> anchor-spl = "0.24.2"
-> spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
+> anchor-lang = "0.25.0"
+> anchor-spl = "0.25.0"
 > 
+> [workspace]
 diff -r ./recommended/src/lib.rs ../../../../lints/arbitrary_cpi/ui/recommended/src/lib.rs
 10c10
 <     pub fn cpi(ctx: Context<Cpi>, amount: u64) -> ProgramResult {
 ---
 >     pub fn cpi(ctx: Context<Cpi>, amount: u64) -> Result<()> {
-33a34,35
+33a34,36
 > 
+> #[allow(dead_code)]
 > fn main() {}
 diff -r ./secure/Cargo.toml ../../../../lints/arbitrary_cpi/ui/secure/Cargo.toml
-19,20c19,20
+19,21c19,22
 < anchor-lang = "0.20.1"
 < anchor-spl = "0.20.1"
+< spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
 ---
-> anchor-lang = "0.24.2"
-> anchor-spl = "0.24.2"
-21a22
+> anchor-lang = "0.25.0"
+> anchor-spl = "0.25.0"
 > 
+> [workspace]
 diff -r ./secure/src/lib.rs ../../../../lints/arbitrary_cpi/ui/secure/src/lib.rs
-0a1
-> use crate::solana_program::entrypoint::ProgramResult;
-38a40,41
+2a3,4
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+> use anchor_spl::token::spl_token;
+38a41,43
 > 
+> #[allow(dead_code)]
 > fn main() {}

@@ -1,39 +1,64 @@
-Only in ../../../../lints/missing_owner_check/ui: fixed-secure
 diff -r ./insecure/Cargo.toml ../../../../lints/missing_owner_check/ui/insecure/Cargo.toml
-19,20c19,20
+19,21c19,22
 < anchor-lang = "0.20.1"
 < anchor-spl = "0.20.1"
+< spl-token = "3.2.0"
 ---
-> anchor-lang = "0.24.2"
-> anchor-spl = "0.24.2"
-diff -r ./insecure/src/lib.rs ../../../../lints/missing_owner_check/ui/insecure/src/lib.rs
-2,3c2
-< use anchor_lang::solana_program::program_error::ProgramError;
-< use anchor_lang::solana_program::program_pack::Pack;
----
-> use anchor_lang::solana_program::{entrypoint::ProgramResult, program_pack::Pack};
-26a26,27
+> anchor-lang = "0.25.0"
+> anchor-spl = "0.25.0"
 > 
+> [workspace]
+diff -r ./insecure/src/lib.rs ../../../../lints/missing_owner_check/ui/insecure/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+4c5
+< use spl_token::state::Account as SplTokenAccount;
+---
+> use anchor_spl::token::spl_token::state::Account as SplTokenAccount;
+26a28,30
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/missing_owner_check/ui/insecure/src: lib.stderr
+diff -r ./recommended/Cargo.toml ../../../../lints/missing_owner_check/ui/recommended/Cargo.toml
+19,21c19,22
+< anchor-lang = "0.20.1"
+< anchor-spl = "0.20.1"
+< spl-token = "3.2.0"
+---
+> anchor-lang = "0.25.0"
+> anchor-spl = "0.25.0"
+> 
+> [workspace]
 diff -r ./recommended/src/lib.rs ../../../../lints/missing_owner_check/ui/recommended/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
-21a23,24
+21a23,25
 > 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/missing_owner_check/ui/recommended/src: lib.stderr
-diff -r ./secure/src/lib.rs ../../../../lints/missing_owner_check/ui/secure/src/lib.rs
-3c3
-< use anchor_lang::solana_program::program_pack::Pack;
+diff -r ./secure/Cargo.toml ../../../../lints/missing_owner_check/ui/secure/Cargo.toml
+19,21c19,22
+< anchor-lang = "0.20.1"
+< anchor-spl = "0.20.1"
+< spl-token = "3.2.0"
 ---
-> use anchor_lang::solana_program::{entrypoint::ProgramResult, program_pack::Pack};
-5,6c5
-< 
-< declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
----
-> use spl_token::ID;
-29a29,30
+> anchor-lang = "0.25.0"
+> anchor-spl = "0.25.0"
 > 
+> [workspace]
+diff -r ./secure/src/lib.rs ../../../../lints/missing_owner_check/ui/secure/src/lib.rs
+1a2
+> use anchor_lang::solana_program::entrypoint::ProgramResult;
+4c5,6
+< use spl_token::state::Account as SplTokenAccount;
+---
+> use anchor_spl::token::spl_token;
+> use anchor_spl::token::spl_token::state::Account as SplTokenAccount;
+29a32,34
+> 
+> #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/missing_owner_check/ui/secure/src: lib.stderr
+Only in ../../../../lints/missing_owner_check/ui: secure-fixed

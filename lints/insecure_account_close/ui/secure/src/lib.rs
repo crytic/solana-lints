@@ -1,5 +1,6 @@
 use anchor_lang::__private::CLOSED_ACCOUNT_DISCRIMINATOR;
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::entrypoint::ProgramResult;
 use std::io::{Cursor, Write};
 use std::ops::DerefMut;
 
@@ -9,7 +10,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod closing_accounts_secure {
     use super::*;
 
-    pub fn close(ctx: Context<Close>) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+    pub fn close(ctx: Context<Close>) -> ProgramResult {
         let dest_starting_lamports = ctx.accounts.destination.lamports();
 
         let account = ctx.accounts.account.to_account_info();
@@ -30,9 +31,7 @@ pub mod closing_accounts_secure {
         Ok(())
     }
 
-    pub fn force_defund(
-        ctx: Context<ForceDefund>,
-    ) -> anchor_lang::solana_program::entrypoint::ProgramResult {
+    pub fn force_defund(ctx: Context<ForceDefund>) -> ProgramResult {
         let account = &ctx.accounts.account;
 
         let data = account.try_borrow_data()?;
@@ -72,4 +71,5 @@ pub struct Data {
     data: u64,
 }
 
+#[allow(dead_code)]
 fn main() {}
