@@ -14,8 +14,8 @@ jobs:
         with:
           ssh-key: ${{ secrets.PR_SSH_KEY }}
 
-      - name: Install dylint and dylint-link
-        run: cargo install dylint dylint-link
+      - name: Install cargo-dylint and dylint-link
+        run: cargo install cargo-dylint dylint-link
 
       - name: Upgrade lints
         run: scripts/upgrade_lints.sh
