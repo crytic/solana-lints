@@ -53,7 +53,7 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
         }
         let body_mir = cx.tcx.optimized_mir(body_did);
         let terminators = body_mir
-            .basic_blocks()
+            .basic_blocks
             .iter_enumerated()
             .map(|(block_id, block)| (block_id, &block.terminator));
         for (_idx, (block_id, terminator)) in terminators.enumerate() {
@@ -158,13 +158,12 @@ impl BumpSeedCanonicalization {
         mut seeds_arg: &Place<'tcx>,
     ) -> (BackwardDataflowState, Vec<Place<'tcx>>) {
         let preds = body.basic_blocks.predecessors();
-        let bbs = body.basic_blocks();
         let mut cur_block = block;
         let mut state = BackwardDataflowState::SeedsArray;
         let mut likely_bump_seed_aliases = Vec::<Place>::new();
         loop {
             // check every statement
-            for stmt in bbs[cur_block].statements.iter().rev() {
+            for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
                 if let StatementKind::Assign(box (assign_place, rvalue)) = &stmt.kind {
                     // trace assignments so we have a list of locals that contain the bump_seed
                     if assign_place.local_or_deref_local() == seeds_arg.local_or_deref_local() {
@@ -249,7 +248,6 @@ impl BumpSeedCanonicalization {
         search_list: &[Local],
     ) -> bool {
         let preds = body.basic_blocks.predecessors();
-        let bbs = body.basic_blocks();
         let mut cur_block = block;
         if let Some(search_loc) = search_place.local_or_deref_local() {
             if search_list.contains(&search_loc) {
@@ -257,7 +255,7 @@ impl BumpSeedCanonicalization {
             }
         }
         loop {
-            for stmt in bbs[cur_block].statements.iter().rev() {
+            for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
                 match &stmt.kind {
                     StatementKind::Assign(box (assign_place, rvalue))
                         if assign_place.local_or_deref_local()
@@ -297,7 +295,7 @@ impl BumpSeedCanonicalization {
         body: &'tcx mir::Body<'tcx>,
         bump_locals: &[Local],
     ) -> bool {
-        for (block_id, block) in body.basic_blocks().iter_enumerated() {
+        for (block_id, block) in body.basic_blocks.iter_enumerated() {
             for stmt in &block.statements {
                 if_chain! {
                     if let StatementKind::Assign(box (_, rvalue)) = &stmt.kind;
