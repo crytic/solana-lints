@@ -49,11 +49,11 @@ fn is_account_close(expr: &Expr<'_>) -> bool {
         if let Some(place) = is_zero_assignment(expr);
         if let ExprKind::Unary(UnOp::Deref, inner) = place.kind;
         if let ExprKind::Unary(UnOp::Deref, inner_inner) = inner.kind;
-        if let ExprKind::MethodCall(method_name, args, _) = inner_inner.kind;
+        if let ExprKind::MethodCall(method_name, receiver, args, _) = inner_inner.kind;
         if method_name.ident.as_str() == "borrow_mut";
-        if let [arg] = args;
-        if let ExprKind::Field(_, field_name) = arg.kind;
+        if let ExprKind::Field(_, field_name) = receiver.kind;
         if field_name.as_str() == "lamports";
+        if args.is_empty();
         then {
             true
         } else {
@@ -78,9 +78,9 @@ fn contains_initial_eight_byte_copy_slice<'tcx>(body: &'tcx Body<'tcx>) -> bool 
 
 fn is_initial_eight_byte_copy_from_slice(expr: &Expr<'_>) -> bool {
     if_chain! {
-        if let ExprKind::MethodCall(method_name, args, _) = expr.kind;
+        if let ExprKind::MethodCall(method_name, _, args, _) = expr.kind;
         if method_name.ident.as_str() == "copy_from_slice";
-        if let [_, arg] = args;
+        if let [arg] = args;
         if let ExprKind::AddrOf(BorrowKind::Ref, Mutability::Not, inner) = arg.kind;
         if let ExprKind::Index(_, index) = inner.kind;
         if let ExprKind::Struct(qpath, fields, None) = index.kind;

@@ -74,7 +74,7 @@ impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
         }
         let body_mir = cx.tcx.optimized_mir(body_did);
         let terminators = body_mir
-            .basic_blocks()
+            .basic_blocks
             .iter_enumerated()
             .map(|(block_id, block)| (block_id, &block.terminator));
         for (_idx, (block_id, terminator)) in terminators.enumerate() {
@@ -144,13 +144,12 @@ impl ArbitraryCpi {
         mut inst_arg: &Place<'tcx>,
     ) -> (bool, Vec<Place<'tcx>>) {
         let preds = body.basic_blocks.predecessors();
-        let bbs = body.basic_blocks();
         let mut cur_block = block;
         let mut found_program_id = false;
         let mut likely_program_id_aliases = Vec::<Place>::new();
         loop {
             // Walk the bb in reverse, starting with the terminator
-            if let Some(t) = &bbs[cur_block].terminator {
+            if let Some(t) = &body.basic_blocks[cur_block].terminator {
                 match &t.kind {
                     TerminatorKind::Call {
                         func: mir::Operand::Constant(box func),
@@ -184,7 +183,7 @@ impl ArbitraryCpi {
                 }
             }
             // check every statement
-            for stmt in bbs[cur_block].statements.iter().rev() {
+            for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
                 match &stmt.kind {
                     StatementKind::Assign(box (assign_place, rvalue))
                         if assign_place.local_or_deref_local()
@@ -264,7 +263,6 @@ impl ArbitraryCpi {
         search_list: &[Local],
     ) -> bool {
         let preds = body.basic_blocks.predecessors();
-        let bbs = body.basic_blocks();
         let mut cur_block = block;
         if let Some(search_loc) = search_place.local_or_deref_local() {
             if search_list.contains(&search_loc) {
@@ -272,7 +270,7 @@ impl ArbitraryCpi {
             }
         }
         loop {
-            for stmt in bbs[cur_block].statements.iter().rev() {
+            for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
                 match &stmt.kind {
                     StatementKind::Assign(box (assign_place, rvalue))
                         if assign_place.local_or_deref_local()
@@ -316,12 +314,11 @@ impl ArbitraryCpi {
         programid_locals: &[Local],
     ) -> bool {
         let preds = body.basic_blocks.predecessors();
-        let bbs = body.basic_blocks();
         let mut cur_block = block;
         loop {
             // check every statement
             if_chain! {
-                if let Some(t) = &bbs[cur_block].terminator;
+                if let Some(t) = &body.basic_blocks[cur_block].terminator;
                 if let TerminatorKind::Call {
                     func: func_operand,
                     args,
