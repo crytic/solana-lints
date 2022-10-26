@@ -14,6 +14,9 @@ jobs:
         with:
           ssh-key: ${{ secrets.PR_SSH_KEY }}
 
+      - name: Install cargo-edit
+        run: cargo install cargo-edit
+
       - name: Install dylint-link
         run: cargo install dylint-link
 
