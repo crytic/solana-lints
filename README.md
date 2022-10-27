@@ -30,7 +30,7 @@ To use these lints, do the following:
    ```toml
    [workspace.metadata.dylint]
    libraries = [
-       { git = "https://github.com/trailofbits/solana-lints", pattern = "lints/*" },
+       { git = "https://github.com/crytic/solana-lints", pattern = "lints/*" },
    ]
    ```
 
