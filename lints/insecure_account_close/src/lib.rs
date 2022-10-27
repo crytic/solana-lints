@@ -70,7 +70,7 @@ fn is_force_defund<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool
 }
 
 fn contains_initial_eight_byte_copy_slice<'tcx>(body: &'tcx Body<'tcx>) -> bool {
-    visit_expr_no_bodies(&body.value, |expr| {
+    visit_expr_no_bodies(body.value, |expr| {
         is_initial_eight_byte_copy_from_slice(expr).then_some(())
     })
     .is_some()
@@ -102,7 +102,7 @@ fn contains_eight_byte_array_comparison<'tcx>(
     cx: &LateContext<'tcx>,
     body: &'tcx Body<'tcx>,
 ) -> bool {
-    visit_expr_no_bodies(&body.value, |expr| {
+    visit_expr_no_bodies(body.value, |expr| {
         is_eight_byte_array_comparison(cx, expr).then_some(())
     })
     .is_some()
@@ -137,7 +137,7 @@ fn is_eight_byte_array<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool 
 }
 
 fn contains_manual_clear<'tcx>(body: &'tcx Body<'tcx>) -> bool {
-    visit_expr_no_bodies(&body.value, |expr| is_manual_clear(expr).then_some(())).is_some()
+    visit_expr_no_bodies(body.value, |expr| is_manual_clear(expr).then_some(())).is_some()
 }
 
 fn is_manual_clear(expr: &Expr<'_>) -> bool {
