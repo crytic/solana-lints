@@ -95,7 +95,7 @@ fn get_referenced_accounts<'tcx>(
         uses: Vec::new(),
     };
 
-    accounts.visit_expr(&body.value);
+    accounts.visit_expr(body.value);
     accounts.uses
 }
 
@@ -120,7 +120,7 @@ fn contains_owner_use<'tcx>(
     body: &'tcx Body<'tcx>,
     account_expr: &Expr<'tcx>,
 ) -> bool {
-    visit_expr_no_bodies(&body.value, |expr| uses_owner_field(cx, expr, account_expr))
+    visit_expr_no_bodies(body.value, |expr| uses_owner_field(cx, expr, account_expr))
 }
 
 /// Checks if `expr` is an owner field reference on `account_expr`

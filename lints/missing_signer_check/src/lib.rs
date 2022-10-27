@@ -67,7 +67,7 @@ impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
 }
 
 fn body_uses_account_info<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool {
-    visit_expr_no_bodies(&body.value, |expr| {
+    visit_expr_no_bodies(body.value, |expr| {
         let ty = cx.typeck_results().expr_ty(expr);
         match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO)
     })
@@ -108,7 +108,7 @@ fn arg_contains_signer_field<'tcx>(cx: &LateContext<'tcx>, arg: GenericArg<'tcx>
 }
 
 fn body_contains_is_signer_use<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool {
-    visit_expr_no_bodies(&body.value, |expr| is_is_signer_use(cx, expr))
+    visit_expr_no_bodies(body.value, |expr| is_is_signer_use(cx, expr))
 }
 
 fn is_is_signer_use<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
