@@ -32,7 +32,7 @@ pub struct User {
     authority: Pubkey,
 }
 
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshSerialize, BorshDeserialize)]
 pub struct Metadata {
     account: Pubkey,
 }
