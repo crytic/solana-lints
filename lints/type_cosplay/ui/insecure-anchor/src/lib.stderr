@@ -1,5 +1,5 @@
 error: `User` type implements the `Discriminator` trait. If you are attempting to deserialize
-        here and `User` is annotated with #[account] use try_deserialize() instead.
+        here, you probably want try_deserialize() instead.
   --> $DIR/lib.rs:12:20
    |
 LL |         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();

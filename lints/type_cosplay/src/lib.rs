@@ -174,8 +174,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                             cx,
                             TYPE_COSPLAY,
                             fnc_expr.span,
-                            &format!("`{}` type implements the `Discriminator` trait. If you are attempting to deserialize\n here and `{}` is annotated with #[account] use try_deserialize() instead.",
-                                middle_ty,
+                            &format!("`{}` type implements the `Discriminator` trait. If you are attempting to deserialize\n here, you probably want try_deserialize() instead.",
                                 middle_ty
                             ),
                             None,
