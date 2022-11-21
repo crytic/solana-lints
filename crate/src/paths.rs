@@ -3,10 +3,15 @@
 // all in upper snake case.
 
 pub const ANCHOR_LANG_ACCOUNT: [&str; 4] = ["anchor_lang", "accounts", "account", "Account"];
+pub const ANCHOR_LANG_PROGRAM: [&str; 4] = ["anchor_lang", "accounts", "program", "Program"];
+pub const ANCHOR_LANG_SYSTEM_ACCOUNT: [&str; 4] =
+    ["anchor_lang", "accounts", "system_account", "SystemAccount"];
 pub const ANCHOR_LANG_ACCOUNT_DESERIALIZE: [&str; 2] = ["anchor_lang", "AccountDeserialize"];
 pub const ANCHOR_LANG_CONTEXT: [&str; 3] = ["anchor_lang", "context", "Context"];
 pub const ANCHOR_LANG_DISCRIMINATOR: [&str; 2] = ["anchor_lang", "Discriminator"];
 pub const ANCHOR_LANG_SIGNER: [&str; 4] = ["anchor_lang", "accounts", "signer", "Signer"];
+pub const ANCHOR_LANG_TO_ACCOUNT_INFO: [&str; 3] =
+    ["anchor_lang", "ToAccountInfo", "to_account_info"];
 pub const ANCHOR_LANG_TRY_DESERIALIZE: [&str; 3] =
     ["anchor_lang", "AccountDeserialize", "try_deserialize"];
 

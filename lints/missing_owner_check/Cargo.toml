@@ -25,6 +25,14 @@ path = "ui/secure/src/lib.rs"
 name = "secure-fixed"
 path = "ui/secure-fixed/src/lib.rs"
 
+[[example]]
+name = "secure-account-owner"
+path = "ui/secure-account-owner/src/lib.rs"
+
+[[example]]
+name = "secure-program-id"
+path = "ui/secure-program-id/src/lib.rs"
+
 [dependencies]
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "e43f5a17d4d9263616ae6fc28a7c5353e80d8a12" }
 dylint_linting = "2.0.13"
