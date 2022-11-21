@@ -61,4 +61,6 @@ diff -r ./secure/src/lib.rs ../../../../lints/missing_owner_check/ui/secure/src/
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/missing_owner_check/ui/secure/src: lib.stderr
+Only in ../../../../lints/missing_owner_check/ui: secure-account-owner
 Only in ../../../../lints/missing_owner_check/ui: secure-fixed
+Only in ../../../../lints/missing_owner_check/ui: secure-program-id

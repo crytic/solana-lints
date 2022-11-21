@@ -2,15 +2,19 @@
 #![warn(unused_extern_crates)]
 
 extern crate rustc_hir;
+extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::{diagnostics::span_lint, ty::match_type, SpanlessEq};
+use clippy_utils::{
+    diagnostics::span_lint, match_any_def_paths, match_def_path, ty::match_type, SpanlessEq,
+};
 use if_chain::if_chain;
 use rustc_hir::{
     intravisit::{walk_expr, FnKind, Visitor},
     Body, Expr, ExprKind, FnDecl, HirId,
 };
 use rustc_lint::{LateContext, LateLintPass};
+use rustc_middle::ty;
 use rustc_span::Span;
 use solana_lints::{paths, utils::visit_expr_no_bodies};
 
@@ -65,8 +69,6 @@ impl<'tcx> LateLintPass<'tcx> for MissingOwnerCheck {
     ) {
         if !span.from_expansion() {
             let accounts = get_referenced_accounts(cx, body);
-            // println!("{:?}\n {:#?}", span, accounts.len());
-
             for account_expr in accounts {
                 if !contains_owner_use(cx, body, account_expr) {
                     span_lint(
@@ -104,14 +106,60 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
         if_chain! {
             let ty = self.cx.typeck_results().expr_ty(expr);
             if match_type(self.cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
+            if !is_safe_to_account_info(self.cx, expr);
             let mut spanless_eq = SpanlessEq::new(self.cx);
             if !self.uses.iter().any(|e| spanless_eq.eq_expr(e, expr));
             then {
-                // println!("Expression pushed: {:?}", expr);
                 self.uses.push(expr);
             }
         }
         walk_expr(self, expr);
+    }
+}
+
+// smoelius: See: https://github.com/crytic/solana-lints/issues/31
+fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> bool {
+    if_chain! {
+        if let Some(recv) = is_to_account_info(cx, expr);
+        let recv_ty = cx.typeck_results().expr_ty(recv);
+        if let ty::Adt(adt_def, _) = recv_ty.kind();
+        // smoelius:
+        // - `Account` requires its type argument to implement `anchor_lang::Owner`.
+        // - `Program`'s implementation of `try_from` checks the account's program id. So there is
+        //   no ambiguity in regard to the account's owner.
+        // - `SystemAccount`'s implementation of `try_from` checks that the account's owner is the
+        //   System Program.
+        if match_any_def_paths(
+            cx,
+            adt_def.did(),
+            &[
+                &paths::ANCHOR_LANG_ACCOUNT,
+                &paths::ANCHOR_LANG_PROGRAM,
+                &paths::ANCHOR_LANG_SYSTEM_ACCOUNT,
+            ],
+        )
+        .is_some();
+        then {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+fn is_to_account_info<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &'tcx Expr<'tcx>,
+) -> Option<&'tcx Expr<'tcx>> {
+    if_chain! {
+        if let ExprKind::MethodCall(_, recv, _, _) = expr.kind;
+        if let Some(def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id);
+        if match_def_path(cx, def_id, &paths::ANCHOR_LANG_TO_ACCOUNT_INFO);
+        then {
+            Some(recv)
+        } else {
+            None
+        }
     }
 }
 
@@ -161,4 +209,14 @@ fn secure() {
 #[test]
 fn secure_fixed() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure-fixed");
+}
+
+#[test]
+fn secure_account_owner() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure-account-owner");
+}
+
+#[test]
+fn secure_programn_id() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure-program-id");
 }
