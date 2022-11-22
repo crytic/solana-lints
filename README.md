@@ -1,8 +1,10 @@
 # Trail of Bits Solana lints
 
-Each subdirectory of [`lints`](lints) contains a Solana lint in the form of a [Dylint](https://github.com/trailofbits/dylint) library.
+Solana Breakpoint 2022 [slides] [video]
 
-The lints are inspired by the [Sealevel Attacks](https://github.com/coral-xyz/sealevel-attacks).
+Each subdirectory of [`lints`] contains a Solana lint in the form of a [Dylint] library.
+
+The lints are inspired by the [Sealevel Attacks].
 
 The current lints are:
 
@@ -38,3 +40,9 @@ To use these lints, do the following:
    ```sh
    cargo dylint --all --workspace
    ```
+
+[`lints`]: lints
+[dylint]: https://github.com/trailofbits/dylint
+[sealevel attacks]: https://github.com/coral-xyz/sealevel-attacks
+[slides]: docs/Dylint%20Can%20Help%20you%20Write%20More%20Secure%20Solana%20Contracts.pdf
+[video]: https://www.youtube.com/watch?v=AulT4TaPf1M
