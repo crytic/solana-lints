@@ -4,12 +4,12 @@ error: multiple enum types deserialized. Should only have one enum type to avoid
 LL |         let user = UserInfo::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
    |                    ^^^^^^^^
    |
-   = note: `-D type-cosplay` implied by `-D warnings`
 help: consider constructing a single enum that contains all type definitions as variants
   --> $DIR/lib.rs:30:24
    |
 LL |         let metadata = MetadataInfo::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
    |                        ^^^^^^^^^^^^
+   = note: `-D type-cosplay` implied by `-D warnings`
 
 error: aborting due to previous error
 

@@ -5,8 +5,8 @@ error: `User` type implements the `Discriminator` trait. If you are attempting t
 LL |         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
    |                    ^^^^^^^^^^^^^^^^^^^^
    |
-   = note: `-D type-cosplay` implied by `-D warnings`
    = help: otherwise, make sure you are accounting for this type's discriminator in your deserialization function
+   = note: `-D type-cosplay` implied by `-D warnings`
 
 error: aborting due to previous error
 

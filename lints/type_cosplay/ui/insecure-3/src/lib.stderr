@@ -4,12 +4,12 @@ error: Deserializing from different ADT types.
 LL |         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
    |                    ^^^^
    |
-   = note: `-D type-cosplay` implied by `-D warnings`
 help: deserialize from only structs with a discriminant, or an enum encapsulating all structs.
   --> $DIR/lib.rs:25:13
    |
 LL |             AccountWithDiscriminant::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
    |             ^^^^^^^^^^^^^^^^^^^^^^^
+   = note: `-D type-cosplay` implied by `-D warnings`
 
 error: aborting due to previous error
 
