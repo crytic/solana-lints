@@ -30,7 +30,7 @@ fn one_toolchain_is_used_throughout() {
 
 fn toolchain_channel(path: &Path) -> String {
     let rust_toolchain = path.join("rust-toolchain");
-    let file = read_to_string(&rust_toolchain).unwrap();
+    let file = read_to_string(rust_toolchain).unwrap();
     let document = toml::from_str::<Value>(&file).unwrap();
     document
         .as_table()
