@@ -4,8 +4,8 @@ error: type does not have a proper discriminant. It may be indistinguishable whe
 LL |         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
    |                    ^^^^
    |
-   = note: `-D type-cosplay` implied by `-D warnings`
    = help: add an enum with at least as many variants as there are struct definitions
+   = note: `-D type-cosplay` implied by `-D warnings`
 
 error: aborting due to previous error
 
