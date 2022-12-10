@@ -4,7 +4,7 @@ Solana Breakpoint 2022 [slides] [video]
 
 Each subdirectory of [`lints`] contains a Solana lint in the form of a [Dylint] library.
 
-The lints are inspired by the [Sealevel Attacks].
+The lints are inspired by the [Sealevel Attacks]. (See also @pencilflip's [Twitter thread].)
 
 The current lints are:
 
@@ -45,4 +45,5 @@ To use these lints, do the following:
 [dylint]: https://github.com/trailofbits/dylint
 [sealevel attacks]: https://github.com/coral-xyz/sealevel-attacks
 [slides]: docs/Dylint%20Can%20Help%20you%20Write%20More%20Secure%20Solana%20Contracts.pdf
+[twitter thread]: https://threadreaderapp.com/thread/1483880018858201090.html
 [video]: https://www.youtube.com/watch?v=AulT4TaPf1M
