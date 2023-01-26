@@ -9,7 +9,7 @@ edition = "2021"
 assert_cmd = "2.0.8"
 predicates = "2.1.5"
 tempfile = "3.3.0"
-toml = "0.5.10"
+toml = "0.6.0"
 
 [package.metadata.rust-analyzer]
 rustc_private = true
