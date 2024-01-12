@@ -104,6 +104,7 @@ fn get_referenced_accounts<'tcx>(
 impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         if_chain! {
+            if !is_call_to_clone(self.cx, expr);
             let ty = self.cx.typeck_results().expr_ty(expr);
             if match_type(self.cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
             if !is_safe_to_account_info(self.cx, expr);
@@ -117,11 +118,25 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
     }
 }
 
+/// Return true if the expr is a method call to clone else false
+fn is_call_to_clone<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> bool {
+    if_chain! {
+        if let ExprKind::MethodCall(_, _, _, _) = expr.kind;
+        if let Some(def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id);
+        if match_any_def_paths(cx, def_id, &[&paths::CORE_CLONE]).is_some();
+        then {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 // smoelius: See: https://github.com/crytic/solana-lints/issues/31
 fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> bool {
     if_chain! {
-        if let Some(recv) = is_to_account_info(cx, expr);
-        let recv_ty = cx.typeck_results().expr_ty(recv);
+        if let Some(recv) = is_to_account_info(cx, expr); 
+        if let ty::Ref(_, recv_ty, _) = cx.typeck_results().expr_ty_adjusted(recv).kind();
         if let ty::Adt(adt_def, _) = recv_ty.kind();
         // smoelius:
         // - `Account` requires its type argument to implement `anchor_lang::Owner`.
@@ -129,6 +144,9 @@ fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>)
         //   no ambiguity in regard to the account's owner.
         // - `SystemAccount`'s implementation of `try_from` checks that the account's owner is the
         //   System Program.
+        // - `AccountLoader` requires its type argument to implement `anchor_lang::Owner`.
+        // - `Signer` are mostly accounts with a private key and most of the times owned by System Program.
+        // - `Sysvar` type arguments checks the account key.
         if match_any_def_paths(
             cx,
             adt_def.did(),
@@ -136,6 +154,9 @@ fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>)
                 &paths::ANCHOR_LANG_ACCOUNT,
                 &paths::ANCHOR_LANG_PROGRAM,
                 &paths::ANCHOR_LANG_SYSTEM_ACCOUNT,
+                &paths::ANCHOR_LANG_ACCOUNT_LOADER,
+                &paths::ANCHOR_LANG_SIGNER,
+                &paths::ANCHOR_LANG_SYSVAR,
             ],
         )
         .is_some();
