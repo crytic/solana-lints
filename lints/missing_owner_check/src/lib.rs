@@ -12,7 +12,7 @@ use if_chain::if_chain;
 use rustc_hir::{
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
-    Body, Expr, ExprKind, FnDecl,
+    Body, Expr, ExprKind, FnDecl, QPath,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty;
@@ -108,6 +108,7 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
             if !is_call_to_clone(self.cx, expr);
             let ty = self.cx.typeck_results().expr_ty(expr);
             if match_type(self.cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
+            if !is_expr_local_variable(expr);
             if !is_safe_to_account_info(self.cx, expr);
             let mut spanless_eq = SpanlessEq::new(self.cx);
             if !self.uses.iter().any(|e| spanless_eq.eq_expr(e, expr));
@@ -119,12 +120,31 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
     }
 }
 
+// s3v3ru5: the following check removes duplicate warnings where lint would report both `x` and `x.clone()` expressions.
 /// Return true if the expr is a method call to clone else false
 fn is_call_to_clone<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> bool {
     if_chain! {
         if let ExprKind::MethodCall(_, _, _, _) = expr.kind;
         if let Some(def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id);
         if match_any_def_paths(cx, def_id, &[&paths::CORE_CLONE]).is_some();
+        then {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+// s3v3ru5: if a local variable is of type AccountInfo, the rhs of the let statement assigning to variable
+// will be of type AccountInfo. The lint would check that expression and there is no need for checking the
+// local variable as well.
+// This removes the false positives of following pattern:
+// `let x = {Account, Program, ...verified structs}.to_account_info()`,
+// the lint reports uses of `x`. Having this check would remove such false positives.
+fn is_expr_local_variable<'tcx>(expr: &'tcx Expr<'tcx>) -> bool {
+    if_chain! {
+        if let ExprKind::Path(QPath::Resolved(None, path)) = expr.kind;
+        if path.segments.len() == 1;
         then {
             true
         } else {
@@ -158,6 +178,8 @@ fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>)
                 &paths::ANCHOR_LANG_ACCOUNT_LOADER,
                 &paths::ANCHOR_LANG_SIGNER,
                 &paths::ANCHOR_LANG_SYSVAR,
+                // s3v3ru5: The following line will remove duplicate warnings where lint reports both `x` and `x.to_account_info()` when x is of type Anchor's AccountInfo.
+                &paths::SOLANA_PROGRAM_ACCOUNT_INFO,
             ],
         )
         .is_some();
