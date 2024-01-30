@@ -12,7 +12,7 @@ use if_chain::if_chain;
 use rustc_hir::{
     def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
-    Body, Expr, ExprKind, FnDecl, QPath,
+    Body, Expr, ExprKind, FnDecl, QPath, BinOpKind,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty;
@@ -71,7 +71,7 @@ impl<'tcx> LateLintPass<'tcx> for MissingOwnerCheck {
         if !span.from_expansion() {
             let accounts = get_referenced_accounts(cx, body);
             for account_expr in accounts {
-                if !contains_owner_use(cx, body, account_expr) {
+                if !contains_owner_use(cx, body, account_expr) && !contains_key_check(cx, body, account_expr) {
                     span_lint(
                         cx,
                         MISSING_OWNER_CHECK,
@@ -105,7 +105,9 @@ fn get_referenced_accounts<'tcx>(
 impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         if_chain! {
-            if !is_call_to_clone(self.cx, expr);
+            // s3v3ru5: the following check removes duplicate warnings where lint would report both `x` and `x.clone()` expressions.
+            // ignore `clone()` expressions
+            if !is_expr_method_call(self.cx, expr, &paths::CORE_CLONE).is_some();
             let ty = self.cx.typeck_results().expr_ty(expr);
             if match_type(self.cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
             if !is_expr_local_variable(expr);
@@ -117,21 +119,6 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
             }
         }
         walk_expr(self, expr);
-    }
-}
-
-// s3v3ru5: the following check removes duplicate warnings where lint would report both `x` and `x.clone()` expressions.
-/// Return true if the expr is a method call to clone else false
-fn is_call_to_clone<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> bool {
-    if_chain! {
-        if let ExprKind::MethodCall(_, _, _, _) = expr.kind;
-        if let Some(def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id);
-        if match_any_def_paths(cx, def_id, &[&paths::CORE_CLONE]).is_some();
-        then {
-            true
-        } else {
-            false
-        }
     }
 }
 
@@ -156,7 +143,8 @@ fn is_expr_local_variable<'tcx>(expr: &'tcx Expr<'tcx>) -> bool {
 // smoelius: See: https://github.com/crytic/solana-lints/issues/31
 fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> bool {
     if_chain! {
-        if let Some(recv) = is_to_account_info(cx, expr);
+        // is the expression method call `to_account_info()`
+        if let Some(recv) = is_expr_method_call(cx, expr, &paths::ANCHOR_LANG_TO_ACCOUNT_INFO); 
         if let ty::Ref(_, recv_ty, _) = cx.typeck_results().expr_ty_adjusted(recv).kind();
         if let ty::Adt(adt_def, _) = recv_ty.kind();
         // smoelius:
@@ -191,14 +179,16 @@ fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>)
     }
 }
 
-fn is_to_account_info<'tcx>(
+/// if `expr` is a method call of `def_path` return the receiver else None
+fn is_expr_method_call<'tcx>(
     cx: &LateContext<'tcx>,
-    expr: &'tcx Expr<'tcx>,
+    expr: &Expr<'tcx>,
+    def_path: &[&str],
 ) -> Option<&'tcx Expr<'tcx>> {
     if_chain! {
         if let ExprKind::MethodCall(_, recv, _, _) = expr.kind;
         if let Some(def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id);
-        if match_def_path(cx, def_id, &paths::ANCHOR_LANG_TO_ACCOUNT_INFO);
+        if match_def_path(cx, def_id, def_path);
         then {
             Some(recv)
         } else {
@@ -212,21 +202,82 @@ fn contains_owner_use<'tcx>(
     body: &'tcx Body<'tcx>,
     account_expr: &Expr<'tcx>,
 ) -> bool {
-    visit_expr_no_bodies(body.value, |expr| uses_owner_field(cx, expr, account_expr))
+    visit_expr_no_bodies(body.value, |expr| uses_given_field(cx, expr, account_expr, "owner"))
 }
 
-/// Checks if `expr` is an owner field reference on `account_expr`
-fn uses_owner_field<'tcx>(
+/// Checks if `expr` is references `field` on `account_expr`
+fn uses_given_field<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &Expr<'tcx>,
+    account_expr: &Expr<'tcx>,
+    field: &str,
+) -> bool {
+    if_chain! {
+        if let ExprKind::Field(object, field_name) = expr.kind;
+        // TODO: add check for key, is_signer
+        if field_name.as_str() == field;
+        let mut spanless_eq = SpanlessEq::new(cx);
+        if spanless_eq.eq_expr(account_expr, object);
+        then {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+/// Checks if `expr` is a method call of `path` on `account_expr`
+fn calls_method_on_expr<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &Expr<'tcx>,
+    account_expr: &Expr<'tcx>,
+    def_path: &[&str],
+) -> bool {
+    if_chain! {
+        // check if expr is a method call
+        if let Some(recv) = is_expr_method_call(cx, expr, def_path);
+        // check if recv is same expression as account_expr
+        let mut spanless_eq = SpanlessEq::new(cx);
+        if spanless_eq.eq_expr(account_expr, recv);
+        then {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+
+// Return true if the expr access key of account_expr(AccountInfo)
+fn expr_accesses_key<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &Expr<'tcx>,
+    account_expr: &Expr<'tcx>,
+) -> bool {
+    // Anchor AccountInfo: `.key()` and Solana AccountInfo: `.key` field.
+    calls_method_on_expr(cx, expr, account_expr, &paths::ANCHOR_LANG_KEY) || uses_given_field(cx, expr, account_expr, "key")
+}
+
+fn contains_key_check<'tcx>(
+    cx: &LateContext<'tcx>,
+    body: &'tcx Body<'tcx>,
+    account_expr: &Expr<'tcx>,
+) -> bool {
+    visit_expr_no_bodies(body.value, |expr| compares_key(cx, expr, account_expr))
+}
+
+fn compares_key<'tcx>(
     cx: &LateContext<'tcx>,
     expr: &Expr<'tcx>,
     account_expr: &Expr<'tcx>,
 ) -> bool {
     if_chain! {
-        if let ExprKind::Field(object, field_name) = expr.kind;
-        // TODO: add check for key, is_signer
-        if field_name.as_str() == "owner";
-        let mut spanless_eq = SpanlessEq::new(cx);
-        if spanless_eq.eq_expr(account_expr, object);
+        // check if the expr is comparison expression
+        if let ExprKind::Binary(op, lhs, rhs) = expr.kind;
+        // == or !=
+        if matches!(op.node, BinOpKind::Eq | BinOpKind::Ne);
+        // check if lhs or rhs accesses key of `account_expr`
+        if expr_accesses_key(cx, lhs, account_expr) || expr_accesses_key(cx, rhs, account_expr);
         then {
             true
         } else {
