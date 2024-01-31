@@ -53,6 +53,38 @@ dylint_linting::declare_late_lint! {
     ///
     /// See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/2-owner-checks/secure/src/lib.rs
     /// for a secure example.
+    /// 
+    /// **How the lint is implemented:**
+    /// - for every function defined in the package
+    /// - exclude functions generated from macro expansion.
+    /// - Get a list of unique and unsafe AccountInfo's referenced in the body
+    ///     - for each expression in the function body
+    ///     - Ignore `.clone()` expressions as the expression referencing original account will be checked
+    ///     - Check if the expression's type is Solana's AccountInfo (`solana_program::account_info::AccountInfo`)
+    ///     - Ignore local variable expressions (`x` where x is defined in the function `let x = y`)
+    ///         - Removes duplcate warnings: both `x` and `y` are reported by the lint. reporting `y` is sufficient.
+    ///         - Also the owner could be checked on `y`. reporting `x` which a copy/ref of `y` would be false-positive.
+    ///         - Determine using the expression kind (`.kind`): expr.kind = ExprKind::Path(QPath::Resolved(None, path)); path.segments.len() == 1
+    ///     - Ignore safe `.to_account_info()` expressions
+    ///         - `.to_account_info()` method can be called to convert Anchor different account types to AccountInfo
+    ///         - The Anchor account types such as `Account` implement `Owner` trait: The owner of the account is checked during deserialization
+    ///         - The expressions `x.to_account_info` where `x` has one of following types are ignored:
+    ///             - `Account` requires its type argument to implement `anchor_lang::Owner`.
+    ///             - `Program`'s implementation of `try_from` checks the account's program id. So there is
+    ///                no ambiguity in regard to the account's owner.
+    ///             - `SystemAccount`'s implementation of `try_from` checks that the account's owner is the System Program.
+    ///             - `AccountLoader` requires its type argument to implement `anchor_lang::Owner`.
+    ///             - `Signer` are mostly accounts with a private key and most of the times owned by System Program.
+    ///             - `Sysvar` type arguments checks the account key.
+    ///     - Ignore `x.to_account_info()` expressions called on Anchor AccountInfo to remove duplicates.
+    ///         - the lint checks the original expression `x`; no need for checking both.
+    /// - For each of the collected expressions, check if `owner` is accessed or if the `key` is compared
+    ///     - Ignore the `account_expr` if any of the expressions in the function is `{account_expr}.owner`
+    ///     - Ignore the `account_expr` if `key` is compared
+    ///         - Check if there is a comparison expression (`==` or `!=`) and one of the expressions being compared accesses key on `account_expr`:
+    ///             - lhs or rhs of the comparison is `{account_expr}.key()`; The key for Anchor's AccountInfo is accessed using `.key()`
+    ///             - Or lhs or rhs is `{account_expr}.key`; The key of Solana AccountInfo are accessed using `.key`
+    /// - Report the remaining expressions
     pub MISSING_OWNER_CHECK,
     Warn,
     "using an account without checking if its owner is as expected"
@@ -68,9 +100,13 @@ impl<'tcx> LateLintPass<'tcx> for MissingOwnerCheck {
         span: Span,
         _: LocalDefId,
     ) {
+        // exclude functions generated from macro expansions
         if !span.from_expansion() {
+            // get unique and unsafe AccountInfo's referenced in the body
             let accounts = get_referenced_accounts(cx, body);
             for account_expr in accounts {
+                // ignore the account_expr if `.owner` field is accessed in the function 
+                // or key of account_expr is compared using `==` or `!=` in the function
                 if !contains_owner_use(cx, body, account_expr)
                     && !contains_key_check(cx, body, account_expr)
                 {
@@ -100,6 +136,7 @@ fn get_referenced_accounts<'tcx>(
         uses: Vec::new(),
     };
 
+    // visit each expr in the body and collect AccountInfo's
     accounts.visit_expr(body.value);
     accounts.uses
 }
@@ -110,10 +147,15 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
             // s3v3ru5: the following check removes duplicate warnings where lint would report both `x` and `x.clone()` expressions.
             // ignore `clone()` expressions
             if is_expr_method_call(self.cx, expr, &paths::CORE_CLONE).is_none();
+            // type of the expression must be Solana's AccountInfo.
             let ty = self.cx.typeck_results().expr_ty(expr);
             if match_type(self.cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
+            // ignore expressions which are local variables
             if !is_expr_local_variable(expr);
+            // `to_account_info()` returns AccountInfo. look for expressions calling `to_account_info` and ignore safe expressions
+            // expression is safe if `to_account_info` is called on Anchor "Owner" types such as Account, which check the owner during deserialization
             if !is_safe_to_account_info(self.cx, expr);
+            // check if this expression has been detected and is present in the already collected expressions Vec.
             let mut spanless_eq = SpanlessEq::new(self.cx);
             if !self.uses.iter().any(|e| spanless_eq.eq_expr(e, expr));
             then {
@@ -132,6 +174,10 @@ impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
 // the lint reports uses of `x`. Having this check would remove such false positives.
 fn is_expr_local_variable<'tcx>(expr: &'tcx Expr<'tcx>) -> bool {
     if_chain! {
+        // The expressions accessing simple local variables have expr.kind = ExprKind::Path(QPath::Resolved(None, path))
+        // where path only has one segment.
+        // Note: The check could be improved by including more checks on path/expr or following a different approach which uses Res.
+        // matches!(tcx.hir().qpath_res(qpath, expr.hir_id), Res::Local(_))
         if let ExprKind::Path(QPath::Resolved(None, path)) = expr.kind;
         if path.segments.len() == 1;
         then {
@@ -147,6 +193,7 @@ fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>)
     if_chain! {
         // is the expression method call `to_account_info()`
         if let Some(recv) = is_expr_method_call(cx, expr, &paths::ANCHOR_LANG_TO_ACCOUNT_INFO);
+        // expr_ty_adjusted removes wrappers such as Box, any other implicit conversions and gives the base type
         if let ty::Ref(_, recv_ty, _) = cx.typeck_results().expr_ty_adjusted(recv).kind();
         if let ty::Adt(adt_def, _) = recv_ty.kind();
         // smoelius:
@@ -181,6 +228,7 @@ fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>)
     }
 }
 
+/// Check if any of the expressions in the body is `{account_expr}.owner`
 fn contains_owner_use<'tcx>(
     cx: &LateContext<'tcx>,
     body: &'tcx Body<'tcx>,
@@ -191,6 +239,7 @@ fn contains_owner_use<'tcx>(
     })
 }
 
+/// Check if the key of account returned by account_expr is compared
 fn contains_key_check<'tcx>(
     cx: &LateContext<'tcx>,
     body: &'tcx Body<'tcx>,
@@ -199,6 +248,7 @@ fn contains_key_check<'tcx>(
     visit_expr_no_bodies(body.value, |expr| compares_key(cx, expr, account_expr))
 }
 
+/// Check if expr is a comparison expression and one of expressions being compared accesses key on `account_expr`
 fn compares_key<'tcx>(
     cx: &LateContext<'tcx>,
     expr: &Expr<'tcx>,
