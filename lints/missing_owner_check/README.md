@@ -33,3 +33,35 @@ Use instead:
 
 See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/2-owner-checks/secure/src/lib.rs
 for a secure example.
+
+**How the lint is implemented:**
+- for every function defined in the package
+- exclude functions generated from macro expansion.
+- Get a list of unique and unsafe AccountInfo's referenced in the body
+    - for each expression in the function body
+    - Ignore `.clone()` expressions as the expression referencing original account will be checked
+    - Check if the expression's type is Solana's AccountInfo (`solana_program::account_info::AccountInfo`)
+    - Ignore local variable expressions (`x` where x is defined in the function `let x = y`)
+        - Removes duplcate warnings: both `x` and `y` are reported by the lint. reporting `y` is sufficient.
+        - Also the owner could be checked on `y`. reporting `x` which a copy/ref of `y` would be false-positive.
+        - Determine using the expression kind (`.kind`): expr.kind = ExprKind::Path(QPath::Resolved(None, path)); path.segments.len() == 1
+    - Ignore safe `.to_account_info()` expressions
+        - `.to_account_info()` method can be called to convert Anchor different account types to AccountInfo
+        - The Anchor account types such as `Account` implement `Owner` trait: The owner of the account is checked during deserialization
+        - The expressions `x.to_account_info` where `x` has one of following types are ignored:
+            - `Account` requires its type argument to implement `anchor_lang::Owner`.
+            - `Program`'s implementation of `try_from` checks the account's program id. So there is
+               no ambiguity in regard to the account's owner.
+            - `SystemAccount`'s implementation of `try_from` checks that the account's owner is the System Program.
+            - `AccountLoader` requires its type argument to implement `anchor_lang::Owner`.
+            - `Signer` are mostly accounts with a private key and most of the times owned by System Program.
+            - `Sysvar` type arguments checks the account key.
+    - Ignore `x.to_account_info()` expressions called on Anchor AccountInfo to remove duplicates.
+        - the lint checks the original expression `x`; no need for checking both.
+- For each of the collected expressions, check if `owner` is accessed or if the `key` is compared
+    - Ignore the `account_expr` if any of the expressions in the function is `{account_expr}.owner`
+    - Ignore the `account_expr` if `key` is compared
+        - Check if there is a comparison expression (`==` or `!=`) and one of the expressions being compared accesses key on `account_expr`:
+            - lhs or rhs of the comparison is `{account_expr}.key()`; The key for Anchor's AccountInfo is accessed using `.key()`
+            - Or lhs or rhs is `{account_expr}.key`; The key of Solana AccountInfo are accessed using `.key`
+- Report the remaining expressions
