@@ -26,7 +26,9 @@ use rustc_target::abi::FieldIdx;
 use solana_lints::{paths, utils::visit_expr_no_bodies};
 
 dylint_linting::impl_late_lint! {
-    /// **What it does:** Checks that all deserialized types have a proper discriminant so that
+    /// **What it does:** 
+    /// 
+    /// Checks that all deserialized types have a proper discriminant so that
     /// all types are guaranteed to deserialize differently.
     ///
     /// Instead of searching for equivalent types and checking to make sure those specific
@@ -44,13 +46,16 @@ dylint_linting::impl_late_lint! {
     /// are guaranteed to be unique since the program will have to match a specific variant.
     ///
     /// **Why is this bad?**
+    /// 
     /// The type cosplay issue is when one account type can be substituted for another account type.
     /// This occurs when a type deserializes exactly the same as another type, such that you can't
     /// tell the difference between deserialized type `X` and deserialized type `Y`. This allows a
     /// malicious user to substitute `X` for `Y` or vice versa, and the code may perform unauthorized
     /// actions with the bytes.
     ///
-    /// **Known problems:** In the case when only one enum is deserialized, this lint by default
+    /// **Known problems:** 
+    /// 
+    /// In the case when only one enum is deserialized, this lint by default
     /// regards that as secure. However, this is not always the case. For example, if the program
     /// defines another enum and serializes, but never deserializes it, a user could create this enum,
     /// and, if it deserializes the same as the first enum, then this may be a possible vulnerability.
@@ -135,6 +140,29 @@ dylint_linting::impl_late_lint! {
     /// This example fixes both the insecure and insecure-2 examples. It is secure because it only deserializes
     /// from a single enum, and that enum encapsulates all of the user-defined types. Since enums contain
     /// an implicit discriminant, this program will always be secure as long as all types are defined under the enum.
+    /// 
+    /// **How the lint is implemented:**
+    /// 
+    /// - Find call expressions which has an arg that accesses account data
+    ///     - Arg expression contains `x.data`; `x` is of type `AccountInfo`
+    /// - Get the type that the function was called on, ie X in X::call()
+    /// - if `X` implements `anchor_lang::Discriminator` trait but the function called is not `try_deserialize`
+    ///     - warn to use `try_deserialize` or to account for type's discriminator
+    /// - else if the function called is Borsh `try_from_slice`, collect the deserialized type
+    /// - Repeat the above for all call expressions and collect all deserialized types; `X` from `X::try_from_slice()` expressions.
+    /// - If number of different kinds of types deserialized is more than `1`, i.e the code deserializes `Enum` type, `Struct` type, etc.
+    ///     - warn to either deserialize from only structs or only an enum
+    /// - If the deserialized types are all enum
+    ///     - If number of deserialized enums are more than `1`
+    ///         - warn to use single enum that contains all type definitions
+    ///     - Else assume that the single enum is safe and do not report
+    /// - Else the deserialized types are structs
+    ///     - For each deserialized type
+    ///         - If the struct has first field of type enum and number of variants of the enum are more than the
+    ///         number of deserialized types
+    ///             - The struct has proper discriminant
+    ///         - Else warn to add an enum with at least as many variants as there are deserialized types.
+    ///
     pub TYPE_COSPLAY,
     Warn,
     "type is equivalent to another type",
@@ -156,6 +184,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             // smoelius: I updated the `recommended-2` test so that the call contains a reference to
             // `AccountInfo.data`. But @victor-wei126's comment is still relevant in that we need a
             // more general solution for finding references to `AccountInfo.data`.
+            // do any of the args access `x.data` where x is of type `AccountInfo`
             if args_exprs.iter().any(|arg| {
                 visit_expr_no_bodies(arg, |expr| contains_data_field_reference(cx, expr))
             });
@@ -168,11 +197,14 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             let middle_ty = cx.tcx.type_of(def_id).skip_binder();
             then {
                 if_chain! {
+                    // the type implements `anchor_lang::Discriminator`
                     if let Some(trait_did) = get_trait_def_id(cx, &paths::ANCHOR_LANG_DISCRIMINATOR);
                     if implements_trait(cx, middle_ty, trait_did, &[]);
+                    // But the function is not `try_deserialize`
                     if let Some(def_id) = cx.typeck_results().type_dependent_def_id(fnc_expr.hir_id);
                     if !match_def_path(cx, def_id, &paths::ANCHOR_LANG_TRY_DESERIALIZE);
                     then {
+                        // warn to use `try_deserialize`
                         span_lint_and_help(
                             cx,
                             TYPE_COSPLAY,
@@ -187,6 +219,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                             if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind() {
                                 let adt_kind = adt_def.adt_kind();
                                 let def_id = adt_def.did();
+                                // store the deserialized type
                                 if let Some(vec) = self.deser_types.get_mut(&adt_kind.into()) {
                                     vec.push((def_id, ty.span));
                                 } else {
@@ -210,6 +243,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                 _ => check_structs_have_discriminant(cx, v), // NOTE: also catches unions
             }
         } else if self.deser_types.len() > 1 {
+            // Number of AdtKind's of different deserialization is > 1
             // Retrieve spans: iter through map, grab first elem of each key-pair, then get span
             let mut spans = vec![];
             self.deser_types.iter().for_each(|(_, v)| {
@@ -227,6 +261,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
     }
 }
 
+/// Return true if the expr is Borsh `try_from_slice` else false
 fn is_deserialize_function(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool {
     match cx.typeck_results().type_dependent_def_id(expr.hir_id) {
         Some(def_id) => match_def_path(cx, def_id, &paths::BORSH_TRY_FROM_SLICE),
@@ -234,6 +269,7 @@ fn is_deserialize_function(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool {
     }
 }
 
+/// Return true if the `expr` accesses `.data` on a value whose type is `solana_program::account_info::AccountInfo`
 fn contains_data_field_reference(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool {
     if_chain! {
         if let ExprKind::Field(obj_expr, ident) = expr.kind;
@@ -248,6 +284,7 @@ fn contains_data_field_reference(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool 
     }
 }
 
+// if number of enums are 1 then ignore otherwise warn the first two instances found
 fn check_enums(cx: &LateContext<'_>, enums: &[(DefId, Span)]) {
     #[allow(clippy::comparison_chain)]
     if enums.len() > 1 {
@@ -268,6 +305,7 @@ fn check_enums(cx: &LateContext<'_>, enums: &[(DefId, Span)]) {
     }
 }
 
+/// Check each of the struct has first field of type enum with number of variants > `types.len()`
 fn check_structs_have_discriminant(cx: &LateContext<'_>, types: &[(DefId, Span)]) {
     let num_structs = types.len();
     types
@@ -279,10 +317,12 @@ fn check_structs_have_discriminant(cx: &LateContext<'_>, types: &[(DefId, Span)]
 /// the number of variants at least the number of deserialized structs. Further the discriminant should
 /// be the first field in the adt.
 fn has_discriminant(cx: &LateContext, adt: AdtDef, num_struct_types: usize, span: Span) {
+    // get the type of the first field
     let variant = adt.variants().get(Idx::new(0)).unwrap();
     let first_field_def = &variant.fields[FieldIdx::new(0)];
     let ty = cx.tcx.type_of(first_field_def.did).skip_binder();
     if_chain! {
+        // the type is an enum with variants > `num_struct_types``.
         if let MiddleTyKind::Adt(adt_def, _) = ty.kind();
         if adt_def.is_enum();
         if adt_def.variants().len() >= num_struct_types;

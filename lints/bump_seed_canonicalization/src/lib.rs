@@ -26,13 +26,18 @@ extern crate rustc_target;
 
 dylint_linting::declare_late_lint! {
     /// **What it does:**
+    /// 
     /// Finds uses of solana_program::pubkey::PubKey::create_program_address that do not check the bump_seed
     ///
     /// **Why is this bad?**
+    /// 
     /// Generally for every seed there should be a canonical address, so the user should not be
     /// able to pick the bump_seed, since that would result in a different address.
+    /// 
+    /// See https://github.com/crytic/building-secure-contracts/tree/master/not-so-smart-contracts/solana/improper_pda_validation
     ///
     /// **Known problems:**
+    /// 
     /// False positives, since the bump_seed check may be within some other function (does not
     /// trace through function calls). The bump seed may be also be safely stored in an account but
     /// passed from another function.
@@ -41,6 +46,26 @@ dylint_linting::declare_late_lint! {
     /// occur in all possible execution paths)
     ///
     /// **Example:**
+    /// 
+    /// See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/7-bump-seed-canonicalization/insecure/src/lib.rs for an insecure example
+    /// 
+    /// Use instead:
+    /// 
+    /// See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/7-bump-seed-canonicalization/recommended/src/lib.rs for recommended way to use bump.
+    /// 
+    /// **How the lint is implemented:**
+    /// 
+    /// - For every function containing calls to `solana_program::pubkey::Pubkey::create_program_address`
+    /// - find the `bump` location from the first argument to `create_program_address` call.
+    ///     - first argument is the seeds array(`&[&[u8]]`). In general, the seeds are structured with bump as last element:
+    ///     `&[seed1, seed2, ..., &[bump]]` e.g `&[b"vault", &[bump]]`.
+    ///     - find the locations of bump.
+    ///     - If bump is assigned by accessing a struct field
+    ///         - if bump is assigned from a struct implementing `AnchorDeserialize` trait
+    ///             - report a warning to use `#[account(...)` macro
+    ///         - else report "bump may not be constrainted" warning
+    ///     - else check if the bump is checked using a comparison operation
+    ///         - report a warning if the bump is not checked
     pub BUMP_SEED_CANONICALIZATION,
     Warn,
     "Finds calls to create_program_address that do not check the bump_seed"
@@ -50,10 +75,13 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
     fn check_body(&mut self, cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) {
         let hir_map = cx.tcx.hir();
         let body_did = hir_map.body_owner_def_id(body.id()).to_def_id();
+        // The body is the body of function whose mir is available
+        // fn_like includes fn, const fn, async fn but not closures.
         if !cx.tcx.def_kind(body_did).is_fn_like() || !cx.tcx.is_mir_available(body_did) {
             return;
         }
         let body_mir = cx.tcx.optimized_mir(body_did);
+        // list of block id and the terminator of the basic blocks in the CFG
         let terminators = body_mir
             .basic_blocks
             .iter_enumerated()
@@ -61,6 +89,7 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
         for (block_id, terminator) in terminators {
             if_chain! {
                 if let t = terminator.as_ref().unwrap();
+                // The terminator is call to a function
                 if let TerminatorKind::Call {
                     func: func_operand,
                     args,
@@ -72,13 +101,16 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
                 then {
                     // Static call
                     let callee_did = *def_id;
+                    // called function is `solana_program::pubkey::Pubkey::create_program_address`
                     if match_def_path(
                         cx,
                         callee_did,
                         &paths::SOLANA_PROGRAM_CREATE_PROGRAM_ADDRESS,
                     ) {
+                        // get the seeds argument; seeds is the first argument
                         let seed_arg = &args[0];
                         if let Operand::Move(p) = seed_arg {
+                            // find all alias of bump in the seeds array: &[seed1, ..., &[bump]].
                             let (dataflow_state, likely_bump_places): (
                                 BackwardDataflowState,
                                 Vec<Place>,
@@ -86,6 +118,7 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
                             let likely_bump_locals: Vec<Local> =
                                 likely_bump_places.iter().map(|pl| pl.local).collect();
                             match dataflow_state {
+                                // found the location of bump
                                 BackwardDataflowState::Bump => {
                                     // If the bump seed is just passed in but didn't come from a
                                     // structure, look for equality checks that might show that
@@ -103,6 +136,8 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
                                         );
                                     }
                                 }
+                                // bump value is accessed from a struct which does not implement AnchorDeserialize trait
+                                // non anchor struct => not part of state
                                 BackwardDataflowState::NonAnchorStructContainingBump => {
                                     // Value came from a non-anchor struct. We will warn here
                                     // just to be safe, since we can't tell if this bump seed
@@ -114,6 +149,9 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
                                             "Bump seed comes from structure, ensure it is constrained to a single value and not user-controlled.",
                                         );
                                 }
+                                // TODO: Should we report this???
+                                // bump for one anchor account might be stored in a different account, it might not be
+                                // always possible to use the #[account(...)] macro
                                 BackwardDataflowState::AnchorStructContainingBump => {
                                     // Value came from an anchor struct. They should be using
                                     // the account macro for this.
@@ -134,6 +172,7 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
     }
 }
 
+/// Return true if the `deser_ty` implements `anchor::AccountDeserialize` trait else false
 fn is_anchor_account_struct<'tcx>(cx: &LateContext<'tcx>, deser_ty: Ty<'tcx>) -> bool {
     let mut account_deserialize = false;
     if let Some(anchor_trait_id) = get_trait_def_id(cx, &paths::ANCHOR_LANG_ACCOUNT_DESERIALIZE) {
@@ -152,6 +191,8 @@ enum BackwardDataflowState {
 }
 
 impl BumpSeedCanonicalization {
+    /// Given the seeds_arg, a location passed to first argument of `create_program_address`,
+    /// find all locations/alias of bump: &[seed1, .., &[bump]]
     fn find_bump_seed_for_seed_array<'tcx>(
         cx: &LateContext<'tcx>,
         body: &'tcx mir::Body<'tcx>,
@@ -179,11 +220,14 @@ impl BumpSeedCanonicalization {
                                 Operand::Copy(rvalue_place) | Operand::Move(rvalue_place),
                                 _,
                             ) => {
+                                // if seed_arg = x then trace for assignments of x
                                 seeds_arg = rvalue_place;
+                                // state is Bump => seed_arg stores the bump
                                 if state == BackwardDataflowState::Bump {
                                     likely_bump_seed_aliases.push(*rvalue_place);
                                 }
                                 if_chain! {
+                                    // if seed_arg stores bump and rvalue is such that `x.y` (field access) 
                                     if state == BackwardDataflowState::Bump;
                                     if let Some(proj) =
                                         rvalue_place.iter_projections().find_map(|(_, proj)| {
@@ -194,6 +238,7 @@ impl BumpSeedCanonicalization {
                                         });
                                     if let ProjectionElem::Field(_, _) = proj;
                                     then {
+                                        // if the bump is accessed from a Anchor struct (representing program state)
                                         state = if is_anchor_account_struct(
                                             cx,
                                             Place::ty_from(rvalue_place.local, &[], body, cx.tcx)
@@ -207,19 +252,27 @@ impl BumpSeedCanonicalization {
                                     }
                                 }
                             }
+                            // rhs is array
                             Rvalue::Aggregate(box AggregateKind::Array(_), elements) => match state
                             {
                                 BackwardDataflowState::SeedsArray if elements.len() > 1 => {
+                                    // if seeds_arg stores the `seeds` location, find the location of bump
+                                    // bump is the last element: [seed1, seed2, ..., bump]
                                     if let Operand::Move(pl) = elements.into_iter().last().unwrap()
                                     {
+                                        // update the seeds_arg to point to pl and update the state
                                         seeds_arg = pl;
                                         state = BackwardDataflowState::FirstSeed;
                                     }
                                 }
                                 BackwardDataflowState::FirstSeed if elements.len() == 1 => {
+                                    // seeds_arg points to bump array [ seed1, ..., &[bump]. seeds_arg stores 
+                                    // the location of &[bump]. update it to store the location of bump.
                                     if let Operand::Move(pl) = &elements[FieldIdx::from_u32(0)] {
+                                        // store the location of bump
                                         seeds_arg = &pl;
                                         likely_bump_seed_aliases.push(*seeds_arg);
+                                        // seeds_arg is a location of bump
                                         state = BackwardDataflowState::Bump;
                                     }
                                 }
@@ -256,6 +309,9 @@ impl BumpSeedCanonicalization {
                 return true;
             }
         }
+        // look for chain of assign statements whose value is eventually assigned to the `search_place` and 
+        // see if any of the intermediate local is in the search_list.
+        // TODO: move this and ArbitraryCPI::is_moved_from to utils.
         loop {
             for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
                 match &stmt.kind {
@@ -292,6 +348,8 @@ impl BumpSeedCanonicalization {
         false
     }
 
+    // This function takes the list of bump_locals and a starting block, and searches for a
+    // check elsewhere in the Body that would compare the program_id with something else.
     fn is_bump_seed_checked<'tcx>(
         cx: &LateContext,
         body: &'tcx mir::Body<'tcx>,
@@ -300,11 +358,14 @@ impl BumpSeedCanonicalization {
         for (block_id, block) in body.basic_blocks.iter_enumerated() {
             for stmt in &block.statements {
                 if_chain! {
+                    // look for assign statements
                     if let StatementKind::Assign(box (_, rvalue)) = &stmt.kind;
+                    // check if rhs is comparison between bump and some other value.
                     if let Rvalue::BinaryOp(BinOp::Eq | BinOp::Ne, box (op0, op1)) = rvalue;
                     if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = op0;
                     if let Operand::Copy(arg1_pl) | Operand::Move(arg1_pl) = op1;
                     then {
+                        // Check if one of the args in comparison came from a local of bump
                         if Self::is_moved_from(cx, body, block_id, arg0_pl, bump_locals)
                             || Self::is_moved_from(cx, body, block_id, arg1_pl, bump_locals)
                         {
