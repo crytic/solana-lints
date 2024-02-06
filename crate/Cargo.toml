@@ -8,6 +8,7 @@ edition = "2021"
 [dev-dependencies]
 assert_cmd = "2.0.13"
 predicates = "3.1.0"
+similar-asserts = "1.5"
 tempfile = "3.10.0"
 toml = "0.8.10"
 
