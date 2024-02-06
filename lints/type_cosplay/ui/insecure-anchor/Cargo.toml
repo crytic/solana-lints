@@ -18,4 +18,4 @@ default = []
 [workspace]
 
 [dependencies]
-anchor-lang = "0.25.0"
+anchor-lang = "0.29.0"
