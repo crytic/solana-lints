@@ -4,11 +4,6 @@
 # set -x
 set -euo pipefail
 
-if [[ $# -ne 0 ]]; then
-    echo "$0: expect no arguments" >&2
-    exit 1
-fi
-
 cd "$(dirname "$0")"/../lints
 
 DYLINT_LIBRARY_PATH=
@@ -19,7 +14,7 @@ for LIBRARY in *; do
     fi
 
     pushd "$LIBRARY" >/dev/null
-    cargo build
+    cargo build "$@"
 
     DEBUG="$PWD/target/debug"
     if [[ -z "$DYLINT_LIBRARY_PATH" ]]; then
