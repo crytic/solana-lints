@@ -9,6 +9,7 @@ LL | |         )?;
    | |_________^
    |
    = note: `-D bump-seed-canonicalization` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(bump_seed_canonicalization)]`
 
-error: aborting due to previous error
+error: aborting due to 1 previous error
 

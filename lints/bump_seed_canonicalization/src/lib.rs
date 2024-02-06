@@ -17,10 +17,12 @@ use rustc_middle::{
     ty::Ty,
     ty::TyKind,
 };
+use rustc_target::abi::FieldIdx;
 use solana_lints::paths;
 
 extern crate rustc_hir;
 extern crate rustc_middle;
+extern crate rustc_target;
 
 dylint_linting::declare_late_lint! {
     /// **What it does:**
@@ -56,18 +58,17 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
             .basic_blocks
             .iter_enumerated()
             .map(|(block_id, block)| (block_id, &block.terminator));
-        for (_idx, (block_id, terminator)) in terminators.enumerate() {
+        for (block_id, terminator) in terminators {
             if_chain! {
                 if let t = terminator.as_ref().unwrap();
                 if let TerminatorKind::Call {
                     func: func_operand,
                     args,
                     destination: _,
-                    cleanup: _,
                     ..
                 } = &t.kind;
                 if let mir::Operand::Constant(box func) = func_operand;
-                if let TyKind::FnDef(def_id, _callee_substs) = func.literal.ty().kind();
+                if let TyKind::FnDef(def_id, _callee_substs) = func.const_.ty().kind();
                 then {
                     // Static call
                     let callee_did = *def_id;
@@ -209,14 +210,15 @@ impl BumpSeedCanonicalization {
                             Rvalue::Aggregate(box AggregateKind::Array(_), elements) => match state
                             {
                                 BackwardDataflowState::SeedsArray if elements.len() > 1 => {
-                                    if let Operand::Move(pl) = elements.last().unwrap() {
+                                    if let Operand::Move(pl) = elements.into_iter().last().unwrap()
+                                    {
                                         seeds_arg = pl;
                                         state = BackwardDataflowState::FirstSeed;
                                     }
                                 }
                                 BackwardDataflowState::FirstSeed if elements.len() == 1 => {
-                                    if let Operand::Move(pl) = &elements[0] {
-                                        seeds_arg = pl;
+                                    if let Operand::Move(pl) = &elements[FieldIdx::from_u32(0)] {
+                                        seeds_arg = &pl;
                                         likely_bump_seed_aliases.push(*seeds_arg);
                                         state = BackwardDataflowState::Bump;
                                     }

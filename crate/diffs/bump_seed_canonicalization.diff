@@ -1,11 +1,11 @@
-diff -r ./insecure/Cargo.toml ../../../../lints/bump_seed_canonicalization/ui/insecure/Cargo.toml
+diff -r -x Cargo.lock ./insecure/Cargo.toml ../../../../lints/bump_seed_canonicalization/ui/insecure/Cargo.toml
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.25.0"
+> anchor-lang = "0.29.0"
 > 
 > [workspace]
-diff -r ./insecure/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/insecure/src/lib.rs
+diff -r -x Cargo.lock ./insecure/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/insecure/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 30a32,34
@@ -15,28 +15,28 @@ diff -r ./insecure/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/in
 Only in ../../../../lints/bump_seed_canonicalization/ui/insecure/src: lib.stderr
 Only in ../../../../lints/bump_seed_canonicalization/ui: insecure-2
 Only in ../../../../lints/bump_seed_canonicalization/ui: insecure-3
-diff -r ./recommended/Cargo.toml ../../../../lints/bump_seed_canonicalization/ui/recommended/Cargo.toml
+diff -r -x Cargo.lock ./recommended/Cargo.toml ../../../../lints/bump_seed_canonicalization/ui/recommended/Cargo.toml
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.25.0"
+> anchor-lang = "0.29.0"
 > 
 > [workspace]
-diff -r ./recommended/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/recommended/src/lib.rs
+diff -r -x Cargo.lock ./recommended/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/recommended/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 35a37,39
 > 
 > #[allow(dead_code)]
 > fn main() {}
-diff -r ./secure/Cargo.toml ../../../../lints/bump_seed_canonicalization/ui/secure/Cargo.toml
+diff -r -x Cargo.lock ./secure/Cargo.toml ../../../../lints/bump_seed_canonicalization/ui/secure/Cargo.toml
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.25.0"
+> anchor-lang = "0.29.0"
 > 
 > [workspace]
-diff -r ./secure/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/secure/src/lib.rs
+diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/secure/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 38a40,42

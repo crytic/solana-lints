@@ -3,7 +3,8 @@
 // all in upper snake case.
 
 pub const ANCHOR_LANG_ACCOUNT: [&str; 4] = ["anchor_lang", "accounts", "account", "Account"];
-pub const ANCHOR_LANG_ACCOUNT_LOADER: [&str; 4] = ["anchor_lang", "accounts", "account_loader", "AccountLoader"];
+pub const ANCHOR_LANG_ACCOUNT_LOADER: [&str; 4] =
+    ["anchor_lang", "accounts", "account_loader", "AccountLoader"];
 pub const ANCHOR_LANG_PROGRAM: [&str; 4] = ["anchor_lang", "accounts", "program", "Program"];
 pub const ANCHOR_LANG_SYSTEM_ACCOUNT: [&str; 4] =
     ["anchor_lang", "accounts", "system_account", "SystemAccount"];

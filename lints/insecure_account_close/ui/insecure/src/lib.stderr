@@ -5,6 +5,7 @@ LL |         **ctx.accounts.account.to_account_info().lamports.borrow_mut() = 0;
    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: `-D insecure-account-close` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(insecure_account_close)]`
 
-error: aborting due to previous error
+error: aborting due to 1 previous error
 

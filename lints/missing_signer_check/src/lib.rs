@@ -7,12 +7,9 @@ extern crate rustc_span;
 
 use clippy_utils::{diagnostics::span_lint, ty::match_type};
 use if_chain::if_chain;
-use rustc_hir::{intravisit::FnKind, Body, Expr, ExprKind, FnDecl, HirId};
+use rustc_hir::{def_id::LocalDefId, intravisit::FnKind, Body, Expr, ExprKind, FnDecl};
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::ty::{
-    self,
-    subst::{GenericArg, GenericArgKind},
-};
+use rustc_middle::ty::{self, GenericArg, GenericArgKind};
 use rustc_span::Span;
 use solana_lints::{paths, utils::visit_expr_no_bodies};
 
@@ -47,12 +44,12 @@ impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
         _: &'tcx FnDecl<'tcx>,
         body: &'tcx Body<'tcx>,
         span: Span,
-        hir_id: HirId,
+        local_def_id: LocalDefId,
     ) {
         if_chain! {
             if matches!(fn_kind, FnKind::ItemFn(..));
             if body_uses_account_info(cx, body);
-            if !context_contains_signer_field(cx, hir_id);
+            if !context_contains_signer_field(cx, local_def_id);
             if !body_contains_is_signer_use(cx, body);
             then {
                 span_lint(
@@ -73,9 +70,12 @@ fn body_uses_account_info<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) 
     })
 }
 
-fn context_contains_signer_field(cx: &LateContext<'_>, hir_id: HirId) -> bool {
-    let local_def_id = cx.tcx.hir().local_def_id(hir_id);
-    let fn_sig = cx.tcx.fn_sig(local_def_id.to_def_id()).skip_binder();
+fn context_contains_signer_field(cx: &LateContext<'_>, local_def_id: LocalDefId) -> bool {
+    let fn_sig = cx
+        .tcx
+        .fn_sig(local_def_id.to_def_id())
+        .skip_binder()
+        .skip_binder();
     if_chain! {
         if let Some(ty) = fn_sig
             .inputs()

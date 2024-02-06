@@ -1,14 +1,14 @@
-diff -r ./insecure/Cargo.toml ../../../../lints/missing_owner_check/ui/insecure/Cargo.toml
+diff -r -x Cargo.lock ./insecure/Cargo.toml ../../../../lints/missing_owner_check/ui/insecure/Cargo.toml
 19,21c19,22
 < anchor-lang = "0.20.1"
 < anchor-spl = "0.20.1"
 < spl-token = "3.2.0"
 ---
-> anchor-lang = "0.25.0"
-> anchor-spl = "0.25.0"
+> anchor-lang = "0.29.0"
+> anchor-spl = "0.29.0"
 > 
 > [workspace]
-diff -r ./insecure/src/lib.rs ../../../../lints/missing_owner_check/ui/insecure/src/lib.rs
+diff -r -x Cargo.lock ./insecure/src/lib.rs ../../../../lints/missing_owner_check/ui/insecure/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 4c5
@@ -20,17 +20,17 @@ diff -r ./insecure/src/lib.rs ../../../../lints/missing_owner_check/ui/insecure/
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/missing_owner_check/ui/insecure/src: lib.stderr
-diff -r ./recommended/Cargo.toml ../../../../lints/missing_owner_check/ui/recommended/Cargo.toml
+diff -r -x Cargo.lock ./recommended/Cargo.toml ../../../../lints/missing_owner_check/ui/recommended/Cargo.toml
 19,21c19,22
 < anchor-lang = "0.20.1"
 < anchor-spl = "0.20.1"
 < spl-token = "3.2.0"
 ---
-> anchor-lang = "0.25.0"
-> anchor-spl = "0.25.0"
+> anchor-lang = "0.29.0"
+> anchor-spl = "0.29.0"
 > 
 > [workspace]
-diff -r ./recommended/src/lib.rs ../../../../lints/missing_owner_check/ui/recommended/src/lib.rs
+diff -r -x Cargo.lock ./recommended/src/lib.rs ../../../../lints/missing_owner_check/ui/recommended/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 21a23,25
@@ -38,17 +38,17 @@ diff -r ./recommended/src/lib.rs ../../../../lints/missing_owner_check/ui/recomm
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/missing_owner_check/ui/recommended/src: lib.stderr
-diff -r ./secure/Cargo.toml ../../../../lints/missing_owner_check/ui/secure/Cargo.toml
+diff -r -x Cargo.lock ./secure/Cargo.toml ../../../../lints/missing_owner_check/ui/secure/Cargo.toml
 19,21c19,22
 < anchor-lang = "0.20.1"
 < anchor-spl = "0.20.1"
 < spl-token = "3.2.0"
 ---
-> anchor-lang = "0.25.0"
-> anchor-spl = "0.25.0"
+> anchor-lang = "0.29.0"
+> anchor-spl = "0.29.0"
 > 
 > [workspace]
-diff -r ./secure/src/lib.rs ../../../../lints/missing_owner_check/ui/secure/src/lib.rs
+diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/missing_owner_check/ui/secure/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 4c5,6

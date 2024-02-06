@@ -6,6 +6,7 @@ LL |         let user = User::try_from_slice(&ctx.accounts.user.data.borrow()).u
    |
    = help: add an enum with at least as many variants as there are struct definitions
    = note: `-D type-cosplay` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(type_cosplay)]`
 
-error: aborting due to previous error
+error: aborting due to 1 previous error
 

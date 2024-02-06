@@ -5,6 +5,7 @@ LL |         let token = SplTokenAccount::unpack(&ctx.accounts.token.data.borrow
    |                                              ^^^^^^^^^^^^^^^^^^
    |
    = note: `-D missing-owner-check` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(missing_owner_check)]`
 
-error: aborting due to previous error
+error: aborting due to 1 previous error
 

@@ -10,8 +10,9 @@ use clippy_utils::{
 };
 use if_chain::if_chain;
 use rustc_hir::{
+    def_id::LocalDefId,
     intravisit::{walk_expr, FnKind, Visitor},
-    Body, Expr, ExprKind, FnDecl, HirId,
+    Body, Expr, ExprKind, FnDecl,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty;
@@ -65,7 +66,7 @@ impl<'tcx> LateLintPass<'tcx> for MissingOwnerCheck {
         _: &'tcx FnDecl<'tcx>,
         body: &'tcx Body<'tcx>,
         span: Span,
-        _: HirId,
+        _: LocalDefId,
     ) {
         if !span.from_expansion() {
             let accounts = get_referenced_accounts(cx, body);
@@ -135,7 +136,7 @@ fn is_call_to_clone<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> boo
 // smoelius: See: https://github.com/crytic/solana-lints/issues/31
 fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>) -> bool {
     if_chain! {
-        if let Some(recv) = is_to_account_info(cx, expr); 
+        if let Some(recv) = is_to_account_info(cx, expr);
         if let ty::Ref(_, recv_ty, _) = cx.typeck_results().expr_ty_adjusted(recv).kind();
         if let ty::Adt(adt_def, _) = recv_ty.kind();
         // smoelius:
