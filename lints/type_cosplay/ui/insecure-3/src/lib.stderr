@@ -10,6 +10,7 @@ help: deserialize from only structs with a discriminant, or an enum encapsulatin
 LL |             AccountWithDiscriminant::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
    |             ^^^^^^^^^^^^^^^^^^^^^^^
    = note: `-D type-cosplay` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(type_cosplay)]`
 
-error: aborting due to previous error
+error: aborting due to 1 previous error
 

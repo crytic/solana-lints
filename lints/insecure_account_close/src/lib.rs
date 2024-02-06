@@ -82,13 +82,13 @@ fn is_initial_eight_byte_copy_from_slice(expr: &Expr<'_>) -> bool {
         if method_name.ident.as_str() == "copy_from_slice";
         if let [arg] = args;
         if let ExprKind::AddrOf(BorrowKind::Ref, Mutability::Not, inner) = arg.kind;
-        if let ExprKind::Index(_, index) = inner.kind;
+        if let ExprKind::Index(_, index, _) = inner.kind;
         if let ExprKind::Struct(qpath, fields, None) = index.kind;
-        if matches!(qpath, QPath::LangItem(LangItem::Range, _, _));
+        if matches!(qpath, QPath::LangItem(LangItem::Range, _));
         if let [start, end] = fields;
-        if let ExprKind::Lit(ref start_lit) = start.expr.kind;
+        if let ExprKind::Lit(start_lit) = start.expr.kind;
         if let LitKind::Int(0, LitIntType::Unsuffixed) = start_lit.node;
-        if let ExprKind::Lit(ref end_lit) = end.expr.kind;
+        if let ExprKind::Lit(end_lit) = end.expr.kind;
         if let LitKind::Int(8, LitIntType::Unsuffixed) = end_lit.node;
         then {
             true
@@ -126,7 +126,7 @@ fn is_eight_byte_array<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool 
     if_chain! {
         if let TyKind::Array(ty, length) = ty.kind();
         if *ty.kind() == TyKind::Uint(UintTy::U8);
-        if let Some(length) = length.try_eval_usize(cx.tcx, cx.param_env);
+        if let Some(length) = length.try_eval_target_usize(cx.tcx, cx.param_env);
         if length == 8;
         then {
             true
@@ -159,7 +159,7 @@ fn contains_zero_assignment<'tcx>(expr: &'tcx Expr<'tcx>) -> bool {
 fn is_zero_assignment<'tcx>(expr: &'tcx Expr<'tcx>) -> Option<&'tcx Expr<'tcx>> {
     if_chain! {
         if let ExprKind::Assign(place, value, _) = expr.kind;
-        if let ExprKind::Lit(ref lit) = value.kind;
+        if let ExprKind::Lit(lit) = value.kind;
         if let LitKind::Int(0, LitIntType::Unsuffixed) = lit.node;
         then {
             Some(place)

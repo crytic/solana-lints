@@ -77,7 +77,7 @@ impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
             .basic_blocks
             .iter_enumerated()
             .map(|(block_id, block)| (block_id, &block.terminator));
-        for (_idx, (block_id, terminator)) in terminators.enumerate() {
+        for (block_id, terminator) in terminators {
             if_chain! {
                 if let t = terminator.as_ref().unwrap();
                 if let TerminatorKind::Call {
@@ -86,7 +86,7 @@ impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
                     ..
                 } = &t.kind;
                 if let mir::Operand::Constant(box func) = func_operand;
-                if let TyKind::FnDef(def_id, _callee_substs) = func.literal.ty().kind();
+                if let TyKind::FnDef(def_id, _callee_substs) = func.const_.ty().kind();
                 then {
                     // Static call
                     let callee_did = *def_id;
@@ -160,7 +160,7 @@ impl ArbitraryCpi {
                         && !found_program_id =>
                     {
                         if_chain! {
-                            if let TyKind::FnDef(def_id, _callee_substs) = func.literal.ty().kind();
+                            if let TyKind::FnDef(def_id, _callee_substs) = func.const_.ty().kind();
                             if !args.is_empty();
                             if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = &args[0];
                             then {
@@ -325,7 +325,7 @@ impl ArbitraryCpi {
                     ..
                 } = &t.kind;
                 if let mir::Operand::Constant(box func) = func_operand;
-                if let TyKind::FnDef(def_id, _callee_substs) = func.literal.ty().kind();
+                if let TyKind::FnDef(def_id, _callee_substs) = func.const_.ty().kind();
                 if match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "ne"])
                     || match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "eq"]);
                 if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = args[0];
@@ -338,10 +338,7 @@ impl ArbitraryCpi {
                     {
                         // we found the check. if it dominates the call to invoke, then the check
                         // is assumed to be sufficient!
-                        return body
-                            .basic_blocks
-                            .dominators()
-                            .is_dominated_by(block, cur_block);
+                        return body.basic_blocks.dominators().dominates(cur_block, block);
                     }
                 }
             }

@@ -1,15 +1,15 @@
-diff -r ./insecure/Cargo.toml ../../../../lints/arbitrary_cpi/ui/insecure/Cargo.toml
+diff -r -x Cargo.lock ./insecure/Cargo.toml ../../../../lints/arbitrary_cpi/ui/insecure/Cargo.toml
 19,21c19,22
 < anchor-lang = "0.20.1"
 < anchor-spl = "0.20.1"
 < spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
 \ No newline at end of file
 ---
-> anchor-lang = "0.25.0"
-> anchor-spl = "0.25.0"
+> anchor-lang = "0.29.0"
+> anchor-spl = "0.29.0"
 > 
 > [workspace]
-diff -r ./insecure/src/lib.rs ../../../../lints/arbitrary_cpi/ui/insecure/src/lib.rs
+diff -r -x Cargo.lock ./insecure/src/lib.rs ../../../../lints/arbitrary_cpi/ui/insecure/src/lib.rs
 2a3,4
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 > use anchor_spl::token::spl_token;
@@ -18,18 +18,18 @@ diff -r ./insecure/src/lib.rs ../../../../lints/arbitrary_cpi/ui/insecure/src/li
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/arbitrary_cpi/ui: insecure-2
-diff -r ./recommended/Cargo.toml ../../../../lints/arbitrary_cpi/ui/recommended/Cargo.toml
+diff -r -x Cargo.lock ./recommended/Cargo.toml ../../../../lints/arbitrary_cpi/ui/recommended/Cargo.toml
 19,21c19,22
 < anchor-lang = "0.20.1"
 < anchor-spl = "0.20.1"
 < spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
 \ No newline at end of file
 ---
-> anchor-lang = "0.25.0"
-> anchor-spl = "0.25.0"
+> anchor-lang = "0.29.0"
+> anchor-spl = "0.29.0"
 > 
 > [workspace]
-diff -r ./recommended/src/lib.rs ../../../../lints/arbitrary_cpi/ui/recommended/src/lib.rs
+diff -r -x Cargo.lock ./recommended/src/lib.rs ../../../../lints/arbitrary_cpi/ui/recommended/src/lib.rs
 10c10
 <     pub fn cpi(ctx: Context<Cpi>, amount: u64) -> ProgramResult {
 ---
@@ -38,17 +38,17 @@ diff -r ./recommended/src/lib.rs ../../../../lints/arbitrary_cpi/ui/recommended/
 > 
 > #[allow(dead_code)]
 > fn main() {}
-diff -r ./secure/Cargo.toml ../../../../lints/arbitrary_cpi/ui/secure/Cargo.toml
+diff -r -x Cargo.lock ./secure/Cargo.toml ../../../../lints/arbitrary_cpi/ui/secure/Cargo.toml
 19,21c19,22
 < anchor-lang = "0.20.1"
 < anchor-spl = "0.20.1"
 < spl-token = { version = "3.1.1", features = ["no-entrypoint"] }
 ---
-> anchor-lang = "0.25.0"
-> anchor-spl = "0.25.0"
+> anchor-lang = "0.29.0"
+> anchor-spl = "0.29.0"
 > 
 > [workspace]
-diff -r ./secure/src/lib.rs ../../../../lints/arbitrary_cpi/ui/secure/src/lib.rs
+diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/arbitrary_cpi/ui/secure/src/lib.rs
 2a3,4
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 > use anchor_spl::token::spl_token;

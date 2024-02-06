@@ -1,6 +1,9 @@
 #![feature(rustc_private)]
 #![warn(unused_extern_crates)]
 
+#[allow(unused_extern_crates)]
+extern crate rustc_driver;
+
 extern crate rustc_data_structures;
 
 use rustc_data_structures::fx::FxHashMap;

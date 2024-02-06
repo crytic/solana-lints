@@ -7,6 +7,7 @@ extern crate rustc_hir;
 extern crate rustc_index;
 extern crate rustc_middle;
 extern crate rustc_span;
+extern crate rustc_target;
 
 use clippy_utils::{
     diagnostics::span_lint_and_help,
@@ -16,10 +17,12 @@ use clippy_utils::{
 use if_chain::if_chain;
 use rustc_data_structures::fx::FxHashMap;
 use rustc_hir::{def::Res, Expr, ExprKind, QPath, TyKind};
-use rustc_index::vec::Idx;
+use rustc_index::Idx;
 use rustc_lint::{LateContext, LateLintPass};
-use rustc_middle::ty::{AdtDef, AdtKind, TyKind as MiddleTyKind};
+use rustc_middle::ty::{AdtDef, TyKind as MiddleTyKind};
+use rustc_session::DataTypeKind;
 use rustc_span::{def_id::DefId, Span};
+use rustc_target::abi::FieldIdx;
 use solana_lints::{paths, utils::visit_expr_no_bodies};
 
 dylint_linting::impl_late_lint! {
@@ -140,7 +143,7 @@ dylint_linting::impl_late_lint! {
 
 #[derive(Default)]
 struct TypeCosplay {
-    deser_types: FxHashMap<AdtKind, Vec<(DefId, Span)>>,
+    deser_types: FxHashMap<DataTypeKind, Vec<(DefId, Span)>>,
 }
 
 impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
@@ -162,7 +165,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             if let TyKind::Path(ty_qpath) = &ty.kind;
             let res = cx.typeck_results().qpath_res(ty_qpath, ty.hir_id);
             if let Res::Def(_, def_id) = res;
-            let middle_ty = cx.tcx.type_of(def_id);
+            let middle_ty = cx.tcx.type_of(def_id).skip_binder();
             then {
                 if_chain! {
                     if let Some(trait_did) = get_trait_def_id(cx, &paths::ANCHOR_LANG_DISCRIMINATOR);
@@ -174,9 +177,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                             cx,
                             TYPE_COSPLAY,
                             fnc_expr.span,
-                            &format!("`{}` type implements the `Discriminator` trait. If you are attempting to deserialize\n here, you probably want try_deserialize() instead.",
-                                middle_ty
-                            ),
+                            &format!("`{middle_ty}` type implements the `Discriminator` trait. If you are attempting to deserialize\n here, you probably want try_deserialize() instead."),
                             None,
                             "otherwise, make sure you are accounting for this type's discriminator in your deserialization function"
                         );
@@ -186,10 +187,10 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                             if let MiddleTyKind::Adt(adt_def, _) = middle_ty.kind() {
                                 let adt_kind = adt_def.adt_kind();
                                 let def_id = adt_def.did();
-                                if let Some(vec) = self.deser_types.get_mut(&adt_kind) {
+                                if let Some(vec) = self.deser_types.get_mut(&adt_kind.into()) {
                                     vec.push((def_id, ty.span));
                                 } else {
-                                    self.deser_types.insert(adt_kind, vec![(def_id, ty.span)]);
+                                    self.deser_types.insert(adt_kind.into(), vec![(def_id, ty.span)]);
                                 }
                             }
                         }
@@ -205,7 +206,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
         if self.deser_types.len() == 1 {
             let (k, v) = self.deser_types.iter().next().unwrap();
             match k {
-                AdtKind::Enum => check_enums(cx, v),
+                DataTypeKind::Enum => check_enums(cx, v),
                 _ => check_structs_have_discriminant(cx, v), // NOTE: also catches unions
             }
         } else if self.deser_types.len() > 1 {
@@ -247,7 +248,7 @@ fn contains_data_field_reference(cx: &LateContext<'_>, expr: &Expr<'_>) -> bool 
     }
 }
 
-fn check_enums(cx: &LateContext<'_>, enums: &Vec<(DefId, Span)>) {
+fn check_enums(cx: &LateContext<'_>, enums: &[(DefId, Span)]) {
     #[allow(clippy::comparison_chain)]
     if enums.len() > 1 {
         // TODO: can implement loop to print all spans if > 2 enums
@@ -267,7 +268,7 @@ fn check_enums(cx: &LateContext<'_>, enums: &Vec<(DefId, Span)>) {
     }
 }
 
-fn check_structs_have_discriminant(cx: &LateContext<'_>, types: &Vec<(DefId, Span)>) {
+fn check_structs_have_discriminant(cx: &LateContext<'_>, types: &[(DefId, Span)]) {
     let num_structs = types.len();
     types
         .iter()
@@ -279,8 +280,8 @@ fn check_structs_have_discriminant(cx: &LateContext<'_>, types: &Vec<(DefId, Spa
 /// be the first field in the adt.
 fn has_discriminant(cx: &LateContext, adt: AdtDef, num_struct_types: usize, span: Span) {
     let variant = adt.variants().get(Idx::new(0)).unwrap();
-    let first_field_def = &variant.fields[0];
-    let ty = cx.tcx.type_of(first_field_def.did);
+    let first_field_def = &variant.fields[FieldIdx::new(0)];
+    let ty = cx.tcx.type_of(first_field_def.did).skip_binder();
     if_chain! {
         if let MiddleTyKind::Adt(adt_def, _) = ty.kind();
         if adt_def.is_enum();

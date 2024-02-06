@@ -10,6 +10,7 @@ help: consider constructing a single enum that contains all type definitions as 
 LL |         let metadata = MetadataInfo::try_from_slice(&ctx.accounts.user.data.borrow()).unwrap();
    |                        ^^^^^^^^^^^^
    = note: `-D type-cosplay` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(type_cosplay)]`
 
-error: aborting due to previous error
+error: aborting due to 1 previous error
 

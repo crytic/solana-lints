@@ -1,11 +1,11 @@
-diff -r ./insecure/Cargo.toml ../../../../lints/insecure_account_close/ui/insecure/Cargo.toml
+diff -r -x Cargo.lock ./insecure/Cargo.toml ../../../../lints/insecure_account_close/ui/insecure/Cargo.toml
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.25.0"
+> anchor-lang = "0.29.0"
 > 
 > [workspace]
-diff -r ./insecure/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure/src/lib.rs
+diff -r -x Cargo.lock ./insecure/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 30a32,34
@@ -13,14 +13,14 @@ diff -r ./insecure/src/lib.rs ../../../../lints/insecure_account_close/ui/insecu
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/insecure_account_close/ui/insecure/src: lib.stderr
-diff -r ./insecure-still/Cargo.toml ../../../../lints/insecure_account_close/ui/insecure-still/Cargo.toml
+diff -r -x Cargo.lock ./insecure-still/Cargo.toml ../../../../lints/insecure_account_close/ui/insecure-still/Cargo.toml
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.25.0"
+> anchor-lang = "0.29.0"
 > 
 > [workspace]
-diff -r ./insecure-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still/src/lib.rs
+diff -r -x Cargo.lock ./insecure-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 45a47,49
@@ -28,14 +28,14 @@ diff -r ./insecure-still/src/lib.rs ../../../../lints/insecure_account_close/ui/
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/insecure_account_close/ui/insecure-still/src: lib.stderr
-diff -r ./insecure-still-still/Cargo.toml ../../../../lints/insecure_account_close/ui/insecure-still-still/Cargo.toml
+diff -r -x Cargo.lock ./insecure-still-still/Cargo.toml ../../../../lints/insecure_account_close/ui/insecure-still-still/Cargo.toml
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.25.0"
+> anchor-lang = "0.29.0"
 > 
 > [workspace]
-diff -r ./insecure-still-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still-still/src/lib.rs
+diff -r -x Cargo.lock ./insecure-still-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still-still/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 45a47,49
@@ -43,14 +43,14 @@ diff -r ./insecure-still-still/src/lib.rs ../../../../lints/insecure_account_clo
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/insecure_account_close/ui/insecure-still-still/src: lib.stderr
-diff -r ./recommended/Cargo.toml ../../../../lints/insecure_account_close/ui/recommended/Cargo.toml
+diff -r -x Cargo.lock ./recommended/Cargo.toml ../../../../lints/insecure_account_close/ui/recommended/Cargo.toml
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.25.0"
+> anchor-lang = "0.29.0"
 > 
 > [workspace]
-diff -r ./recommended/src/lib.rs ../../../../lints/insecure_account_close/ui/recommended/src/lib.rs
+diff -r -x Cargo.lock ./recommended/src/lib.rs ../../../../lints/insecure_account_close/ui/recommended/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 18d18
@@ -60,14 +60,14 @@ diff -r ./recommended/src/lib.rs ../../../../lints/insecure_account_close/ui/rec
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/insecure_account_close/ui/recommended/src: lib.stderr
-diff -r ./secure/Cargo.toml ../../../../lints/insecure_account_close/ui/secure/Cargo.toml
+diff -r -x Cargo.lock ./secure/Cargo.toml ../../../../lints/insecure_account_close/ui/secure/Cargo.toml
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.25.0"
+> anchor-lang = "0.29.0"
 > 
 > [workspace]
-diff -r ./secure/src/lib.rs ../../../../lints/insecure_account_close/ui/secure/src/lib.rs
+diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/insecure_account_close/ui/secure/src/lib.rs
 2a3
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
 71a73,75
