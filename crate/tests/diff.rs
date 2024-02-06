@@ -6,7 +6,7 @@
 // lint's actual changes differ from the changes reflected in the lint's diff file, the test fails.
 
 use assert_cmd::prelude::*;
-use predicates::prelude::*;
+use similar_asserts::SimpleDiff;
 use std::{fs::read_to_string, path::Path};
 
 struct Diff {
@@ -55,16 +55,17 @@ fn diff() {
         .success();
 
     for diff in DIFFS {
-        let contents = read_to_string(
-            Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("diffs")
-                .join(diff.solana_lint.to_owned() + ".diff"),
-        )
-        .unwrap();
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("diffs")
+            .join(diff.solana_lint.to_owned() + ".diff");
 
-        std::process::Command::new("diff")
+        let contents = read_to_string(&path).unwrap();
+
+        let assert = std::process::Command::new("diff")
             .args([
                 "-r",
+                "-x",
+                "Cargo.lock",
                 ".",
                 &Path::new("..")
                     .join("..")
@@ -81,7 +82,24 @@ fn diff() {
                     .join("programs")
                     .join(diff.sealevel_attacks_programs_dir),
             )
-            .assert()
-            .stdout(predicate::eq(contents.as_str()));
+            .assert();
+
+        let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
+
+        if contents != stdout {
+            if enabled("BLESS") {
+                std::fs::write(path, stdout).unwrap();
+            } else {
+                panic!(
+                    "{}",
+                    SimpleDiff::from_str(&contents, stdout, "left", "right")
+                );
+            }
+        }
     }
+}
+
+#[must_use]
+pub fn enabled(key: &str) -> bool {
+    std::env::var(key).map_or(false, |value| value != "0")
 }
