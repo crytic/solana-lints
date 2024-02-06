@@ -6,11 +6,11 @@ edition = "2021"
 [dependencies]
 
 [dev-dependencies]
-assert_cmd = "2.0.13"
-predicates = "3.1.0"
+assert_cmd = "2.0"
+predicates = "3.1"
 similar-asserts = "1.5"
-tempfile = "3.10.0"
-toml = "0.8.10"
+tempfile = "3.10"
+toml = "0.8"
 
 [package.metadata.rust-analyzer]
 rustc_private = true
