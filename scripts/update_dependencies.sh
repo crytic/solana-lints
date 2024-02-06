@@ -13,10 +13,16 @@ WORKSPACE="$(realpath "$SCRIPTS"/..)"
 
 cd "$WORKSPACE"
 
-for X in $(find . -name Cargo.toml); do
+for X in $(find . -name Cargo.lock); do
     pushd "$(dirname "$X")"
-    rm -f Cargo.lock
-    cargo upgrade --incompatible
-    cargo build --workspace --all-targets
+    cargo update
     popd
 done
+
+for X in $(find . -name Cargo.toml); do
+    pushd "$(dirname "$X")"
+    cargo upgrade --incompatible
+    popd
+done
+
+"$SCRIPTS"/build.sh --all-targets
