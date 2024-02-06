@@ -282,7 +282,7 @@ dependencies = [
  "ark-std",
  "derivative",
  "hashbrown 0.13.2",
- "itertools",
+ "itertools 0.10.5",
  "num-traits",
  "zeroize",
 ]
@@ -299,7 +299,7 @@ dependencies = [
  "ark-std",
  "derivative",
  "digest 0.10.7",
- "itertools",
+ "itertools 0.10.5",
  "num-bigint",
  "num-traits",
  "paste",
@@ -755,13 +755,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "clippy_config"
+version = "0.1.77"
+source = "git+https://github.com/rust-lang/rust-clippy?rev=ac4c2094a6030530661bee3876e0228ddfeb6b8b#ac4c2094a6030530661bee3876e0228ddfeb6b8b"
+dependencies = [
+ "rustc-semver",
+ "serde",
+ "toml 0.7.8",
+]
+
+[[package]]
 name = "clippy_utils"
-version = "0.1.67"
-source = "git+https://github.com/rust-lang/rust-clippy?rev=f4850f7292efa33759b4f7f9b7621268979e9914#f4850f7292efa33759b4f7f9b7621268979e9914"
+version = "0.1.77"
+source = "git+https://github.com/rust-lang/rust-clippy?rev=ac4c2094a6030530661bee3876e0228ddfeb6b8b#ac4c2094a6030530661bee3876e0228ddfeb6b8b"
 dependencies = [
  "arrayvec",
- "if_chain",
- "itertools",
+ "clippy_config",
+ "itertools 0.11.0",
  "rustc-semver",
 ]
 
@@ -1443,6 +1453,15 @@ name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
 dependencies = [
  "either",
 ]
@@ -2431,7 +2450,7 @@ dependencies = [
  "console_log",
  "curve25519-dalek",
  "getrandom 0.2.12",
- "itertools",
+ "itertools 0.10.5",
  "js-sys",
  "lazy_static",
  "libc",
@@ -2482,7 +2501,7 @@ dependencies = [
  "ed25519-dalek-bip32",
  "generic-array",
  "hmac 0.12.1",
- "itertools",
+ "itertools 0.10.5",
  "js-sys",
  "lazy_static",
  "libsecp256k1",
@@ -2548,7 +2567,7 @@ dependencies = [
  "byteorder",
  "curve25519-dalek",
  "getrandom 0.1.16",
- "itertools",
+ "itertools 0.10.5",
  "lazy_static",
  "merlin",
  "num-derive",
@@ -2979,6 +2998,18 @@ dependencies = [
 
 [[package]]
 name = "toml"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd79e69d3b627db300ff956027cc6c3798cef26d22526befdfcd12feeb6d2257"
+dependencies = [
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_edit 0.19.15",
+]
+
+[[package]]
+name = "toml"
 version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a9aad4a3066010876e8dcf5a8a06e70a558751117a145c6ce2b82c2e2054290"
@@ -2996,6 +3027,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3550f4e9685620ac18a50ed434eb3aec30db8ba93b0287467bca5826ea25baf1"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.19.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
+dependencies = [
+ "indexmap",
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "winnow",
 ]
 
 [[package]]
