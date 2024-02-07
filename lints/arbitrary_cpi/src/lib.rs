@@ -60,9 +60,9 @@ dylint_linting::declare_late_lint! {
     /// };
     /// invoke(&ix, accounts.clone());
     /// ```
-    /// 
+    ///
     /// **How the lint is implemented:**
-    /// 
+    ///
     /// - For every function containing calls to `solana_program::program::invoke`
     /// - find the definition of `Instruction` argument passed to `invoke`; first argument
     /// - If the `Instruction` argument is result of a function call
@@ -72,12 +72,13 @@ dylint_linting::declare_late_lint! {
     ///     - find the assign statement assigning to the `program_id` field, assigning to field at `0`th index
     ///     - find all the aliases of `program_id`. Use the rhs of the assignment as initial alias and look for
     ///         all assignments assigning to the locals recursively.
-    ///     - Check if `program_id` is compared using any of aliases.
-    ///         - look for calls to `core::cmp::PartialEq{ne, eq}` where one of arg is moved from an alias.
-    ///         - If one of the arg accesses `program_id`, check if the basic block containing the comparison
+    ///     - If `program_id` is compared using any of aliases ignore the call to `invoke`.
+    ///         - Look for calls to `core::cmp::PartialEq{ne, eq}` where one of arg is moved from an alias.
+    ///         - If one of the arg accesses `program_id` and if the basic block containing the comparison
     ///         dominates the basic block containing call to `invoke` ensuring the `program_id` is checked in all execution
-    ///         paths.
-    ///         - If basic block does not dominate or there is no such comparison report the call to `invoke`
+    ///         paths Then ignore the call to `invoke`.
+    ///         - Else report the call to `invoke`.
+    ///     - Else report the call to `invoke`.
     pub ARBITRARY_CPI,
     Warn,
     "Finds unconstrained inter-contract calls"
@@ -183,8 +184,7 @@ impl ArbitraryCpi {
                         destination: dest,
                         args,
                         ..
-                    } if dest.local_or_deref_local() == Some(inst_arg.local) =>
-                    {
+                    } if dest.local_or_deref_local() == Some(inst_arg.local) => {
                         if_chain! {
                             // function definition
                             if let TyKind::FnDef(def_id, _callee_substs) = func.const_.ty().kind();
@@ -211,7 +211,7 @@ impl ArbitraryCpi {
                                     } else {
                                         // if the called function is not the whitelisted one, then we assume it to be vulnerable
                                         return (false, Vec::new());
-                                    } 
+                                    }
                                 }
                             }
                         }
@@ -221,13 +221,11 @@ impl ArbitraryCpi {
             }
             // check every statement
             for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
-                // println!("5. {:?}, {:?}", stmt, stmt.kind);
                 match &stmt.kind {
                     // if the statement assigns to `inst_arg`, update `inst_arg` to the rhs
                     StatementKind::Assign(box (assign_place, rvalue))
                         if assign_place.local == inst_arg.local =>
                     {
-                        // println!("2. {:?}, {:?}, {:?}", assign_place, inst_arg, rvalue);
                         // Check if assign_place is assignment to a field. if not then this is not the initialization of the struct
                         // have to check further
                         if_chain! {
@@ -240,7 +238,7 @@ impl ArbitraryCpi {
                                 // there will be 3 statements(for 3 fields), ensure this statement is assignment
                                 // to the first field `program_id`
                                 // Also, do not update inst_arg, as this is just field assignment.
-                                if_chain!{
+                                if_chain! {
                                     // program_id is the first field; index = 0
                                     if f.index() == 0;
                                     if let Some(adtdef) = ty.ty_adt_def();
@@ -262,9 +260,9 @@ impl ArbitraryCpi {
                             } else {
                                 // inst_arg is defined using this statement. rvalue could store the actual value.
                                 if let Rvalue::Use(Operand::Copy(pl) | Operand::Move(pl))
-                                | Rvalue::Ref(_, _, pl) = rvalue {
+                                | Rvalue::Ref(_, _, pl) = rvalue
+                                {
                                     inst_arg = pl;
-                                    // println!("4. {:?}", inst_arg);
                                 }
                             }
                         }
@@ -278,7 +276,7 @@ impl ArbitraryCpi {
                 _ => {
                     break;
                 }
-            }            
+            }
         }
         // we did not find the statement assigning to the program_id of `Instruction`. report as vulnerable
         (false, Vec::new())
@@ -287,7 +285,7 @@ impl ArbitraryCpi {
     fn find_program_id_aliases<'tcx>(
         body: &'tcx mir::Body<'tcx>,
         block: BasicBlock,
-        mut id_arg: &Place<'tcx>, 
+        mut id_arg: &Place<'tcx>,
     ) -> Vec<Place<'tcx>> {
         let preds = body.basic_blocks.predecessors();
         let mut cur_block = block;
@@ -299,14 +297,12 @@ impl ArbitraryCpi {
                 match &stmt.kind {
                     // if the statement assigns to `inst_arg`, update `inst_arg` to the rhs
                     StatementKind::Assign(box (assign_place, rvalue))
-                        if assign_place.local_or_deref_local()
-                            == id_arg.local_or_deref_local() =>
+                        if assign_place.local_or_deref_local() == id_arg.local_or_deref_local() =>
                     {
                         if let Rvalue::Use(Operand::Copy(pl) | Operand::Move(pl))
                         | Rvalue::Ref(_, _, pl) = rvalue
                         {
                             id_arg = pl;
-                            // println!("x. {:?}", pl);
                             likely_program_id_aliases.push(*pl);
                         }
                     }
@@ -339,7 +335,7 @@ impl ArbitraryCpi {
                 return true;
             }
         }
-        // look for chain of assign statements whose value is eventually assigned to the `search_place` and 
+        // look for chain of assign statements whose value is eventually assigned to the `search_place` and
         // see if any of the intermediate local is in the search_list.
         loop {
             for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
@@ -353,7 +349,6 @@ impl ArbitraryCpi {
                                 Operand::Copy(rvalue_place) | Operand::Move(rvalue_place),
                             )
                             | Rvalue::Ref(_, _, rvalue_place) => {
-                                // println!("Found assignment {:?}", stmt);
                                 search_place = rvalue_place;
                                 if let Some(search_loc) = search_place.local_or_deref_local() {
                                     if search_list.contains(&search_loc) {
