@@ -45,15 +45,19 @@ invoke(&ix, accounts.clone());
 - For every function containing calls to `solana_program::program::invoke`
 - find the definition of `Instruction` argument passed to `invoke`; first argument
 - If the `Instruction` argument is result of a function call
-    - If the function is whitelisted, do not report; only functions defined in `spl_token::instruction` are whitelisted.
-    - Else report the call to `invoke` as vulnerable
+  - If the function is whitelisted, do not report; only functions defined in
+    `spl_token::instruction` are whitelisted.
+  - Else report the call to `invoke` as vulnerable
 - Else if the `Instruction` is initialized in the function itself
-    - find the assign statement assigning to the `program_id` field, assigning to field at `0`th index
-    - find all the aliases of `program_id`. Use the rhs of the assignment as initial alias and look for
-        all assignments assigning to the locals recursively.
-    - Check if `program_id` is compared using any of aliases.
-        - look for calls to `core::cmp::PartialEq{ne, eq}` where one of arg is moved from an alias.
-        - If one of the arg accesses `program_id`, check if the basic block containing the comparison
-        dominates the basic block containing call to `invoke` ensuring the `program_id` is checked in all execution
-        paths.
-        - If basic block does not dominate or there is no such comparison report the call to `invoke`
+  - find the assign statement assigning to the `program_id` field, assigning to
+    field at `0`th index
+  - find all the aliases of `program_id`. Use the rhs of the assignment as initial
+    alias and look for all assignments assigning to the locals recursively.
+  - If `program_id` is compared using any of aliases ignore the call to `invoke`.
+    - Look for calls to `core::cmp::PartialEq{ne, eq}` where one of arg is moved
+      from an alias.
+    - If one of the arg accesses `program_id` and if the basic block containing the
+      comparison dominates the basic block containing call to `invoke` ensuring the
+      `program_id` is checked in all execution paths Then ignore the call to `invoke`.
+    - Else report the call to `invoke`.
+  - Else report the call to `invoke`.

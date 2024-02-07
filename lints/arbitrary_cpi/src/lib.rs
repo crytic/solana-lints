@@ -66,19 +66,22 @@ dylint_linting::declare_late_lint! {
     /// - For every function containing calls to `solana_program::program::invoke`
     /// - find the definition of `Instruction` argument passed to `invoke`; first argument
     /// - If the `Instruction` argument is result of a function call
-    ///     - If the function is whitelisted, do not report; only functions defined in `spl_token::instruction` are whitelisted.
-    ///     - Else report the call to `invoke` as vulnerable
+    ///   - If the function is whitelisted, do not report; only functions defined in
+    ///     `spl_token::instruction` are whitelisted.
+    ///   - Else report the call to `invoke` as vulnerable
     /// - Else if the `Instruction` is initialized in the function itself
-    ///     - find the assign statement assigning to the `program_id` field, assigning to field at `0`th index
-    ///     - find all the aliases of `program_id`. Use the rhs of the assignment as initial alias and look for
-    ///         all assignments assigning to the locals recursively.
-    ///     - If `program_id` is compared using any of aliases ignore the call to `invoke`.
-    ///         - Look for calls to `core::cmp::PartialEq{ne, eq}` where one of arg is moved from an alias.
-    ///         - If one of the arg accesses `program_id` and if the basic block containing the comparison
-    ///         dominates the basic block containing call to `invoke` ensuring the `program_id` is checked in all execution
-    ///         paths Then ignore the call to `invoke`.
-    ///         - Else report the call to `invoke`.
+    ///   - find the assign statement assigning to the `program_id` field, assigning to
+    ///     field at `0`th index
+    ///   - find all the aliases of `program_id`. Use the rhs of the assignment as initial
+    ///     alias and look for all assignments assigning to the locals recursively.
+    ///   - If `program_id` is compared using any of aliases ignore the call to `invoke`.
+    ///     - Look for calls to `core::cmp::PartialEq{ne, eq}` where one of arg is moved
+    ///       from an alias.
+    ///     - If one of the arg accesses `program_id` and if the basic block containing the
+    ///       comparison dominates the basic block containing call to `invoke` ensuring the
+    ///       `program_id` is checked in all execution paths Then ignore the call to `invoke`.
     ///     - Else report the call to `invoke`.
+    ///   - Else report the call to `invoke`.
     pub ARBITRARY_CPI,
     Warn,
     "Finds unconstrained inter-contract calls"
@@ -208,10 +211,9 @@ impl ArbitraryCpi {
                                     // if the instruction is constructed by a function in `spl_token::instruction`, assume program_id is checked
                                     if path.iter().take(2).eq(&token_path) {
                                         return (true, Vec::new());
-                                    } else {
-                                        // if the called function is not the whitelisted one, then we assume it to be vulnerable
-                                        return (false, Vec::new());
                                     }
+                                    // if the called function is not the whitelisted one, then we assume it to be vulnerable
+                                    return (false, Vec::new());
                                 }
                             }
                         }
@@ -319,6 +321,56 @@ impl ArbitraryCpi {
         likely_program_id_aliases
     }
 
+    // This function takes the list of programid_locals and a starting block, and searches for a
+    // check elsewhere in the Body that would compare the program_id with something else.
+    fn is_programid_checked<'tcx>(
+        cx: &LateContext,
+        body: &'tcx mir::Body<'tcx>,
+        block: BasicBlock,
+        programid_locals: &[Local],
+    ) -> bool {
+        let preds = body.basic_blocks.predecessors();
+        let mut cur_block = block;
+        loop {
+            // check every statement
+            if_chain! {
+                // is terminator a call `core::cmp::PartialEq{ne, eq}`?
+                if let Some(t) = &body.basic_blocks[cur_block].terminator;
+                if let TerminatorKind::Call {
+                    func: func_operand,
+                    args,
+                    ..
+                } = &t.kind;
+                if let mir::Operand::Constant(box func) = func_operand;
+                if let TyKind::FnDef(def_id, _callee_substs) = func.const_.ty().kind();
+                if match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "ne"])
+                    || match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "eq"]);
+                // check if any of the args accesses program_id
+                if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = args[0];
+                if let Operand::Copy(arg1_pl) | Operand::Move(arg1_pl) = args[1];
+                then {
+                    // if either arg0 or arg1 came from one of the programid_locals, then we know
+                    // this eq/ne check was operating on the program_id.
+                    if Self::is_moved_from(cx, body, cur_block, &arg0_pl, programid_locals)
+                        || Self::is_moved_from(cx, body, cur_block, &arg1_pl, programid_locals)
+                    {
+                        // we found the check. if it dominates the call to invoke, then the check
+                        // is assumed to be sufficient!
+                        return body.basic_blocks.dominators().dominates(cur_block, block);
+                    }
+                }
+            }
+
+            match preds.get(cur_block) {
+                Some(cur_preds) if !cur_preds.is_empty() => cur_block = cur_preds[0],
+                _ => {
+                    break;
+                }
+            }
+        }
+        false
+    }
+
     // helper function
     // Given the Place search_place, check if it was defined using one of the locals in search_list
     fn is_moved_from<'tcx>(
@@ -362,56 +414,6 @@ impl ArbitraryCpi {
                     _ => {}
                 }
             }
-            match preds.get(cur_block) {
-                Some(cur_preds) if !cur_preds.is_empty() => cur_block = cur_preds[0],
-                _ => {
-                    break;
-                }
-            }
-        }
-        false
-    }
-
-    // This function takes the list of programid_locals and a starting block, and searches for a
-    // check elsewhere in the Body that would compare the program_id with something else.
-    fn is_programid_checked<'tcx>(
-        cx: &LateContext,
-        body: &'tcx mir::Body<'tcx>,
-        block: BasicBlock,
-        programid_locals: &[Local],
-    ) -> bool {
-        let preds = body.basic_blocks.predecessors();
-        let mut cur_block = block;
-        loop {
-            // check every statement
-            if_chain! {
-                // is terminator a call `core::cmp::PartialEq{ne, eq}`?
-                if let Some(t) = &body.basic_blocks[cur_block].terminator;
-                if let TerminatorKind::Call {
-                    func: func_operand,
-                    args,
-                    ..
-                } = &t.kind;
-                if let mir::Operand::Constant(box func) = func_operand;
-                if let TyKind::FnDef(def_id, _callee_substs) = func.const_.ty().kind();
-                if match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "ne"])
-                    || match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "eq"]);
-                // check if any of the args accesses program_id
-                if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = args[0];
-                if let Operand::Copy(arg1_pl) | Operand::Move(arg1_pl) = args[1];
-                then {
-                    // if either arg0 or arg1 came from one of the programid_locals, then we know
-                    // this eq/ne check was operating on the program_id.
-                    if Self::is_moved_from(cx, body, cur_block, &arg0_pl, programid_locals)
-                        || Self::is_moved_from(cx, body, cur_block, &arg1_pl, programid_locals)
-                    {
-                        // we found the check. if it dominates the call to invoke, then the check
-                        // is assumed to be sufficient!
-                        return body.basic_blocks.dominators().dominates(cur_block, block);
-                    }
-                }
-            }
-
             match preds.get(cur_block) {
                 Some(cur_preds) if !cur_preds.is_empty() => cur_block = cur_preds[0],
                 _ => {
