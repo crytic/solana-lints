@@ -32,12 +32,12 @@ See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/7-bump-se
 
 - For every function containing calls to `solana_program::pubkey::Pubkey::create_program_address`
 - find the `bump` location from the first argument to `create_program_address` call.
-    - first argument is the seeds array(`&[&[u8]]`). In general, the seeds are structured with bump as last element:
+  - first argument is the seeds array(`&[&[u8]]`). In general, the seeds are structured with bump as last element:
     `&[seed1, seed2, ..., &[bump]]` e.g `&[b"vault", &[bump]]`.
-    - find the locations of bump.
-    - If bump is assigned by accessing a struct field
-        - if bump is assigned from a struct implementing `AnchorDeserialize` trait
-            - report a warning to use `#[account(...)` macro
-        - else report "bump may not be constrainted" warning
-    - else check if the bump is checked using a comparison operation
-        - report a warning if the bump is not checked
+  - find the locations of bump.
+  - If bump is assigned by accessing a struct field
+    - if bump is assigned from a struct implementing `AnchorDeserialize` trait
+      - report a warning to use `#[account(...)` macro
+    - else report "bump may not be constrainted" warning
+  - else if the bump is checked using a comparison operation; do not report
+  - else report a warning

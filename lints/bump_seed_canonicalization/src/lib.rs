@@ -26,18 +26,18 @@ extern crate rustc_target;
 
 dylint_linting::declare_late_lint! {
     /// **What it does:**
-    /// 
+    ///
     /// Finds uses of solana_program::pubkey::PubKey::create_program_address that do not check the bump_seed
     ///
     /// **Why is this bad?**
-    /// 
+    ///
     /// Generally for every seed there should be a canonical address, so the user should not be
     /// able to pick the bump_seed, since that would result in a different address.
-    /// 
+    ///
     /// See https://github.com/crytic/building-secure-contracts/tree/master/not-so-smart-contracts/solana/improper_pda_validation
     ///
     /// **Known problems:**
-    /// 
+    ///
     /// False positives, since the bump_seed check may be within some other function (does not
     /// trace through function calls). The bump seed may be also be safely stored in an account but
     /// passed from another function.
@@ -46,26 +46,26 @@ dylint_linting::declare_late_lint! {
     /// occur in all possible execution paths)
     ///
     /// **Example:**
-    /// 
+    ///
     /// See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/7-bump-seed-canonicalization/insecure/src/lib.rs for an insecure example
-    /// 
+    ///
     /// Use instead:
-    /// 
+    ///
     /// See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/7-bump-seed-canonicalization/recommended/src/lib.rs for recommended way to use bump.
-    /// 
+    ///
     /// **How the lint is implemented:**
-    /// 
+    ///
     /// - For every function containing calls to `solana_program::pubkey::Pubkey::create_program_address`
     /// - find the `bump` location from the first argument to `create_program_address` call.
-    ///     - first argument is the seeds array(`&[&[u8]]`). In general, the seeds are structured with bump as last element:
+    ///   - first argument is the seeds array(`&[&[u8]]`). In general, the seeds are structured with bump as last element:
     ///     `&[seed1, seed2, ..., &[bump]]` e.g `&[b"vault", &[bump]]`.
-    ///     - find the locations of bump.
-    ///     - If bump is assigned by accessing a struct field
-    ///         - if bump is assigned from a struct implementing `AnchorDeserialize` trait
-    ///             - report a warning to use `#[account(...)` macro
-    ///         - else report "bump may not be constrainted" warning
-    ///     - else check if the bump is checked using a comparison operation
-    ///         - report a warning if the bump is not checked
+    ///   - find the locations of bump.
+    ///   - If bump is assigned by accessing a struct field
+    ///     - if bump is assigned from a struct implementing `AnchorDeserialize` trait
+    ///       - report a warning to use `#[account(...)` macro
+    ///     - else report "bump may not be constrainted" warning
+    ///   - else if the bump is checked using a comparison operation; do not report
+    ///   - else report a warning
     pub BUMP_SEED_CANONICALIZATION,
     Warn,
     "Finds calls to create_program_address that do not check the bump_seed"
@@ -191,8 +191,8 @@ enum BackwardDataflowState {
 }
 
 impl BumpSeedCanonicalization {
-    /// Given the seeds_arg, a location passed to first argument of `create_program_address`,
-    /// find all locations/alias of bump: &[seed1, .., &[bump]]
+    /// Given the `seeds_arg`, a location passed to first argument of `create_program_address`,
+    /// find all locations/alias of bump: `&[seed1, .., &[bump]]`
     fn find_bump_seed_for_seed_array<'tcx>(
         cx: &LateContext<'tcx>,
         body: &'tcx mir::Body<'tcx>,
@@ -227,7 +227,7 @@ impl BumpSeedCanonicalization {
                                     likely_bump_seed_aliases.push(*rvalue_place);
                                 }
                                 if_chain! {
-                                    // if seed_arg stores bump and rvalue is such that `x.y` (field access) 
+                                    // if seed_arg stores bump and rvalue is such that `x.y` (field access)
                                     if state == BackwardDataflowState::Bump;
                                     if let Some(proj) =
                                         rvalue_place.iter_projections().find_map(|(_, proj)| {
@@ -266,7 +266,7 @@ impl BumpSeedCanonicalization {
                                     }
                                 }
                                 BackwardDataflowState::FirstSeed if elements.len() == 1 => {
-                                    // seeds_arg points to bump array [ seed1, ..., &[bump]. seeds_arg stores 
+                                    // seeds_arg points to bump array [ seed1, ..., &[bump]. seeds_arg stores
                                     // the location of &[bump]. update it to store the location of bump.
                                     if let Operand::Move(pl) = &elements[FieldIdx::from_u32(0)] {
                                         // store the location of bump
@@ -309,7 +309,7 @@ impl BumpSeedCanonicalization {
                 return true;
             }
         }
-        // look for chain of assign statements whose value is eventually assigned to the `search_place` and 
+        // look for chain of assign statements whose value is eventually assigned to the `search_place` and
         // see if any of the intermediate local is in the search_list.
         // TODO: move this and ArbitraryCPI::is_moved_from to utils.
         loop {
