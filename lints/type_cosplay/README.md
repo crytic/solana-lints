@@ -1,6 +1,6 @@
 # type_cosplay
 
-**What it does:** 
+**What it does:**
 
 Checks that all deserialized types have a proper discriminant so that
 all types are guaranteed to deserialize differently.
@@ -27,7 +27,7 @@ tell the difference between deserialized type `X` and deserialized type `Y`. Thi
 malicious user to substitute `X` for `Y` or vice versa, and the code may perform unauthorized
 actions with the bytes.
 
-**Known problems:** 
+**Known problems:**
 
 In the case when only one enum is deserialized, this lint by default
 regards that as secure. However, this is not always the case. For example, if the program
@@ -118,22 +118,22 @@ an implicit discriminant, this program will always be secure as long as all type
 **How the lint is implemented:**
 
 - Find call expressions which has an arg that accesses account data
-    - Arg expression contains `x.data`; `x` is of type `AccountInfo`
+  - Arg expression contains `x.data`; `x` is of type `AccountInfo`
 - Get the type that the function was called on, ie X in X::call()
 - if `X` implements `anchor_lang::Discriminator` trait but the function called is not `try_deserialize`
-    - warn to use `try_deserialize` or to account for type's discriminator
+  - warn to use `try_deserialize` or to account for type's discriminator
 - else if the function called is Borsh `try_from_slice`, collect the deserialized type
 - Repeat the above for all call expressions and collect all deserialized types; `X` from `X::try_from_slice()` expressions.
-- If number of different kinds of types deserialized is more than `1`, i.e the code deserializes `Enum` type, `Struct` type, etc.
-    - warn to either deserialize from only structs or only an enum
-- If the deserialized types are all enum
-    - If number of deserialized enums are more than `1`
-        - warn to use single enum that contains all type definitions
-    - Else assume that the single enum is safe and do not report
+- If number of different kinds of types deserialized is more than `1`, i.e the
+  code deserializes `Enum` type as well as a `Struct` type, etc.
+  - warn to either deserialize from only structs or only an enum
+- Else If the deserialized types are all enum
+  - If number of deserialized enums are more than `1`
+    - warn to use single enum that contains all type definitions
+  - Else assume that the single enum is safe and do not warn
 - Else the deserialized types are structs
-    - For each deserialized type
-        - If the struct has first field of type enum and number of variants of the enum are more than the
-        number of deserialized types
-            - The struct has proper discriminant
-        - Else warn to add an enum with at least as many variants as there are deserialized types.
-
+  - For each deserialized type
+    - If the struct has first field of type enum and number of variants of the enum are more than the
+      number of deserialized types
+      - The struct has proper discriminant; do not warn.
+    - Else warn to add an enum with at least as many variants as there are deserialized types.

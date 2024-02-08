@@ -17,18 +17,18 @@ dylint_linting::declare_late_lint! {
     /// **What it does:**
     ///
     /// This lint reports functions which use `AccountInfo` type and have zero signer checks.
-    /// 
+    ///
     /// **Why is this bad?**
     ///
     /// The missing-signer-check vulnerability occurs when a program does not check that all the authorative
     /// accounts have signed the instruction. The issue is lack of proper access controls. Verifying signatures is a way to
     /// ensure the required entities has approved the operation. If a program does not check the signer field,
     /// then anyone can create the instruction, call the program and perform a privileged operation.
-    /// 
+    ///
     /// For example if the Token program does not check that the owner of the tokens is a signer in the transfer instruction then anyone can
     /// transfer the tokens and steal them.
-    /// 
-    /// **Known problems:** 
+    ///
+    /// **Known problems:**
     /// None.
     ///
     /// **Example:**
@@ -39,13 +39,14 @@ dylint_linting::declare_late_lint! {
     /// Use instead:
     ///
     /// See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/0-signer-authorization/recommended/src/lib.rs for a secure example
-    /// 
+    ///
     /// **How the lint is implemented:**
+    ///
     /// - For each free function, function not associated with any type or trait.
-    /// - Check the function has an expression of type `AccountInfo`
-    /// - Check that the function does **not** take a `Context<T>` type argument where `T` has a `Signer` type field
-    /// - Check that the function does **not** has an expression `x.is_signer` where the expression `x` is of type `AccountInfo`.
-    /// - Report the function
+    /// - If the function has an expression of type `AccountInfo` AND
+    /// - If the function does **not** take a `Context<T>` type argument where `T` has a `Signer` type field AND
+    /// - If the function does **not** has an expression `x.is_signer` where the expression `x` is of type `AccountInfo`.
+    ///   - Report the function
     pub MISSING_SIGNER_CHECK,
     Warn,
     "description goes here"
@@ -82,7 +83,7 @@ impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
     }
 }
 
-/// Return true if any of the expression in body has type AccountInfo (`solana_program::account_info::AccountInfo`)
+/// Return true if any of the expression in body has type `AccountInfo` (`solana_program::account_info::AccountInfo`)
 fn body_uses_account_info<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool {
     visit_expr_no_bodies(body.value, |expr| {
         let ty = cx.typeck_results().expr_ty(expr);
@@ -137,12 +138,12 @@ fn arg_contains_signer_field<'tcx>(cx: &LateContext<'tcx>, arg: GenericArg<'tcx>
     }
 }
 
-/// Return true if any of expressions in `body` are `x.is_signer` where `x`'s type is AccountInfo
+/// Return true if any of expressions in `body` are `x.is_signer` where `x`'s type is `AccountInfo`
 fn body_contains_is_signer_use<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool {
     visit_expr_no_bodies(body.value, |expr| is_is_signer_use(cx, expr))
 }
 
-/// Return true if the `expr` is `x.is_signer` where `x`'s type is AccountInfo.
+/// Return true if the `expr` is `x.is_signer` where `x`'s type is `AccountInfo`.
 fn is_is_signer_use<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
     if_chain! {
         // `expr` is `x.{field_name}`

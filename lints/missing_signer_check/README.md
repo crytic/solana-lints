@@ -14,7 +14,7 @@ then anyone can create the instruction, call the program and perform a privilege
 For example if the Token program does not check that the owner of the tokens is a signer in the transfer instruction then anyone can
 transfer the tokens and steal them.
 
-**Known problems:** 
+**Known problems:**
 None.
 
 **Example:**
@@ -27,8 +27,9 @@ Use instead:
 See https://github.com/coral-xyz/sealevel-attacks/blob/master/programs/0-signer-authorization/recommended/src/lib.rs for a secure example
 
 **How the lint is implemented:**
+
 - For each free function, function not associated with any type or trait.
-- Check the function has an expression of type `AccountInfo`
-- Check that the function does **not** take a `Context<T>` type argument where `T` has a `Signer` type field
-- Check that the function does **not** has an expression `x.is_signer` where the expression `x` is of type `AccountInfo`.
-- Report the function
+- If the function has an expression of type `AccountInfo` AND
+- If the function does **not** take a `Context<T>` type argument where `T` has a `Signer` type field AND
+- If the function does **not** has an expression `x.is_signer` where the expression `x` is of type `AccountInfo`.
+  - Report the function
