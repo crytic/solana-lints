@@ -181,24 +181,6 @@ fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>)
     }
 }
 
-/// if `expr` is a method call of `def_path` return the receiver else None
-fn is_expr_method_call<'tcx>(
-    cx: &LateContext<'tcx>,
-    expr: &Expr<'tcx>,
-    def_path: &[&str],
-) -> Option<&'tcx Expr<'tcx>> {
-    if_chain! {
-        if let ExprKind::MethodCall(_, recv, _, _) = expr.kind;
-        if let Some(def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id);
-        if match_def_path(cx, def_id, def_path);
-        then {
-            Some(recv)
-        } else {
-            None
-        }
-    }
-}
-
 fn contains_owner_use<'tcx>(
     cx: &LateContext<'tcx>,
     body: &'tcx Body<'tcx>,
@@ -207,59 +189,6 @@ fn contains_owner_use<'tcx>(
     visit_expr_no_bodies(body.value, |expr| {
         uses_given_field(cx, expr, account_expr, "owner")
     })
-}
-
-/// Checks if `expr` is references `field` on `account_expr`
-fn uses_given_field<'tcx>(
-    cx: &LateContext<'tcx>,
-    expr: &Expr<'tcx>,
-    account_expr: &Expr<'tcx>,
-    field: &str,
-) -> bool {
-    if_chain! {
-        if let ExprKind::Field(object, field_name) = expr.kind;
-        // TODO: add check for key, is_signer
-        if field_name.as_str() == field;
-        let mut spanless_eq = SpanlessEq::new(cx);
-        if spanless_eq.eq_expr(account_expr, object);
-        then {
-            true
-        } else {
-            false
-        }
-    }
-}
-
-/// Checks if `expr` is a method call of `path` on `account_expr`
-fn calls_method_on_expr<'tcx>(
-    cx: &LateContext<'tcx>,
-    expr: &Expr<'tcx>,
-    account_expr: &Expr<'tcx>,
-    def_path: &[&str],
-) -> bool {
-    if_chain! {
-        // check if expr is a method call
-        if let Some(recv) = is_expr_method_call(cx, expr, def_path);
-        // check if recv is same expression as account_expr
-        let mut spanless_eq = SpanlessEq::new(cx);
-        if spanless_eq.eq_expr(account_expr, recv);
-        then {
-            true
-        } else {
-            false
-        }
-    }
-}
-
-// Return true if the expr access key of account_expr(AccountInfo)
-fn expr_accesses_key<'tcx>(
-    cx: &LateContext<'tcx>,
-    expr: &Expr<'tcx>,
-    account_expr: &Expr<'tcx>,
-) -> bool {
-    // Anchor AccountInfo: `.key()` and Solana AccountInfo: `.key` field.
-    calls_method_on_expr(cx, expr, account_expr, &paths::ANCHOR_LANG_KEY)
-        || uses_given_field(cx, expr, account_expr, "key")
 }
 
 fn contains_key_check<'tcx>(
@@ -286,6 +215,77 @@ fn compares_key<'tcx>(
             true
         } else {
             false
+        }
+    }
+}
+
+// Return true if the expr access key of account_expr(AccountInfo)
+fn expr_accesses_key<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &Expr<'tcx>,
+    account_expr: &Expr<'tcx>,
+) -> bool {
+    // Anchor AccountInfo: `.key()` and Solana AccountInfo: `.key` field.
+    calls_method_on_expr(cx, expr, account_expr, &paths::ANCHOR_LANG_KEY)
+        || uses_given_field(cx, expr, account_expr, "key")
+}
+
+/// Checks if `expr` is a method call of `path` on `account_expr`
+fn calls_method_on_expr<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &Expr<'tcx>,
+    account_expr: &Expr<'tcx>,
+    def_path: &[&str],
+) -> bool {
+    if_chain! {
+        // check if expr is a method call
+        if let Some(recv) = is_expr_method_call(cx, expr, def_path);
+        // check if recv is same expression as account_expr
+        let mut spanless_eq = SpanlessEq::new(cx);
+        if spanless_eq.eq_expr(account_expr, recv);
+        then {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+/// Checks if `expr` is references `field` on `account_expr`
+fn uses_given_field<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &Expr<'tcx>,
+    account_expr: &Expr<'tcx>,
+    field: &str,
+) -> bool {
+    if_chain! {
+        if let ExprKind::Field(object, field_name) = expr.kind;
+        // TODO: add check for key, is_signer
+        if field_name.as_str() == field;
+        let mut spanless_eq = SpanlessEq::new(cx);
+        if spanless_eq.eq_expr(account_expr, object);
+        then {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+/// if `expr` is a method call of `def_path` return the receiver else None
+fn is_expr_method_call<'tcx>(
+    cx: &LateContext<'tcx>,
+    expr: &Expr<'tcx>,
+    def_path: &[&str],
+) -> Option<&'tcx Expr<'tcx>> {
+    if_chain! {
+        if let ExprKind::MethodCall(_, recv, _, _) = expr.kind;
+        if let Some(def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id);
+        if match_def_path(cx, def_id, def_path);
+        then {
+            Some(recv)
+        } else {
+            None
         }
     }
 }
