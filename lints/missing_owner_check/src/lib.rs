@@ -5,21 +5,23 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
+use anchor_syn::{AccountField, AccountsStruct, ConstraintGroup};
 use clippy_utils::{
     diagnostics::span_lint, match_any_def_paths, match_def_path, ty::match_type, SpanlessEq,
 };
 use if_chain::if_chain;
 use rustc_hir::{
-    def_id::LocalDefId,
+    def_id::{DefId, LocalDefId},
     intravisit::{walk_expr, FnKind, Visitor},
-    BinOpKind, Body, Expr, ExprKind, FnDecl, QPath,
+    BinOpKind, Body, Expr, ExprKind, FnDecl, Item, QPath,
 };
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty;
 use rustc_span::Span;
-use solana_lints::{paths, utils::visit_expr_no_bodies};
+use solana_lints::{paths, utils::get_anchor_accounts_struct, utils::visit_expr_no_bodies};
+use std::collections::HashMap;
 
-dylint_linting::declare_late_lint! {
+dylint_linting::impl_late_lint! {
     /// **What it does:**
     ///
     /// This lint checks that for each account referenced in a program, that there is a
@@ -56,6 +58,8 @@ dylint_linting::declare_late_lint! {
     ///
     /// **How the lint is implemented:**
     ///
+    /// check_fn:
+    ///
     /// - for every function defined in the package
     /// - exclude functions generated from macro expansion.
     /// - Get a list of unique and unsafe AccountInfo's referenced in the body
@@ -85,13 +89,64 @@ dylint_linting::declare_late_lint! {
     ///     - if there is a comparison expression (`==` or `!=`) and one of the expressions being compared accesses key on `account_expr`:
     ///       - lhs or rhs of the comparison is `{account_expr}.key()`; The key for Anchor's `AccountInfo` is accessed using `.key()`
     ///       - Or lhs or rhs is `{account_expr}.key`; The key of Solana `AccountInfo` are accessed using `.key`
-    /// - Report the remaining expressions
+    ///   - Else
+    ///     - If the expression is `.to_account_info()` and the receiver is a field access on a struct: `x.y.to_account_info()`
+    ///     - Or If the expression is a field access on a struct `x.y`
+    ///       - Then store the struct(x) def id and the accessed field name (y) in `MissingOwnerCheck.account_exprs`.
+    ///     - Else report the expression.
+    ///
+    /// check_item: Collect Anchor `Accounts` structs
+    ///
+    /// - for each item defined in the crate
+    ///   - If Item is a Struct and implements `anchor_lang::ToAccountInfos` trait.
+    ///     - Get the pre-expansion source code and parse it using anchor's accounts parser
+    ///     - If parsing succeeds
+    ///       - Then store the struct def id and the resultant AccountsStruct in `MissingOwnerCheck.anchor_accounts`
+    ///
+    /// check_crate_post:
+    ///
+    /// - for each account expression in `MissingOwnerCheck.account_exprs`
+    ///   - If the struct accessed in the expression is in `MissingOwnerCheck.anchor_accounts`
+    ///     - find the `#[account(...)]` constraints applied on the accessed field
+    ///     - If any of the following constraints are applied on the field/account
+    ///       - Then ignore the expression.
+    ///       - Constraints:
+    ///         - `#[account(signer)]` - Signer accounts are assumed to be EOA accounts and are ignored.
+    ///         - `#[account(init, ...)]` - init creates a new account and sets its owner to current program or the given program.
+    ///         - `#[account(seeds = ..., ...)]` - Anchor derives a PDA using the seeds. This is essentially a `key` check
+    ///         - `#[account(address = ...)]` - Validates the key of the account.
+    ///         - `#[account(owner = ...)]` - Checks the owner.
+    ///         - `#[account(executable)]` - The account is an executable; All executables are owned by `BPFLoaders`.
+    ///       - Else report the expression.
     pub MISSING_OWNER_CHECK,
     Warn,
-    "using an account without checking if its owner is as expected"
+    "using an account without checking if its owner is as expected",
+    MissingOwnerCheck::new()
+}
+
+struct MissingOwnerCheck {
+    pub anchor_accounts: HashMap<DefId, AccountsStruct>,
+    pub account_exprs: Vec<(Span, DefId, String)>,
+}
+
+impl MissingOwnerCheck {
+    pub fn new() -> Self {
+        Self {
+            anchor_accounts: HashMap::new(),
+            account_exprs: Vec::new(),
+        }
+    }
 }
 
 impl<'tcx> LateLintPass<'tcx> for MissingOwnerCheck {
+    fn check_item(&mut self, cx: &LateContext<'tcx>, item: &'tcx Item<'tcx>) {
+        if let Some(accounts_struct) = get_anchor_accounts_struct(cx, item) {
+            // item is an anchor accounts struct
+            self.anchor_accounts
+                .insert(item.owner_id.to_def_id(), accounts_struct);
+        }
+    }
+
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -111,14 +166,47 @@ impl<'tcx> LateLintPass<'tcx> for MissingOwnerCheck {
                 if !contains_owner_use(cx, body, account_expr)
                     && !contains_key_check(cx, body, account_expr)
                 {
-                    span_lint(
-                        cx,
-                        MISSING_OWNER_CHECK,
-                        account_expr.span,
-                        "this Account struct is used but there is no check on its owner field",
-                    );
+                    if let Some((def_id, field_name)) = accesses_anchor_account(cx, account_expr) {
+                        self.account_exprs
+                            .push((account_expr.span, def_id, field_name));
+                    } else {
+                        span_lint(
+                            cx,
+                            MISSING_OWNER_CHECK,
+                            account_expr.span,
+                            "this Account struct is used but there is no check on its owner field",
+                        );
+                    }
                 }
             }
+        }
+    }
+
+    fn check_crate_post(&mut self, cx: &LateContext<'tcx>) {
+        for (span, def_id, field_name) in &self.account_exprs {
+            if let Some(accounts_struct) = self.anchor_accounts.get(def_id) {
+                if let Some((_, constraints)) = accounts_struct
+                    .fields
+                    .iter()
+                    .map(|account_field| match account_field {
+                        AccountField::Field(field) => (field.ident.to_string(), &field.constraints),
+                        AccountField::CompositeField(field) => {
+                            (field.ident.to_string(), &field.constraints)
+                        }
+                    })
+                    .find(|(anchor_field_name, _)| anchor_field_name == field_name)
+                {
+                    if is_safe_constraint_for_owner(constraints) {
+                        continue;
+                    }
+                }
+            }
+            span_lint(
+                cx,
+                MISSING_OWNER_CHECK,
+                *span,
+                "this Account struct is used but there is no check on its owner field",
+            );
         }
     }
 }
@@ -227,6 +315,57 @@ fn is_safe_to_account_info<'tcx>(cx: &LateContext<'tcx>, expr: &'tcx Expr<'tcx>)
             false
         }
     }
+}
+
+/// Given an expression, if the expr accesses account from a struct return `DefId` of the struct and the field name
+/// - if expr is a `to_account_info()` method call
+///     - then expr = receiver
+/// - if expr is a field access on T
+///     - return def id of T and the field name.
+/// - return None
+fn accesses_anchor_account<'tcx>(
+    cx: &LateContext<'tcx>,
+    mut expr: &'tcx Expr<'tcx>,
+) -> Option<(DefId, String)> {
+    if let Some(receiver) = is_expr_method_call(cx, expr, &paths::ANCHOR_LANG_TO_ACCOUNT_INFO) {
+        // This covers `UncheckedAccount` type. Anchor AccountInfo are flaged by lint directly
+        // but UncheckedAccount are only flaged when `to_account_info()` is called on them.
+        expr = receiver;
+    };
+    if_chain! {
+        if let ExprKind::Field(recv, field_name) = expr.kind;
+        if let ty::Adt(adt_def, _) = cx.typeck_results().expr_ty_adjusted(recv).kind();
+        then {
+            Some((adt_def.did(), field_name.to_string()))
+        } else {
+            None
+        }
+    }
+}
+
+/// Given an Anchor `ConstraintGroup`, check if the constraints warrant the exemption of the owner check
+/// - if any of the following constraints are applied on the account return true
+///     - Constraints:
+///     - `#[account(signer)]` - Signer accounts are assumed to be EOA accounts and are ignored.
+///         See comment in fn `is_safe_to_account_info`.
+///     - `#[account(init, ...)]` - init creates a new account and sets its owner to current program or the given program.
+///     - `#[account(seeds = ..., ...)]` - Anchor derives a PDA using the seeds. This is essentially a `key` check and we ignore
+///         if the key of the account is validated.
+///     - `#[account(address = ...)]` - Validates the key of the account.
+///     - `#[account(owner = ...)]` - Checks the owner.
+///     - `#[account(executable)]` - The account is an executable; All executables are owned by `BPFLoaders` and these
+///         accounts are considered to be exempt from owner check.
+/// - else return false
+fn is_safe_constraint_for_owner(constraints: &ConstraintGroup) -> bool {
+    constraints.signer.is_some()
+        || constraints
+            .init
+            .as_ref()
+            .map_or(false, |init_constraint| init_constraint.if_needed)
+        || constraints.seeds.is_some()
+        || constraints.address.is_some()
+        || constraints.owner.is_some()
+        || constraints.executable.is_some()
 }
 
 /// Check if any of the expressions in the body is `{account_expr}.owner`
@@ -369,4 +508,9 @@ fn secure_account_owner() {
 #[test]
 fn secure_programn_id() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure-program-id");
+}
+
+#[test]
+fn secure_anchor_constraints() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure-anchor-constraints");
 }

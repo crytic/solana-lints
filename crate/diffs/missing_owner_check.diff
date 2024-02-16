@@ -62,5 +62,6 @@ diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/missing_owner_check/
 > fn main() {}
 Only in ../../../../lints/missing_owner_check/ui/secure/src: lib.stderr
 Only in ../../../../lints/missing_owner_check/ui: secure-account-owner
+Only in ../../../../lints/missing_owner_check/ui: secure-anchor-constraints
 Only in ../../../../lints/missing_owner_check/ui: secure-fixed
 Only in ../../../../lints/missing_owner_check/ui: secure-program-id

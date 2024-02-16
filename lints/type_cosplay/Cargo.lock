@@ -2061,6 +2061,12 @@ dependencies = [
 [[package]]
 name = "solana-lints"
 version = "0.1.0"
+dependencies = [
+ "anchor-syn",
+ "clippy_utils",
+ "if_chain",
+ "syn 1.0.109",
+]
 
 [[package]]
 name = "solana-program"

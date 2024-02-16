@@ -19,6 +19,7 @@ pub const ANCHOR_LANG_TRY_DESERIALIZE: [&str; 3] =
     ["anchor_lang", "AccountDeserialize", "try_deserialize"];
 // key() method call path
 pub const ANCHOR_LANG_KEY: [&str; 3] = ["anchor_lang", "Key", "key"];
+pub const ANCHOR_LANG_TO_ACCOUNT_INFOS_TRAIT: [&str; 2] = ["anchor_lang", "ToAccountInfos"];
 
 pub const BORSH_TRY_FROM_SLICE: [&str; 4] = ["borsh", "de", "BorshDeserialize", "try_from_slice"];
 

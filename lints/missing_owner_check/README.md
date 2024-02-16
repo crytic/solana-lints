@@ -36,6 +36,8 @@ for a secure example.
 
 **How the lint is implemented:**
 
+check_fn:
+
 - for every function defined in the package
 - exclude functions generated from macro expansion.
 - Get a list of unique and unsafe AccountInfo's referenced in the body
@@ -65,4 +67,32 @@ for a secure example.
     - if there is a comparison expression (`==` or `!=`) and one of the expressions being compared accesses key on `account_expr`:
       - lhs or rhs of the comparison is `{account_expr}.key()`; The key for Anchor's `AccountInfo` is accessed using `.key()`
       - Or lhs or rhs is `{account_expr}.key`; The key of Solana `AccountInfo` are accessed using `.key`
-- Report the remaining expressions
+  - Else
+    - If the expression is `.to_account_info()` and the receiver is a field access on a struct: `x.y.to_account_info()`
+    - Or If the expression is a field access on a struct `x.y`
+      - Then store the struct(x) def id and the accessed field name (y) in `MissingOwnerCheck.account_exprs`.
+    - Else report the expression.
+
+check_item: Collect Anchor `Accounts` structs
+
+- for each item defined in the crate
+  - If Item is a Struct and implements `anchor_lang::ToAccountInfos` trait.
+    - Get the pre-expansion source code and parse it using anchor's accounts parser
+    - If parsing succeeds
+      - Then store the struct def id and the resultant AccountsStruct in `MissingOwnerCheck.anchor_accounts`
+
+check_crate_post:
+
+- for each account expression in `MissingOwnerCheck.account_exprs`
+  - If the struct accessed in the expression is in `MissingOwnerCheck.anchor_accounts`
+    - find the `#[account(...)]` constraints applied on the accessed field
+    - If any of the following constraints are applied on the field/account
+      - Then ignore the expression.
+      - Constraints:
+        - `#[account(signer)]` - Signer accounts are assumed to be EOA accounts and are ignored.
+        - `#[account(init, ...)]` - init creates a new account and sets its owner to current program or the given program.
+        - `#[account(seeds = ..., ...)]` - Anchor derives a PDA using the seeds. This is essentially a `key` check
+        - `#[account(address = ...)]` - Validates the key of the account.
+        - `#[account(owner = ...)]` - Checks the owner.
+        - `#[account(executable)]` - The account is an executable; All executables are owned by `BPFLoaders`.
+      - Else report the expression.
