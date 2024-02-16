@@ -1,2 +1,4 @@
 /target
 /lints/*/ui/*/Cargo.lock
+# /lints/debug/*
+/lints/*/ui/Cargo.toml
