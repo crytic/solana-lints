@@ -5,15 +5,21 @@ extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use clippy_utils::{diagnostics::span_lint, ty::match_type};
+use anchor_syn::{AccountField, Ty as FieldTy};
+use clippy_utils::{diagnostics::span_lint, diagnostics::span_lint_and_then, ty::match_type};
 use if_chain::if_chain;
-use rustc_hir::{def_id::LocalDefId, intravisit::FnKind, Body, Expr, ExprKind, FnDecl};
+use rustc_hir::{
+    def_id::LocalDefId, intravisit::FnKind, Body, Expr, ExprKind, FnDecl, Item, ItemKind,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::{self, GenericArg, GenericArgKind};
 use rustc_span::Span;
-use solana_lints::{paths, utils::visit_expr_no_bodies};
+use solana_lints::{
+    paths,
+    utils::{get_anchor_accounts_struct, is_anchor_program, visit_expr_no_bodies},
+};
 
-dylint_linting::declare_late_lint! {
+dylint_linting::impl_late_lint! {
     /// **What it does:**
     ///
     /// This lint reports functions which use `AccountInfo` type and have zero signer checks.
@@ -49,10 +55,32 @@ dylint_linting::declare_late_lint! {
     ///   - Report the function
     pub MISSING_SIGNER_CHECK,
     Warn,
-    "description goes here"
+    "description goes here",
+    MissingSignerCheck::new()
+}
+
+struct MissingSignerCheck {
+    is_anchor: bool,
+}
+
+impl MissingSignerCheck {
+    pub fn new() -> Self {
+        Self { is_anchor: false }
+    }
 }
 
 impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
+    fn check_crate(&mut self, cx: &LateContext<'tcx>) {
+        self.is_anchor = is_anchor_program(cx);
+    }
+
+    fn check_item(&mut self, cx: &LateContext<'tcx>, item: &'tcx Item<'tcx>) {
+        if !self.is_anchor {
+            return;
+        }
+        anchor_missing_signer(cx, item);
+    }
+
     fn check_fn(
         &mut self,
         cx: &LateContext<'tcx>,
@@ -62,6 +90,9 @@ impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
         span: Span,
         local_def_id: LocalDefId,
     ) {
+        if self.is_anchor {
+            return;
+        }
         if_chain! {
             // fn is a free-standing function (parent is a `mod`). fn is not a method associated with a trait or type.
             if matches!(fn_kind, FnKind::ItemFn(..));
@@ -156,6 +187,108 @@ fn is_is_signer_use<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
             true
         } else {
             false
+        }
+    }
+}
+
+/// Warn about accounts in Anchor Accounts struct which might need to be signers.
+///
+/// Fields of `#[derive(Accounts)]` have one of the Ty variant as type.
+/// ```
+/// pub enum Ty {
+///   AccountInfo,
+///   UncheckedAccount,
+///   AccountLoader(AccountLoaderTy),
+///   Sysvar(SysvarTy),
+///   Account(AccountTy),
+///   Program(ProgramTy),
+///   Interface(InterfaceTy),
+///   InterfaceAccount(InterfaceAccountTy),
+///   Signer,
+///   SystemAccount,
+///   ProgramData,
+/// }
+/// ```
+/// - `AccountInfo`, `UncheckedAccount` - no checks on the account.
+/// - `AccountLoader`, `Account` - Represents state of a program; Checks discriminant, owner.
+/// - `Sysvar` - A sysvar account
+/// - `Program`, `Interface` - A program account. For Interface, one of the programs
+/// - `InterfaceAccount` - State of one of the programs.
+/// - `Signer` - Account must sign the transaction.
+/// - `SystemAccount` - Account owner is System program.
+/// - `ProgramData` - Account storing data of a program owned by `UpgradeableBPFLoader`.
+///
+/// Assumption:
+/// - Accounts storing state, program data, `Sysvar` accounts and `Program` accounts are not required to be signers.
+///
+/// - For each item
+/// - If item is a struct and has `#[derive(Accounts)]`
+///   - parse the struct into Anchor `AccountsStruct`
+///   - For each field
+///     - If the type of the field is a "Skipped type" then continue
+///       - Skipped types:
+///         - `Account`, `AccountLoader`, `InterfaceAccount`, `ProgramData`
+///         - `Program`, `Interface`, `Sysvar`,
+///         - `Signer`
+///       - reported types:
+///         - `AccountInfo`, `UncheckedAccount`, `SystemAccount`
+///     - If the field has `#[account(signer)]` constraint
+///         - continue
+///     - Report the field
+fn anchor_missing_signer<'tcx>(cx: &LateContext<'tcx>, item: &'tcx Item<'tcx>) {
+    if let ItemKind::Struct(variant, _) = item.kind {
+        if let Some(accounts_struct) = get_anchor_accounts_struct(cx, item) {
+            let mut reported_fields = Vec::new();
+            for (item_field, anchor_field) in
+                variant.fields().iter().zip(accounts_struct.fields.iter())
+            {
+                // CompositeFields have type equal to a struct that have #[derive(Accounts)].
+                // The field represents multiple accounts. As this function will report that struct, Composite
+                // fields are ignored here.
+                // TODO: Confirm above statement.
+                if let AccountField::Field(field) = anchor_field {
+                    if matches!(
+                        field.ty,
+                        FieldTy::AccountInfo | FieldTy::UncheckedAccount | FieldTy::SystemAccount
+                    ) && !field.constraints.is_signer()
+                    {
+                        reported_fields.push(item_field);
+                    }
+                }
+            }
+            if reported_fields.is_empty() {
+                return;
+            }
+            let warn_message = if reported_fields.len() == 1 {
+                format!(
+                    "Account `{}` might need to be a signer",
+                    reported_fields[0].ident.as_str()
+                )
+            } else {
+                let (last_field, fields) = reported_fields.split_last().unwrap();
+                format!(
+                    "Accounts `{}`, and `{}` might need to be signers",
+                    fields
+                        .iter()
+                        .map(|f| f.ident.as_str())
+                        .collect::<Vec<&str>>()
+                        .join("`, `"),
+                    last_field.ident.as_str()
+                )
+            };
+
+            span_lint_and_then(
+                cx,
+                MISSING_SIGNER_CHECK,
+                reported_fields
+                    .iter()
+                    .map(|field| field.span)
+                    .collect::<Vec<_>>(),
+                &warn_message,
+                |diag| {
+                    diag.span_label(item.ident.span, "Accounts of this instruction");
+                },
+            );
         }
     }
 }

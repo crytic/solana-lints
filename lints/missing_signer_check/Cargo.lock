@@ -1450,6 +1450,7 @@ name = "missing_signer_check"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "anchor-syn",
  "clippy_utils",
  "dylint_linting",
  "dylint_testing",
