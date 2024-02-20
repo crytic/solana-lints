@@ -113,3 +113,53 @@ pub fn get_anchor_accounts_struct<'tcx>(
         }
     }
 }
+
+/// Return true if the current program is an anchor program
+///
+/// Anchor generated programs will have
+/// mod instruction {}
+/// mod program {}
+/// mod __private { mod __global {} mod __idl}
+/// fn dispatch
+/// fn entry
+///
+/// `is_anchor_program` uses the presence of `mod __private { mod __global {} mod __idl}` to determine if
+/// the Solana program is written using Anchor
+/// - If the root module has `__private` module and it contains `__global`, `__idl` modules
+///   - return True
+/// - else false
+pub fn is_anchor_program(cx: &LateContext<'_>) -> bool {
+    let hir_map = cx.tcx.hir();
+    hir_map
+        .root_module()
+        .item_ids
+        .iter()
+        .map(|item_id| hir_map.item(*item_id))
+        .any(|item| {
+            if_chain! {
+                if let ItemKind::Mod(private_mod) = item.kind;
+                if item.ident.as_str() == "__private";
+                if private_mod
+                    .item_ids
+                    .iter()
+                    .map(|inner_item_id| hir_map.item(*inner_item_id))
+                    .any(|inner_item| {
+                        matches!(inner_item.kind, ItemKind::Mod(_))
+                            && inner_item.ident.as_str() == "__global"
+                    });
+                if private_mod
+                    .item_ids
+                    .iter()
+                    .map(|inner_item_id| hir_map.item(*inner_item_id))
+                    .any(|inner_item| {
+                        matches!(inner_item.kind, ItemKind::Mod(_))
+                            && inner_item.ident.as_str() == "__idl"
+                    });
+                then {
+                    true
+                } else {
+                    false
+                }
+            }
+        })
+}
