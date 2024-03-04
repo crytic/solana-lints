@@ -11,7 +11,7 @@ fn lints() {
         .join("..")
         .join("lints");
 
-    for entry in read_dir(dir).unwrap() {
+    for (index, entry) in read_dir(dir).unwrap().enumerate() {
         let entry = entry.unwrap();
         let path = entry.path();
 
@@ -19,9 +19,18 @@ fn lints() {
         writeln!(stderr(), "{:?}", path.canonicalize().unwrap()).unwrap();
 
         std::process::Command::new("cargo")
+            .current_dir(path.clone())
+            .env_remove("RUSTUP_TOOLCHAIN")
+            .env("CARGO_TARGET_DIR", format!("target_{index}"))
+            .args(["test"])
+            .assert()
+            .success();
+
+        std::process::Command::new("cargo")
             .current_dir(path)
             .env_remove("RUSTUP_TOOLCHAIN")
-            .args(["test"])
+            .env("CARGO_TARGET_DIR", format!("target_{index}"))
+            .args(["clean"])
             .assert()
             .success();
     }
