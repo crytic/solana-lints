@@ -21,6 +21,14 @@ path = "ui/recommended/src/lib.rs"
 name = "secure"
 path = "ui/secure/src/lib.rs"
 
+[[example]]
+name = "insecure-non-anchor"
+path = "ui/insecure-non-anchor/src/lib.rs"
+
+[[example]]
+name = "secure-non-anchor"
+path = "ui/secure-non-anchor/src/lib.rs"
+
 [dependencies]
 anchor-syn = "0.29.0"
 clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "ac4c2094a6030530661bee3876e0228ddfeb6b8b" }
@@ -31,6 +39,7 @@ solana-lints = { path = "../../crate" }
 [dev-dependencies]
 anchor-lang = "0.29"
 dylint_testing = "2.6"
+solana-program = "1.18.4"
 
 [workspace]
 
