@@ -117,7 +117,7 @@ impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
 /// Return true if any of the expression in body has type `AccountInfo` (`solana_program::account_info::AccountInfo`)
 fn body_uses_account_info<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool {
     visit_expr_no_bodies(body.value, |expr| {
-        let ty = cx.typeck_results().expr_ty(expr);
+        let ty = cx.typeck_results().expr_ty(expr).peel_refs();
         match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO)
     })
 }
@@ -181,7 +181,7 @@ fn is_is_signer_use<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
         if let ExprKind::Field(object, field_name) = expr.kind;
         if field_name.as_str() == "is_signer";
         // type of `x` is AccountInfo
-        let ty = cx.typeck_results().expr_ty(object);
+        let ty = cx.typeck_results().expr_ty(object).peel_refs();
         if match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
         then {
             true
@@ -306,4 +306,14 @@ fn recommended() {
 #[test]
 fn secure() {
     dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure");
+}
+
+#[test]
+fn insecure_non_anchor() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "insecure-non-anchor");
+}
+
+#[test]
+fn secure_non_anchor() {
+    dylint_testing::ui_test_example(env!("CARGO_PKG_NAME"), "secure-non-anchor");
 }

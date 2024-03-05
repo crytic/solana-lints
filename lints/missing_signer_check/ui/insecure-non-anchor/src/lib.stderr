@@ -1,0 +1,15 @@
+error: this function lacks a use of `is_signer`
+  --> $DIR/lib.rs:22:1
+   |
+LL | / pub fn log_message(accounts: &[AccountInfo]) -> ProgramResult {
+LL | |     let authority = next_account_info(&mut accounts.iter())?;
+LL | |     msg!("GM {:?}", authority);
+LL | |     Ok(())
+LL | | }
+   | |_^
+   |
+   = note: `-D missing-signer-check` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(missing_signer_check)]`
+
+error: aborting due to 1 previous error
+

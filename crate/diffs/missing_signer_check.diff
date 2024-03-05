@@ -15,6 +15,7 @@ diff -r -x Cargo.lock ./insecure/src/lib.rs ../../../../lints/missing_signer_che
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/missing_signer_check/ui/insecure/src: lib.stderr
+Only in ../../../../lints/missing_signer_check/ui: insecure-non-anchor
 diff -r -x Cargo.lock ./recommended/Cargo.toml ../../../../lints/missing_signer_check/ui/recommended/Cargo.toml
 19c19,21
 < anchor-lang = "0.20.0"
@@ -40,8 +41,11 @@ diff -r -x Cargo.lock ./secure/Cargo.toml ../../../../lints/missing_signer_check
 diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/missing_signer_check/ui/secure/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
-21a23,25
+21a23,27
 > 
+> // This is a false positive as the lint does not check for `is_signer` checks if the
+> // program is an anchor program. The lint should be updated to remove the false positive.
 > #[allow(dead_code)]
 > fn main() {}
 Only in ../../../../lints/missing_signer_check/ui/secure/src: lib.stderr
+Only in ../../../../lints/missing_signer_check/ui: secure-non-anchor
