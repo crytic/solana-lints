@@ -51,15 +51,7 @@ anchor-spl = "0.29"
 dylint_testing = "2.6"
 
 [workspace]
-# members = [
-#     "ui/*",
-# ]
 
 [package.metadata.rust-analyzer]
 rustc_private = true
 
-# [workspace.metadata.dylint]
-# libraries = [
-#     { path = "../solana-lints-dev", pattern = "lints/*" },
-#     # { git = "https://github.com/crytic/solana-lints", pattern = "lints/*" },
-# ]
