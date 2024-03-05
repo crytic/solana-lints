@@ -1,11 +1,10 @@
-error: this function lacks a use of `is_signer`
-  --> $DIR/lib.rs:10:5
+error: Account `authority` might need to be a signer
+  --> $DIR/lib.rs:18:5
    |
-LL | /     pub fn log_message(ctx: Context<LogMessage>) -> ProgramResult {
-LL | |         msg!("GM {}", ctx.accounts.authority.key().to_string());
-LL | |         Ok(())
-LL | |     }
-   | |_____^
+LL | pub struct LogMessage<'info> {
+   |            ---------- Accounts of this instruction
+LL |     authority: AccountInfo<'info>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: `-D missing-signer-check` implied by `-D warnings`
    = help: to override `-D warnings` add `#[allow(missing_signer_check)]`

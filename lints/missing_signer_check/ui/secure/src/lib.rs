@@ -21,5 +21,7 @@ pub struct LogMessage<'info> {
     authority: AccountInfo<'info>,
 }
 
+// This is a false positive as the lint does not check for `is_signer` checks if the
+// program is an anchor program. The lint should be updated to remove the false positive.
 #[allow(dead_code)]
 fn main() {}
