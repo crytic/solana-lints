@@ -25,10 +25,31 @@ cat ../README.md |
 while read X; do
     if [[ "$X" =~ ^\| ]]; then
         if [[ -z "$LISTED" ]]; then
-            echo '| Library | Description |'
-            echo '| - | - |'
-            grep -H '^description = "[^"]*"$' */Cargo.toml |
-            sed 's,^\([^/]*\)/Cargo.toml:description = "\([^"]*\)"$,| [`\1`](lints/\1) | \2 |,'
+            echo '| Library | Description | Anchor | Non Anchor |'
+            echo '| - | - | - | - |'
+            for CARGO_TOML in */Cargo.toml; do
+                DESC=$(
+                    grep -H '^description = "[^"]*"$' "$CARGO_TOML" |
+                    sed 's,^\([^/]*\)/Cargo.toml:description = "\([^"]*\)"$,| [`\1`](lints/\1) | \2,'
+                )
+                ANCHOR=$(
+                    grep '^anchor_programs = \(true\|false\)$' "$CARGO_TOML" |
+                    sed 's,^anchor_programs = \([a-z]*\)$,\1,'
+                )
+                NON_ANCHOR=$(
+                    grep '^non_anchor_programs = \(true\|false\)$' "$CARGO_TOML" |
+                    sed 's,^non_anchor_programs = \([a-z]*\)$,\1,'
+                )
+                ANCHOR_COLUMN=" "
+                if [[ "$ANCHOR" == "true" ]]; then
+                    ANCHOR_COLUMN=":heavy_check_mark:"
+                fi
+                NON_ANCHOR_COLUMN=" "
+                if [[ "$NON_ANCHOR" == "true" ]]; then
+                    NON_ANCHOR_COLUMN=":heavy_check_mark:"
+                fi
+                echo "$DESC | $ANCHOR_COLUMN | $NON_ANCHOR_COLUMN |"
+            done
             LISTED=1
         fi
         continue

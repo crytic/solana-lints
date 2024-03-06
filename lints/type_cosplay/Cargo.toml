@@ -55,3 +55,7 @@ dylint_testing = "2.6"
 
 [package.metadata.rust-analyzer]
 rustc_private = true
+
+[package.metadata]
+anchor_programs = false
+non_anchor_programs = true

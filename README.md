@@ -8,7 +8,7 @@ The lints are inspired by the [Sealevel Attacks]. (See also @pencilflip's [Twitt
 
 The current lints are:
 
-| Library                                                          | Description                                                                                                                              | Anchor             | Non-Anchor         |
+| Library                                                          | Description                                                                                                                              | Anchor             | Non Anchor         |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------ |
 | [`arbitrary_cpi`](lints/arbitrary_cpi)                           | lint for [5-arbitrary-cpi](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/5-arbitrary-cpi)                           |                    | :heavy_check_mark: |
 | [`bump_seed_canonicalization`](lints/bump_seed_canonicalization) | lint for [6-bump-seed-canonicalization](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/7-bump-seed-canonicalization) |                    | :heavy_check_mark: |
