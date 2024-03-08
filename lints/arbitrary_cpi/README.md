@@ -42,22 +42,22 @@ invoke(&ix, accounts.clone());
 
 **How the lint is implemented:**
 
-- For every function containing calls to `solana_program::program::invoke`
-- find the definition of `Instruction` argument passed to `invoke`; first argument
-- If the `Instruction` argument is result of a function call
-  - If the function is whitelisted, do not report; only functions defined in
-    `spl_token::instruction` are whitelisted.
-  - Else report the call to `invoke` as vulnerable
-- Else if the `Instruction` is initialized in the function itself
-  - find the assign statement assigning to the `program_id` field, assigning to
-    field at `0`th index
-  - find all the aliases of `program_id`. Use the rhs of the assignment as initial
-    alias and look for all assignments assigning to the locals recursively.
-  - If `program_id` is compared using any of aliases ignore the call to `invoke`.
-    - Look for calls to `core::cmp::PartialEq{ne, eq}` where one of arg is moved
-      from an alias.
-    - If one of the arg accesses `program_id` and if the basic block containing the
-      comparison dominates the basic block containing call to `invoke` ensuring the
-      `program_id` is checked in all execution paths Then ignore the call to `invoke`.
-    - Else report the call to `invoke`.
-  - Else report the call to `invoke`.
+- For every function
+  - For every statement in the function initializing `Instruction {..}`
+    - Get the place being assigned to `program_id` field
+    - find all the aliases of `program_id`. Use the rhs of the assignment as initial
+      alias and look for all assignments assigning to the locals recursively.
+    - If `program_id` is compared using any of aliases ignore the call to `invoke`.
+      - Look for calls to `core::cmp::PartialEq{ne, eq}` where one of arg is moved
+        from an alias.
+      - If one of the arg accesses `program_id` and if the basic block containing the
+        comparison dominates the basic block containing call to `invoke` ensuring the
+        `program_id` is checked in all execution paths Then ignore the call to `invoke`.
+      - Else report the statement initializing `Instruction`.
+    - Else report the statement initializing `Instruction`.
+  - For every call to `CpiContext::new` or `CpiContext::new_with_signer`
+    - Get the place of the first argument (program's account info)
+    - find all aliases of `program's` place.
+    - If the `program` is a result of calling `to_account_info` on Anchor `Program`/`Interface`
+      - continue
+    - Else report the call to `CpiContext::new`/`CpiContext::new_with_signer`
