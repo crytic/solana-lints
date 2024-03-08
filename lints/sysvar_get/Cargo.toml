@@ -1,0 +1,37 @@
+[package]
+name = "sysvar_get"
+version = "0.1.0"
+authors = ["Trail of Bits"]
+description = "Reports uses of `Sysvar::from_account_info` instead of `Sysvar::get`"
+edition = "2018"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[[example]]
+name = "insecure"
+path = "ui/insecure/src/lib.rs"
+
+[[example]]
+name = "secure"
+path = "ui/secure/src/lib.rs"
+
+[dependencies]
+anchor-syn = "0.29.0"
+clippy_utils = { git = "https://github.com/rust-lang/rust-clippy", rev = "ac4c2094a6030530661bee3876e0228ddfeb6b8b" }
+dylint_linting = "2.6"
+if_chain = "1.0"
+solana-lints = { path = "../../crate" }
+syn = { version = "1.0.109", features = ["parsing"] }
+
+[dev-dependencies]
+anchor-lang = "0.29"
+anchor-spl = "0.29"
+dylint_testing = "2.6"
+
+[workspace]
+
+[package.metadata.rust-analyzer]
+rustc_private = true
+

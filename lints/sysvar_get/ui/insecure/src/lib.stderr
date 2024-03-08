@@ -1,0 +1,55 @@
+error: Use `Clock::get()` instead of `Clock::from_account_info(...)`
+  --> $DIR/lib.rs:31:22
+   |
+LL |         let _clock = Clock::from_account_info(&ctx.accounts.clock);
+   |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `-D sysvar-get` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(sysvar_get)]`
+
+error: Use `EpochRewards::get()` instead of `EpochRewards::from_account_info(...)`
+  --> $DIR/lib.rs:32:24
+   |
+LL |         let _rewards = EpochRewards::from_account_info(&ctx.accounts.epoch_rewards);
+   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: Use `EpochSchedule::get()` instead of `EpochSchedule::from_account_info(...)`
+  --> $DIR/lib.rs:33:25
+   |
+LL |         let _schedule = EpochSchedule::from_account_info(&ctx.accounts.epoch_schedule);
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: Use `LastRestartSlot::get()` instead of `LastRestartSlot::from_account_info(...)`
+  --> $DIR/lib.rs:35:13
+   |
+LL |             LastRestartSlot::from_account_info(&ctx.accounts.last_restart_slot);
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: Use `Rent::get()` instead of `Rent::from_account_info(...)`
+  --> $DIR/lib.rs:36:21
+   |
+LL |         let _rent = Rent::from_account_info(&ctx.accounts.rent);
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: Use `Clock::get` instead of passing the account
+  --> $DIR/lib.rs:45:5
+   |
+LL | pub struct LogMessage<'info> {
+   |            ---------- Sysvar accounts passed in this instruction
+...
+LL |     clock: Sysvar<'info, Clock>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: Use `Sysvar::get` instead of passing the accounts for `Rent`, and `Clock`.
+  --> $DIR/lib.rs:53:5
+   |
+LL | pub struct RentClock<'info> {
+   |            --------- Sysvar accounts passed in this instruction
+...
+LL |     rent: Sysvar<'info, Rent>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+LL |     clock: Sysvar<'info, Clock>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 7 previous errors
+

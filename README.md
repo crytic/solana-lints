@@ -15,6 +15,7 @@ The current lints are:
 | [`insecure_account_close`](lints/insecure_account_close)         | lint for [9-closing-accounts](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/9-closing-accounts)                     |
 | [`missing_owner_check`](lints/missing_owner_check)               | lint for [2-owner-checks](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/2-owner-checks)                             |
 | [`missing_signer_check`](lints/missing_signer_check)             | lint for [0-signer-authorization](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/0-signer-authorization)             |
+| [`sysvar_get`](lints/sysvar_get)                                 | Reports uses of `Sysvar::from_account_info` instead of `Sysvar::get`                                                                     |
 | [`type_cosplay`](lints/type_cosplay)                             | lint for [3-type-cosplay](https://github.com/coral-xyz/sealevel-attacks/tree/master/programs/3-type-cosplay)                             |
 
 ## Usage
