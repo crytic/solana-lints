@@ -6,6 +6,7 @@ pub const ANCHOR_LANG_ACCOUNT: [&str; 4] = ["anchor_lang", "accounts", "account"
 pub const ANCHOR_LANG_ACCOUNT_LOADER: [&str; 4] =
     ["anchor_lang", "accounts", "account_loader", "AccountLoader"];
 pub const ANCHOR_LANG_PROGRAM: [&str; 4] = ["anchor_lang", "accounts", "program", "Program"];
+pub const ANCHOR_LANG_INTERFACE: [&str; 4] = ["anchor_lang", "accounts", "interface", "Interface"];
 pub const ANCHOR_LANG_SYSTEM_ACCOUNT: [&str; 4] =
     ["anchor_lang", "accounts", "system_account", "SystemAccount"];
 pub const ANCHOR_LANG_ACCOUNT_DESERIALIZE: [&str; 2] = ["anchor_lang", "AccountDeserialize"];
@@ -20,7 +21,11 @@ pub const ANCHOR_LANG_TRY_DESERIALIZE: [&str; 3] =
 // key() method call path
 pub const ANCHOR_LANG_KEY: [&str; 3] = ["anchor_lang", "Key", "key"];
 pub const ANCHOR_LANG_TO_ACCOUNT_INFOS_TRAIT: [&str; 2] = ["anchor_lang", "ToAccountInfos"];
-
+// CpiContext::new()
+pub const ANCHOR_CPI_CONTEXT_NEW: [&str; 4] = ["anchor_lang", "context", "CpiContext", "new"];
+// CpiContext::new_with_signer()
+pub const ANCHOR_CPI_CONTEXT_NEW_SIGNER: [&str; 4] =
+    ["anchor_lang", "context", "CpiContext", "new_with_signer"];
 pub const BORSH_TRY_FROM_SLICE: [&str; 4] = ["borsh", "de", "BorshDeserialize", "try_from_slice"];
 
 pub const CORE_BRANCH: [&str; 5] = ["core", "ops", "try_trait", "Try", "branch"];
@@ -29,6 +34,8 @@ pub const CORE_CLONE: [&str; 4] = ["core", "clone", "Clone", "clone"];
 pub const SOLANA_PROGRAM_ACCOUNT_INFO: [&str; 3] =
     ["solana_program", "account_info", "AccountInfo"];
 pub const SOLANA_PROGRAM_INVOKE: [&str; 3] = ["solana_program", "program", "invoke"];
+// Instruction {..}
+pub const SOLANA_PROGRAM_INSTRUCTION: [&str; 3] = ["solana_program", "instruction", "Instruction"];
 pub const SOLANA_PROGRAM_CREATE_PROGRAM_ADDRESS: [&str; 4] = [
     "solana_program",
     "pubkey",

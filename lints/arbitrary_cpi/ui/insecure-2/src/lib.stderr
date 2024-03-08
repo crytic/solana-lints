@@ -1,17 +1,33 @@
 error: program_id may not be checked
-  --> $DIR/lib.rs:18:9
+  --> $DIR/lib.rs:15:19
    |
-LL | /         solana_program::program::invoke(
-LL | |             &ins,
-LL | |             &[
-LL | |                 ctx.accounts.source.clone(),
-...  |
-LL | |             ],
-LL | |         )
+LL |           let ins = Instruction {
+   |  ___________________^
+LL | |             program_id: *ctx.accounts.some_program.key,
+LL | |             accounts: vec![],
+LL | |             data: vec![],
+LL | |         };
    | |_________^
    |
    = note: `-D arbitrary-cpi` implied by `-D warnings`
    = help: to override `-D warnings` add `#[allow(arbitrary_cpi)]`
 
-error: aborting due to 1 previous error
+error: program_id may not be checked
+  --> $DIR/lib.rs:36:23
+   |
+LL |         let cpi_ctx = CpiContext::new(ctx.accounts.some_program.to_account_info(), accounts);
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: program_id may not be checked
+  --> $DIR/lib.rs:46:31
+   |
+LL |           let cpi_ctx_signers = CpiContext::new_with_signer(
+   |  _______________________________^
+LL | |             ctx.accounts.some_program.to_account_info(),
+LL | |             accounts2,
+LL | |             &[&[]],
+LL | |         );
+   | |_________^
+
+error: aborting due to 3 previous errors
 
