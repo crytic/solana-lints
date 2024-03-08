@@ -44,3 +44,13 @@ pub const SOLANA_PROGRAM_CREATE_PROGRAM_ADDRESS: [&str; 4] = [
 ];
 
 pub const SPL_TOKEN_INSTRUCTION: [&str; 2] = ["spl_token", "instruction"];
+
+pub const SYSVAR_FROM_ACCOUNT_INFO: [&str; 4] =
+    ["solana_program", "sysvar", "Sysvar", "from_account_info"];
+pub const SYSVAR_CLOCK: [&str; 3] = ["solana_program", "clock", "Clock"];
+pub const SYSVAR_EPOCH_REWARDS: [&str; 3] = ["solana_program", "epoch_rewards", "EpochRewards"];
+pub const SYSVAR_EPOCH_SCHEDULE: [&str; 3] = ["solana_program", "epoch_schedule", "EpochSchedule"];
+pub const SYSVAR_FEES: [&str; 3] = ["solana_program", "fees", "Fees"];
+pub const SYSVAR_LAST_RESTART_SLOT: [&str; 3] =
+    ["solana_program", "last_restart_slot", "LastRestartSlot"];
+pub const SYSVAR_RENT: [&str; 3] = ["solana_program", "rent", "Rent"];
