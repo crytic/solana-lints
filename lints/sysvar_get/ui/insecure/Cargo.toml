@@ -1,0 +1,28 @@
+[package]
+name = "sysvar-get-insecure"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sysvar_get_insecure"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.29.0"
+anchor-spl = "0.29.0"
+
+[workspace]
+
+[workspace.metadata.dylint]
+libraries = [
+    { path = "../../../../../solana-lints-dev", pattern = "lints/*" },
+    # { git = "https://github.com/crytic/solana-lints", pattern = "lints/*" },
+]
