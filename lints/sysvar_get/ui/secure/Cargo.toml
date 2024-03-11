@@ -20,10 +20,3 @@ anchor-lang = "0.29.0"
 anchor-spl = "0.29.0"
 
 [workspace]
-
-
-# [workspace.metadata.dylint]
-# libraries = [
-#     { path = "../../../../../solana-lints-dev", pattern = "lints/*" },
-#     # { git = "https://github.com/crytic/solana-lints", pattern = "lints/*" },
-# ]
