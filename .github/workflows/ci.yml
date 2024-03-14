@@ -23,9 +23,11 @@ jobs:
         run: |
           npm install -g prettier && prettier --check '**/*.md' '**/*.yml'
 
+      # S3v3ru5: Pin `markdown-link-check` to version 3.11 until the following issue is resolved:
+      # https://github.com/tcort/markdown-link-check/issues/304
       - name: Markdown link check
         run: |
-          npm install -g markdown-link-check && find . -name '*.md' | xargs markdown-link-check
+          npm install -g markdown-link-check@3.11 && find . -name '*.md' | xargs markdown-link-check
 
       - name: Cargo sort
         run: |
