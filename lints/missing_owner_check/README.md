@@ -19,6 +19,11 @@ If no owner check is done on the account, then a malicious actor could pass in a
 account owned by some other program. The code may then perform some actions on the
 unauthorized account that is not owned by the SPL Token program.
 
+**Works on:**
+
+- [x] Anchor
+- [x] Non Anchor
+
 **Known problems:**
 
 Key checks can be strengthened. Currently, the lint only checks that the account's owner

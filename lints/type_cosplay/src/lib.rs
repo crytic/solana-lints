@@ -53,6 +53,11 @@ dylint_linting::impl_late_lint! {
     /// malicious user to substitute `X` for `Y` or vice versa, and the code may perform unauthorized
     /// actions with the bytes.
     ///
+    /// **Works on:**
+    ///
+    /// - [ ] Anchor
+    /// - [x] Non Anchor
+    ///
     /// **Known problems:**
     ///
     /// In the case when only one enum is deserialized, this lint by default

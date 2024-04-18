@@ -6,6 +6,11 @@ Finds uses of solana_program::program::invoke that do not check the program_id
 **Why is this bad?**
 A contract could call into an attacker-controlled contract instead of the intended one
 
+**Works on:**
+
+- [x] Anchor
+- [x] Non Anchor
+
 **Known problems:**
 False positives, since the program_id check may be within some other function (does not
 trace through function calls)

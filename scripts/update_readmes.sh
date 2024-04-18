@@ -16,31 +16,6 @@ WORKSPACE="$(realpath "$SCRIPTS"/..)"
 
 cd "$WORKSPACE"/lints
 
-TMP="$(mktemp)"
-
-LISTED=
-
-IFS=
-cat ../README.md |
-while read X; do
-    if [[ "$X" =~ ^\| ]]; then
-        if [[ -z "$LISTED" ]]; then
-            echo '| Library | Description |'
-            echo '| - | - |'
-            grep -H '^description = "[^"]*"$' */Cargo.toml |
-            sed 's,^\([^/]*\)/Cargo.toml:description = "\([^"]*\)"$,| [`\1`](lints/\1) | \2 |,'
-            LISTED=1
-        fi
-        continue
-    fi
-    echo "$X"
-done |
-cat > "$TMP"
-
-mv "$TMP" ../README.md
-
-prettier --write ../README.md
-
 for LIBRARY in *; do
     pushd "$LIBRARY" >/dev/null
 
@@ -56,3 +31,49 @@ for LIBRARY in *; do
 
     popd >/dev/null
 done
+
+TMP="$(mktemp)"
+
+LISTED=
+
+IFS=
+cat ../README.md |
+while read X; do
+    if [[ "$X" =~ ^\| ]]; then
+        if [[ -z "$LISTED" ]]; then
+            echo '| Library | Description | Anchor | Non Anchor |'
+            echo '| - | - | - | - |'
+            for DIR in */; do
+                CARGO_TOML="${DIR}Cargo.toml"
+                README="${DIR}README.md"
+                DESC=$(
+                    grep -H '^description = "[^"]*"$' "$CARGO_TOML" |
+                    sed 's,^\([^/]*\)/Cargo.toml:description = "\([^"]*\)"$,| [`\1`](lints/\1) | \2,'
+                )
+                ANCHOR=$(
+                    grep '^- \[[ x]\] Anchor$' "$README" | cut -d "[" -f2 | cut -d "]" -f1
+                )
+                NON_ANCHOR=$(
+                    grep '^- \[[ x]\] Non Anchor$' "$README" | cut -d "[" -f2 | cut -d "]" -f1
+                )
+                ANCHOR_COLUMN=" "
+                if [[ "$ANCHOR" == "x" ]]; then
+                    ANCHOR_COLUMN=":heavy_check_mark:"
+                fi
+                NON_ANCHOR_COLUMN=" "
+                if [[ "$NON_ANCHOR" == "x" ]]; then
+                    NON_ANCHOR_COLUMN=":heavy_check_mark:"
+                fi
+                echo "$DESC | $ANCHOR_COLUMN | $NON_ANCHOR_COLUMN |"
+            done
+            LISTED=1
+        fi
+        continue
+    fi
+    echo "$X"
+done |
+cat > "$TMP"
+
+mv "$TMP" ../README.md
+
+prettier --write ../README.md
