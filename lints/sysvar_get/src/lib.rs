@@ -48,6 +48,11 @@ dylint_linting::declare_late_lint! {
     /// [`solana_program/sysvar` docs](https://docs.rs/solana-program/latest/solana_program/sysvar/index.html#:~:text=programs%20should%20prefer%20to%20call%20Sysvar%3A%3Aget),
     /// [Anchor docs](https://docs.rs/anchor-lang/latest/anchor_lang/accounts/sysvar/struct.Sysvar.html#:~:text=If%20possible%2C%20sysvars%20should%20not%20be%20used%20via%20accounts)
     ///
+    /// **Works on:**
+    ///
+    /// - [x] Anchor
+    /// - [x] Non Anchor
+    ///
     /// **Known problems:**
     ///
     /// None

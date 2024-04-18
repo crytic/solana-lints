@@ -14,6 +14,11 @@ then anyone can create the instruction, call the program and perform a privilege
 For example if the Token program does not check that the owner of the tokens is a signer in the transfer instruction then anyone can
 transfer the tokens and steal them.
 
+**Works on:**
+
+- [x] Anchor
+- [x] Non Anchor
+
 **Known problems:**
 None.
 

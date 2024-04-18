@@ -36,6 +36,11 @@ dylint_linting::declare_late_lint! {
     ///
     /// See https://github.com/crytic/building-secure-contracts/tree/master/not-so-smart-contracts/solana/improper_pda_validation
     ///
+    /// **Works on:**
+    ///
+    /// - [ ] Anchor
+    /// - [x] Non Anchor
+    ///
     /// **Known problems:**
     ///
     /// False positives, since the bump_seed check may be within some other function (does not
