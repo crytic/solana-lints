@@ -45,11 +45,13 @@ diff -r -x Cargo.lock ./insecure-still-still/src/lib.rs ../../../../lints/insecu
 > 
 25d29
 < 
-29c33
+28,30c32
+<         cursor
 <             .write_all(&anchor_lang::__private::CLOSED_ACCOUNT_DISCRIMINATOR)
+<             .unwrap();
 ---
->             .write_all(&CLOSED_ACCOUNT_DISCRIMINATOR)
-45a50,52
+>         cursor.write_all(&CLOSED_ACCOUNT_DISCRIMINATOR).unwrap();
+45a48,50
 > 
 > #[allow(dead_code)]
 > fn main() {}
