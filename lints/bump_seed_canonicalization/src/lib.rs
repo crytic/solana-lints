@@ -276,7 +276,14 @@ impl BumpSeedCanonicalization {
                                     // the location of &[bump]. update it to store the location of bump.
                                     if let Operand::Move(pl) = &elements[FieldIdx::from_u32(0)] {
                                         // store the location of bump
-                                        seeds_arg = &pl;
+                                        // smoelius: Clippy recommends to remove the next borrow.
+                                        // However, removing the borrow causes the lint's warning
+                                        // message to change and the tests to fail. I don't
+                                        // understand why.
+                                        #[allow(clippy::needless_borrow)]
+                                        {
+                                            seeds_arg = &pl;
+                                        }
                                         likely_bump_seed_aliases.push(*seeds_arg);
                                         // seeds_arg is a location of bump
                                         state = BackwardDataflowState::Bump;
@@ -321,24 +328,19 @@ impl BumpSeedCanonicalization {
         loop {
             for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
                 match &stmt.kind {
-                    StatementKind::Assign(box (assign_place, rvalue))
-                        if assign_place.local_or_deref_local()
-                            == search_place.local_or_deref_local() =>
+                    StatementKind::Assign(box (
+                        assign_place,
+                        Rvalue::Use(Operand::Copy(rvalue_place) | Operand::Move(rvalue_place))
+                        | Rvalue::Ref(_, _, rvalue_place),
+                    )) if assign_place.local_or_deref_local()
+                        == search_place.local_or_deref_local() =>
                     {
-                        match rvalue {
-                            Rvalue::Use(
-                                Operand::Copy(rvalue_place) | Operand::Move(rvalue_place),
-                            )
-                            | Rvalue::Ref(_, _, rvalue_place) => {
-                                // println!("Found assignment {:?}", stmt);
-                                search_place = rvalue_place;
-                                if let Some(search_loc) = search_place.local_or_deref_local() {
-                                    if search_list.contains(&search_loc) {
-                                        return true;
-                                    }
-                                }
+                        // println!("Found assignment {:?}", stmt);
+                        search_place = rvalue_place;
+                        if let Some(search_loc) = search_place.local_or_deref_local() {
+                            if search_list.contains(&search_loc) {
+                                return true;
                             }
-                            _ => {}
                         }
                     }
                     _ => {}

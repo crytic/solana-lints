@@ -134,7 +134,7 @@ fn find_from_account_info_exprs<'tcx>(
     f.uses
 }
 
-impl<'cx, 'tcx> Visitor<'tcx> for FromAccountInfoUses<'cx, 'tcx> {
+impl<'tcx> Visitor<'tcx> for FromAccountInfoUses<'_, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         if_chain! {
             if let ExprKind::Call(func, _) = expr.kind;

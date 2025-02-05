@@ -262,15 +262,12 @@ fn find_place_aliases<'tcx>(
         for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
             match &stmt.kind {
                 // if the statement assigns to `inst_arg`, update `inst_arg` to the rhs
-                StatementKind::Assign(box (assign_place, rvalue))
-                    if assign_place.local_or_deref_local() == id_arg.local_or_deref_local() =>
-                {
-                    if let Rvalue::Use(Operand::Copy(pl) | Operand::Move(pl))
-                    | Rvalue::Ref(_, _, pl) = rvalue
-                    {
-                        id_arg = pl;
-                        likely_program_id_aliases.push(*pl);
-                    }
+                StatementKind::Assign(box (
+                    assign_place,
+                    Rvalue::Use(Operand::Copy(pl) | Operand::Move(pl)) | Rvalue::Ref(_, _, pl),
+                )) if assign_place.local_or_deref_local() == id_arg.local_or_deref_local() => {
+                    id_arg = pl;
+                    likely_program_id_aliases.push(*pl);
                 }
                 _ => {}
             }
@@ -356,21 +353,18 @@ fn is_moved_from<'tcx>(
     loop {
         for stmt in body.basic_blocks[cur_block].statements.iter().rev() {
             match &stmt.kind {
-                StatementKind::Assign(box (assign_place, rvalue))
-                    if assign_place.local_or_deref_local()
-                        == search_place.local_or_deref_local() =>
+                StatementKind::Assign(box (
+                    assign_place,
+                    Rvalue::Use(Operand::Copy(rvalue_place) | Operand::Move(rvalue_place))
+                    | Rvalue::Ref(_, _, rvalue_place),
+                )) if assign_place.local_or_deref_local()
+                    == search_place.local_or_deref_local() =>
                 {
-                    match rvalue {
-                        Rvalue::Use(Operand::Copy(rvalue_place) | Operand::Move(rvalue_place))
-                        | Rvalue::Ref(_, _, rvalue_place) => {
-                            search_place = rvalue_place;
-                            if let Some(search_loc) = search_place.local_or_deref_local() {
-                                if search_list.contains(&search_loc) {
-                                    return true;
-                                }
-                            }
+                    search_place = rvalue_place;
+                    if let Some(search_loc) = search_place.local_or_deref_local() {
+                        if search_list.contains(&search_loc) {
+                            return true;
                         }
-                        _ => {}
                     }
                 }
                 _ => {}

@@ -235,7 +235,7 @@ fn get_referenced_accounts<'tcx>(
     accounts.uses
 }
 
-impl<'cx, 'tcx> Visitor<'tcx> for AccountUses<'cx, 'tcx> {
+impl<'tcx> Visitor<'tcx> for AccountUses<'_, 'tcx> {
     fn visit_expr(&mut self, expr: &'tcx Expr<'tcx>) {
         if_chain! {
             // s3v3ru5: the following check removes duplicate warnings where lint would report both `x` and `x.clone()` expressions.
@@ -366,7 +366,7 @@ fn is_safe_constraint_for_owner(constraints: &ConstraintGroup) -> bool {
         || constraints
             .init
             .as_ref()
-            .map_or(false, |init_constraint| init_constraint.if_needed)
+            .is_some_and(|init_constraint| init_constraint.if_needed)
         || constraints.seeds.is_some()
         || constraints.address.is_some()
         || constraints.owner.is_some()
