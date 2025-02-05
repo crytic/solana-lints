@@ -4,8 +4,8 @@ diff -r -x Cargo.lock ./insecure/Cargo.toml ../../../../lints/missing_owner_chec
 < anchor-spl = "0.20.1"
 < spl-token = "3.2.0"
 ---
-> anchor-lang = "0.29.0"
-> anchor-spl = "0.29.0"
+> anchor-lang = "0.30.1"
+> anchor-spl = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./insecure/src/lib.rs ../../../../lints/missing_owner_check/ui/insecure/src/lib.rs
@@ -26,8 +26,8 @@ diff -r -x Cargo.lock ./recommended/Cargo.toml ../../../../lints/missing_owner_c
 < anchor-spl = "0.20.1"
 < spl-token = "3.2.0"
 ---
-> anchor-lang = "0.29.0"
-> anchor-spl = "0.29.0"
+> anchor-lang = "0.30.1"
+> anchor-spl = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./recommended/src/lib.rs ../../../../lints/missing_owner_check/ui/recommended/src/lib.rs
@@ -44,8 +44,8 @@ diff -r -x Cargo.lock ./secure/Cargo.toml ../../../../lints/missing_owner_check/
 < anchor-spl = "0.20.1"
 < spl-token = "3.2.0"
 ---
-> anchor-lang = "0.29.0"
-> anchor-spl = "0.29.0"
+> anchor-lang = "0.30.1"
+> anchor-spl = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/missing_owner_check/ui/secure/src/lib.rs

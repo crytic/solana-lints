@@ -2,7 +2,7 @@ diff -r -x Cargo.lock ./insecure/Cargo.toml ../../../../lints/type_cosplay/ui/in
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./insecure/src/lib.rs ../../../../lints/type_cosplay/ui/insecure/src/lib.rs
@@ -20,7 +20,7 @@ diff -r -x Cargo.lock ./recommended/Cargo.toml ../../../../lints/type_cosplay/ui
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./recommended/src/lib.rs ../../../../lints/type_cosplay/ui/recommended/src/lib.rs
@@ -36,7 +36,7 @@ diff -r -x Cargo.lock ./secure/Cargo.toml ../../../../lints/type_cosplay/ui/secu
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/type_cosplay/ui/secure/src/lib.rs

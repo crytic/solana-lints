@@ -77,7 +77,7 @@ dylint_linting::declare_late_lint! {
 }
 
 impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
-    fn check_body(&mut self, cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) {
+    fn check_body(&mut self, cx: &LateContext<'tcx>, body: &Body<'tcx>) {
         let hir_map = cx.tcx.hir();
         let body_did = hir_map.body_owner_def_id(body.id()).to_def_id();
         // The body is the body of function whose mir is available
@@ -113,7 +113,7 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
                         &paths::SOLANA_PROGRAM_CREATE_PROGRAM_ADDRESS,
                     ) {
                         // get the seeds argument; seeds is the first argument
-                        let seed_arg = &args[0];
+                        let seed_arg = &args[0].node;
                         if let Operand::Move(p) = seed_arg {
                             // find all alias of bump in the seeds array: &[seed1, ..., &[bump]].
                             let (dataflow_state, likely_bump_places): (
@@ -180,7 +180,8 @@ impl<'tcx> LateLintPass<'tcx> for BumpSeedCanonicalization {
 /// Return true if the `deser_ty` implements `anchor::AccountDeserialize` trait else false
 fn is_anchor_account_struct<'tcx>(cx: &LateContext<'tcx>, deser_ty: Ty<'tcx>) -> bool {
     let mut account_deserialize = false;
-    if let Some(anchor_trait_id) = get_trait_def_id(cx, &paths::ANCHOR_LANG_ACCOUNT_DESERIALIZE) {
+    if let Some(anchor_trait_id) = get_trait_def_id(cx.tcx, &paths::ANCHOR_LANG_ACCOUNT_DESERIALIZE)
+    {
         account_deserialize = implements_trait(cx, deser_ty, anchor_trait_id, &[]);
     }
     account_deserialize

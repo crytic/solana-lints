@@ -83,7 +83,7 @@ pub fn get_anchor_accounts_struct<'tcx>(
         if let ItemKind::Struct(_, _) = item.kind;
         // Accounts structs implement `anchor_lang::ToAccountInfos` trait.
         // see: https://github.com/coral-xyz/anchor/blob/8eee184938f71e3b85414d469db55fd882b380b2/lang/syn/src/codegen/accounts/mod.rs#L19
-        if let Some(trait_id) = get_trait_def_id(cx, &paths::ANCHOR_LANG_TO_ACCOUNT_INFOS_TRAIT);
+        if let Some(trait_id) = get_trait_def_id(cx.tcx, &paths::ANCHOR_LANG_TO_ACCOUNT_INFOS_TRAIT);
         // `implements_trait` takes generic arguments. providing empty args or dummy args works fine outside tests but
         // fails in tests because of a debug assertion. ToAccountInfos is used instead of Accounts trait because Accounts trait
         // takes a type generic argument. It is not possible to find the generic args in `check_item`, have to use `check_impl` probably.

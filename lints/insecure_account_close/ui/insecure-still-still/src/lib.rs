@@ -5,6 +5,8 @@ use std::ops::DerefMut;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
+const CLOSED_ACCOUNT_DISCRIMINATOR: [u8; 8] = [255, 255, 255, 255, 255, 255, 255, 255];
+
 #[program]
 pub mod closing_accounts_insecure_still_still {
     use super::*;
@@ -26,9 +28,7 @@ pub mod closing_accounts_insecure_still_still {
 
         let dst: &mut [u8] = &mut data;
         let mut cursor = std::io::Cursor::new(dst);
-        cursor
-            .write_all(&anchor_lang::__private::CLOSED_ACCOUNT_DISCRIMINATOR)
-            .unwrap();
+        cursor.write_all(&CLOSED_ACCOUNT_DISCRIMINATOR).unwrap();
 
         Ok(())
     }

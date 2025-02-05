@@ -203,7 +203,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
             then {
                 if_chain! {
                     // the type implements `anchor_lang::Discriminator`
-                    if let Some(trait_did) = get_trait_def_id(cx, &paths::ANCHOR_LANG_DISCRIMINATOR);
+                    if let Some(trait_did) = get_trait_def_id(cx.tcx, &paths::ANCHOR_LANG_DISCRIMINATOR);
                     if implements_trait(cx, middle_ty, trait_did, &[]);
                     // But the function is not `try_deserialize`
                     if let Some(def_id) = cx.typeck_results().type_dependent_def_id(fnc_expr.hir_id);
@@ -214,7 +214,7 @@ impl<'tcx> LateLintPass<'tcx> for TypeCosplay {
                             cx,
                             TYPE_COSPLAY,
                             fnc_expr.span,
-                            &format!("`{middle_ty}` type implements the `Discriminator` trait. If you are attempting to deserialize\n here, you probably want try_deserialize() instead."),
+                            format!("`{middle_ty}` type implements the `Discriminator` trait. If you are attempting to deserialize\n here, you probably want try_deserialize() instead."),
                             None,
                             "otherwise, make sure you are accounting for this type's discriminator in your deserialization function"
                         );

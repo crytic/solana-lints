@@ -31,6 +31,8 @@ pub const BORSH_TRY_FROM_SLICE: [&str; 4] = ["borsh", "de", "BorshDeserialize", 
 pub const CORE_BRANCH: [&str; 5] = ["core", "ops", "try_trait", "Try", "branch"];
 pub const CORE_CLONE: [&str; 4] = ["core", "clone", "Clone", "clone"];
 
+pub const SOLANA_ACCOUNT_INFO: [&str; 2] = ["solana_account_info", "AccountInfo"];
+
 pub const SOLANA_PROGRAM_ACCOUNT_INFO: [&str; 3] =
     ["solana_program", "account_info", "AccountInfo"];
 pub const SOLANA_PROGRAM_INVOKE: [&str; 3] = ["solana_program", "program", "invoke"];

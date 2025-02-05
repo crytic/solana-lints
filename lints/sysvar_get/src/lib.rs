@@ -107,7 +107,7 @@ impl<'tcx> LateLintPass<'tcx> for SysvarGet {
                     cx,
                     SYSVAR_GET,
                     expr.span,
-                    &format!(
+                    format!(
                         "Use `{0}::get()` instead of `{0}::from_account_info(...)`",
                         &sysvar
                     ),
@@ -229,7 +229,7 @@ fn anchor_sysvar_get<'tcx>(cx: &LateContext<'tcx>, item: &'tcx Item<'tcx>) {
                 cx,
                 SYSVAR_GET,
                 reported_fields.iter().map(|f| f.0.span).collect::<Vec<_>>(),
-                &warn_message,
+                warn_message,
                 |diag| {
                     diag.span_label(
                         item.ident.span,

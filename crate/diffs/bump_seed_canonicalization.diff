@@ -2,7 +2,7 @@ diff -r -x Cargo.lock ./insecure/Cargo.toml ../../../../lints/bump_seed_canonica
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./insecure/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/insecure/src/lib.rs
@@ -19,7 +19,7 @@ diff -r -x Cargo.lock ./recommended/Cargo.toml ../../../../lints/bump_seed_canon
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./recommended/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/recommended/src/lib.rs
@@ -33,7 +33,7 @@ diff -r -x Cargo.lock ./secure/Cargo.toml ../../../../lints/bump_seed_canonicali
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/bump_seed_canonicalization/ui/secure/src/lib.rs

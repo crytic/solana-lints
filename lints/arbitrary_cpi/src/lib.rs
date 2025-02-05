@@ -92,7 +92,7 @@ dylint_linting::declare_late_lint! {
 }
 
 impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
-    fn check_body(&mut self, cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) {
+    fn check_body(&mut self, cx: &LateContext<'tcx>, body: &Body<'tcx>) {
         if body.value.span.from_expansion() {
             return;
         }
@@ -146,7 +146,7 @@ impl<'tcx> LateLintPass<'tcx> for ArbitraryCpi {
                         ],
                     )
                     .is_some();
-                    if let Operand::Move(program_place) = &args[0];
+                    if let Operand::Move(program_place) = &args[0].node;
                     if !is_program_safe_account_info(cx, body_mir, block_id, program_place);
                     then {
                         span_lint(
@@ -227,7 +227,7 @@ fn is_program_safe_account_info<'tcx>(
                     if let TyKind::FnDef(def_id, _) = func.const_.ty().kind();
                     if match_def_path(cx, *def_id, &paths::ANCHOR_LANG_TO_ACCOUNT_INFO);
                     if !args.is_empty();
-                    if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = &args[0];
+                    if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = &args[0].node;
                     if let ty::Adt(adt_def, _) = arg0_pl.ty(body, cx.tcx).ty.peel_refs().kind();
                     if match_any_def_paths(
                         cx,
@@ -310,8 +310,8 @@ fn is_programid_checked<'tcx>(
             if match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "ne"])
                 || match_def_path(cx, *def_id, &["core", "cmp", "PartialEq", "eq"]);
             // check if any of the args accesses program_id
-            if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = args[0];
-            if let Operand::Copy(arg1_pl) | Operand::Move(arg1_pl) = args[1];
+            if let Operand::Copy(arg0_pl) | Operand::Move(arg0_pl) = args[0].node;
+            if let Operand::Copy(arg1_pl) | Operand::Move(arg1_pl) = args[1].node;
             then {
                 // if either arg0 or arg1 came from one of the programid_locals, then we know
                 // this eq/ne check was operating on the program_id.

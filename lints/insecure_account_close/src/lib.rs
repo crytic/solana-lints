@@ -3,13 +3,17 @@
 #![warn(unused_extern_crates)]
 
 extern crate rustc_ast;
+extern crate rustc_data_structures;
 extern crate rustc_hir;
 extern crate rustc_middle;
 
 use clippy_utils::{diagnostics::span_lint, higher};
 use if_chain::if_chain;
 use rustc_ast::ast::{LitIntType, LitKind};
-use rustc_hir::{BinOpKind, Body, BorrowKind, Expr, ExprKind, LangItem, Mutability, QPath, UnOp};
+use rustc_data_structures::packed::Pu128;
+use rustc_hir::{
+    BinOpKind, Body, BorrowKind, Expr, ExprKind, LangItem, Mutability, QPath, StructTailExpr, UnOp,
+};
 use rustc_lint::{LateContext, LateLintPass};
 use rustc_middle::ty::{TyKind, UintTy};
 use solana_lints::utils::visit_expr_no_bodies;
@@ -63,8 +67,7 @@ impl<'tcx> LateLintPass<'tcx> for InsecureAccountClose {
             // if expr is `(*(*some_expr).lamports.borrow_mut()) = 0;`
             if is_account_close(expr);
             let body_owner_hir_id = cx.tcx.hir().enclosing_body_owner(expr.hir_id);
-            let body_id = cx.tcx.hir().body_owned_by(body_owner_hir_id);
-            let body = cx.tcx.hir().body(body_id);
+            let body = cx.tcx.hir().body_owned_by(body_owner_hir_id);
             // if the body does not contain `some_expr.copy_from_slice(&another_expr[0..8])` and
             // comparison of `[u8; 8]` value.
             if !is_force_defund(cx, body);
@@ -124,13 +127,13 @@ fn is_initial_eight_byte_copy_from_slice(expr: &Expr<'_>) -> bool {
         if let [arg] = args;
         if let ExprKind::AddrOf(BorrowKind::Ref, Mutability::Not, inner) = arg.kind;
         if let ExprKind::Index(_, index, _) = inner.kind;
-        if let ExprKind::Struct(qpath, fields, None) = index.kind;
+        if let ExprKind::Struct(qpath, fields, StructTailExpr::None) = index.kind;
         if matches!(qpath, QPath::LangItem(LangItem::Range, _));
         if let [start, end] = fields;
         if let ExprKind::Lit(start_lit) = start.expr.kind;
-        if let LitKind::Int(0, LitIntType::Unsuffixed) = start_lit.node;
+        if let LitKind::Int(Pu128(0), LitIntType::Unsuffixed) = start_lit.node;
         if let ExprKind::Lit(end_lit) = end.expr.kind;
-        if let LitKind::Int(8, LitIntType::Unsuffixed) = end_lit.node;
+        if let LitKind::Int(Pu128(8), LitIntType::Unsuffixed) = end_lit.node;
         then {
             true
         } else {
@@ -170,7 +173,7 @@ fn is_eight_byte_array<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool 
     if_chain! {
         if let TyKind::Array(ty, length) = ty.kind();
         if *ty.kind() == TyKind::Uint(UintTy::U8);
-        if let Some(length) = length.try_eval_target_usize(cx.tcx, cx.param_env);
+        if let Some(length) = length.try_to_target_usize(cx.tcx);
         if length == 8;
         then {
             true
@@ -210,7 +213,7 @@ fn is_zero_assignment<'tcx>(expr: &'tcx Expr<'tcx>) -> Option<&'tcx Expr<'tcx>> 
     if_chain! {
         if let ExprKind::Assign(place, value, _) = expr.kind;
         if let ExprKind::Lit(lit) = value.kind;
-        if let LitKind::Int(0, LitIntType::Unsuffixed) = lit.node;
+        if let LitKind::Int(Pu128(0), LitIntType::Unsuffixed) = lit.node;
         then {
             Some(place)
         } else {

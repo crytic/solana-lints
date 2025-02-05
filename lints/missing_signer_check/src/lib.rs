@@ -119,11 +119,11 @@ impl<'tcx> LateLintPass<'tcx> for MissingSignerCheck {
     }
 }
 
-/// Return true if any of the expression in body has type `AccountInfo` (`solana_program::account_info::AccountInfo`)
+/// Return true if any of the expression in body has type `AccountInfo` (`solana_account_info::AccountInfo`)
 fn body_uses_account_info<'tcx>(cx: &LateContext<'tcx>, body: &'tcx Body<'tcx>) -> bool {
     visit_expr_no_bodies(body.value, |expr| {
         let ty = cx.typeck_results().expr_ty(expr).peel_refs();
-        match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO)
+        match_type(cx, ty, &paths::SOLANA_ACCOUNT_INFO)
     })
 }
 
@@ -187,7 +187,7 @@ fn is_is_signer_use<'tcx>(cx: &LateContext<'tcx>, expr: &Expr<'tcx>) -> bool {
         if field_name.as_str() == "is_signer";
         // type of `x` is AccountInfo
         let ty = cx.typeck_results().expr_ty(object).peel_refs();
-        if match_type(cx, ty, &paths::SOLANA_PROGRAM_ACCOUNT_INFO);
+        if match_type(cx, ty, &paths::SOLANA_ACCOUNT_INFO);
         then {
             true
         } else {
@@ -289,7 +289,7 @@ fn anchor_missing_signer<'tcx>(cx: &LateContext<'tcx>, item: &'tcx Item<'tcx>) {
                     .iter()
                     .map(|field| field.span)
                     .collect::<Vec<_>>(),
-                &warn_message,
+                warn_message,
                 |diag| {
                     diag.span_label(item.ident.span, "Accounts of this instruction");
                 },

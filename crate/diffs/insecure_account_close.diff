@@ -2,7 +2,7 @@ diff -r -x Cargo.lock ./insecure/Cargo.toml ../../../../lints/insecure_account_c
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./insecure/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure/src/lib.rs
@@ -17,7 +17,7 @@ diff -r -x Cargo.lock ./insecure-still/Cargo.toml ../../../../lints/insecure_acc
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./insecure-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still/src/lib.rs
@@ -32,12 +32,21 @@ diff -r -x Cargo.lock ./insecure-still-still/Cargo.toml ../../../../lints/insecu
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./insecure-still-still/src/lib.rs ../../../../lints/insecure_account_close/ui/insecure-still-still/src/lib.rs
 1a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
+6a8,9
+> const CLOSED_ACCOUNT_DISCRIMINATOR: [u8; 8] = [255, 255, 255, 255, 255, 255, 255, 255];
+> 
+28,30c31
+<         cursor
+<             .write_all(&anchor_lang::__private::CLOSED_ACCOUNT_DISCRIMINATOR)
+<             .unwrap();
+---
+>         cursor.write_all(&CLOSED_ACCOUNT_DISCRIMINATOR).unwrap();
 45a47,49
 > 
 > #[allow(dead_code)]
@@ -47,7 +56,7 @@ diff -r -x Cargo.lock ./recommended/Cargo.toml ../../../../lints/insecure_accoun
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./recommended/src/lib.rs ../../../../lints/insecure_account_close/ui/recommended/src/lib.rs
@@ -64,13 +73,18 @@ diff -r -x Cargo.lock ./secure/Cargo.toml ../../../../lints/insecure_account_clo
 19c19,21
 < anchor-lang = "0.20.1"
 ---
-> anchor-lang = "0.29.0"
+> anchor-lang = "0.30.1"
 > 
 > [workspace]
 diff -r -x Cargo.lock ./secure/src/lib.rs ../../../../lints/insecure_account_close/ui/secure/src/lib.rs
-2a3
+1d0
+< use anchor_lang::__private::CLOSED_ACCOUNT_DISCRIMINATOR;
+2a2
 > use anchor_lang::solana_program::entrypoint::ProgramResult;
-71a73,75
+7a8,9
+> const CLOSED_ACCOUNT_DISCRIMINATOR: [u8; 8] = [255, 255, 255, 255, 255, 255, 255, 255];
+> 
+71a74,76
 > 
 > #[allow(dead_code)]
 > fn main() {}

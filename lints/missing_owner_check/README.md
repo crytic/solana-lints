@@ -48,7 +48,7 @@ check_fn:
 - Get a list of unique and unsafe AccountInfo's referenced in the body
   - for each expression in the function body
   - Ignore `.clone()` expressions as the expression referencing original account will be checked
-  - Check if the expression's type is Solana's `AccountInfo` (`solana_program::account_info::AccountInfo`)
+  - Check if the expression's type is Solana's `AccountInfo` (`solana_account_info::AccountInfo`)
   - Ignore local variable expressions (`x` where x is defined in the function `let x = y`)
     - Removes duplcate warnings: both `x` and `y` are reported by the lint. reporting `y` is sufficient.
     - Also the owner could be checked on `y`. reporting `x` which a copy/ref of `y` would be false-positive.
