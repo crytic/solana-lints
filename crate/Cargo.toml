@@ -13,7 +13,7 @@ syn = { version = "1.0.109", features = ["parsing"] }
 assert_cmd = "2.0"
 predicates = "3.1"
 similar-asserts = "1.7"
-tempfile = "3.18"
+tempfile = "3.19"
 toml = "0.8"
 
 [package.metadata.rust-analyzer]
