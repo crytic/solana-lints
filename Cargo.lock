@@ -518,7 +518,7 @@ dependencies = [
  "if_chain",
  "predicates",
  "similar-asserts",
- "syn 1.0.109",
+ "syn 2.0.98",
  "tempfile",
  "toml",
 ]
