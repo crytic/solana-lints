@@ -14,7 +14,7 @@ assert_cmd = "2.0"
 predicates = "3.1"
 similar-asserts = "1.7"
 tempfile = "3.20"
-toml = "0.8"
+toml = "0.9"
 
 [package.metadata.rust-analyzer]
 rustc_private = true
